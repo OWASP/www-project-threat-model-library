@@ -1,4 +1,3 @@
 ### Leaders
-* [Leader Name](mailto:leader.email@owasp.org)
-* [Leader Name](mailto:leader.email@owasp.org)
-* [Leader Name](mailto:leader.email@owasp.org)
+* [Petra Vukmirovic](mailto:petra.vukmirovic@owasp.org)
+* [Julian Mehnle](mailto:petra.vukmirovic@owasp.org)
