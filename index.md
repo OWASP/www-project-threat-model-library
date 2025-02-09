@@ -66,6 +66,7 @@ Welcome to the first, open-sourced, structured, peer-reviewed threat modeling da
    There are several tools available for threat modeling, both open-source and commercial. Some popular options include:
 
    - **OWASP Threat Dragon** (open-source)
+   - **OWASP pytm** (open-source)
    - **Microsoft Threat Modeling Tool** (free, proprietary)
 
    You can use any tool you're comfortable with as long as the output can be converted into the JSON format once the schema is published.
