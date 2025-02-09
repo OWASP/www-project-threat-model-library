@@ -5,7 +5,7 @@ title: OWASP Threat Model Library
 tags: example-tag
 level: 2
 type: code
-pitch: A very brief, one-line description of your project
+pitch: Welcome to the first, open-sourced, structured, peer-reviewed threat modeling dataset
 
 ---
 
