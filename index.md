@@ -16,8 +16,12 @@ Welcome to the first, open-sourced, structured, peer-reviewed threat modeling da
 3. Improve the security of open-source applications by having them openly threat modeled. Death to security via obscurity!
 4. Create a dataset to fine-tune existing pre-trained LLMs to achieve more reliable threat modeling results
 
+## News
 
-### Road Map
+Project will be presented at the OWASP Global AppSec in Barcelona, along with the release of the schema!
+
+
+## Road Map
 
 
 1. **Define the Schema:**
@@ -36,7 +40,7 @@ Welcome to the first, open-sourced, structured, peer-reviewed threat modeling da
 
 ---
 
-### FAQs
+## FAQs
 
 1. **How do I contribute?**
 
