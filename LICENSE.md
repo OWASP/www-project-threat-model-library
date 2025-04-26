@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2025 threat Model Library Team
+Copyright (c) 2025 Threat Model Library Team
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
