@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://github.com/OWASP/www-project-threat-model-library/blob/main/threat-model-schema.json",
     "$comment": "When updating the schema `$id`, also update the value of the constant `$schema` property below.",
-    "title": "Threat-model-library-schema",
+    "title": "OWASP Threat Model Library Schema",
 
     "$defs": {
         "version": {
@@ -54,7 +54,7 @@
             "enum": ["assumed", "active", "suggested", "under_review", "approved", "scheduled", "retired", "wont_do"]
         },
         "data-sensitivity": {
-            "enum": ["pii", "phi", "fin", "ip", "cred", "biz", "gov", "pci"]
+            "enum": ["pii", "phi", "fin", "ip", "cred", "biz", "gov", "pci", "op"]
         },
         "degree": {
             "enum": ["minimal", "low", "moderate", "high", "maximal"]
@@ -68,6 +68,9 @@
         "likelihood": {
             "enum": ["rare", "unlikely", "possible", "likely", "certain"]
         },
+        "ease-of-exploit": {
+            "enum": ["theoretical", "difficult", "moderate", "easy", "automated"]
+        },
         "priority": {
             "enum": ["none", "low", "medium", "high", "critical"]
         },
@@ -79,12 +82,11 @@
         "tier": {
             "enum": ["1_mission_critical", "2_business_critical", "3_important", "4_non_critical"]
         },
-        
-
+            
         "access-level": {
             "enum": ["anonymous", "user", "admin"]
         },
-        "access_control_method": {
+        "access-control-method": {
             "enum": ["acl", "rbac", "mac", "dac", "abac"]
         },
         "authentication-method": {
@@ -256,7 +258,7 @@
                     "title": "Access control method used between the two trust zones",
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/access_control_method"
+                        "$ref": "#/$defs/access-control-method"
                     }
                 },
                 "authentication_method": {
@@ -455,7 +457,7 @@
                 "access_control_method": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/access_control_method"
+                        "$ref": "#/$defs/access-control-method"
                     }
                 },
                 "record_count": {
@@ -623,6 +625,14 @@
                         "$comment": "https://nvlpubs.nist.gov/nistpubs/legacy/sp/nistspecialpublication800-30r1.pdf",
                         "enum": ["adversary", "human_error", "failure", "events_beyond_org_control"]
                     }
+                },
+                "ease_of_exploit": {
+                    "title": "Ease of exploiting the threat",
+                    "$ref": "#/$defs/ease-of-exploit"
+                },
+                "scope_of_exploit": {
+                    "title": "Scope of the threat",
+                    "type": "string"
                 },
                 "attack_mechanism": {
                     "title": "Attack mechanism per CAPEC taxonomy",
