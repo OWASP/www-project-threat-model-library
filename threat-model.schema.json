@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://github.com/OWASP/www-project-threat-model-library/blob/main/threat-model-schema.json",
     "$comment": "When updating the schema `$id`, also update the value of the constant `$schema` property below.",
-    "title": "Threat-model-library-schema",
+    "title": "OWASP Threat Model Library Schema",
 
     "$defs": {
         "version": {
@@ -17,7 +17,7 @@
             "pattern": "^[0-9a-z-]+$"
         },
         "typed-symbolic-name": {
-            "title": "Symbolic name of an object of a specified type",
+            "title": "Symbolic name reference to an object of a specified type",
             "type": "object",
             "required": ["type", "name"],
             "additionalProperties": false,
@@ -27,7 +27,7 @@
                     "description": "The type of the object being referenced, as a '#/$defs/...' or simple '...' type reference.",
                     "type": "string"
                 },
-                "name": {
+                "object": {
                     "$ref": "#/$defs/symbolic-name"
                 }
             }
@@ -50,11 +50,11 @@
         "business-criticality": {
             "$ref": "#/$defs/degree"
         },
-        "mitigation-status": {
+        "control-status": {
             "enum": ["assumed", "active", "suggested", "under_review", "approved", "scheduled", "retired", "wont_do"]
         },
         "data-sensitivity": {
-            "enum": ["pii", "phi", "fin", "ip", "cred", "biz", "gov", "pci"]
+            "enum": ["pii", "phi", "fin", "ip", "cred", "biz", "gov", "pci", "op"]
         },
         "degree": {
             "enum": ["minimal", "low", "moderate", "high", "maximal"]
@@ -77,18 +77,17 @@
             "maximum": 25
         },
         "tier": {
-            "enum": ["1_mission_critical", "2_business_critical", "3_important", "4_non_critical"]
+            "enum": ["mission_critical", "business_critical", "important", "non_critical"]
         },
-        
 
         "access-level": {
             "enum": ["anonymous", "user", "admin"]
         },
-        "access_control_method": {
-            "enum": ["acl", "rbac", "mac", "dac", "abac"]
+        "access-control-method": {
+            "enum": ["none", "acl", "rbac", "mac", "dac", "abac"]
         },
         "authentication-method": {
-            "enum": ["password", "otp", "public_key", "token", "biometrics", "sso", "social"]
+            "enum": ["none", "password", "otp", "challenge_response", "public_key", "token", "biometrics", "sso", "social"]
         },
 
         "data-store-type": {
@@ -140,7 +139,7 @@
             "enum": ["script_kid", "insider", "engineer", "expert_engineer", "oc_sponsored", "state_sponsored"]
         },
 
-        "target": {
+        "scope": {
             "type": "object",
             "required": [
                 "title",
@@ -153,11 +152,11 @@
             "additionalProperties": false,
             "properties": {
                 "title": {
-                    "title": "Short description of the target of this threat model of an application or service",
+                    "title": "Short description of the scope of the threat model",
                     "type": "string"
                 },
                 "description": {
-                    "title": "Definition of the target of an application or service",
+                    "title": "Definition of the scope of an application or service",
                     "type": "string"
                 },
                 "business_criticality": {
@@ -252,15 +251,15 @@
                     "title": "Symbolic name of the second trust zone",
                     "$ref": "#/$defs/symbolic-name"
                 },
-                "access_control_method": {
-                    "title": "Access control method used between the two trust zones",
+                "access_control_methods": {
+                    "title": "Access control methods used between the two trust zones",
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/access_control_method"
+                        "$ref": "#/$defs/access-control-method"
                     }
                 },
-                "authentication_method": {
-                    "title": "Authentication method used between the two trust zones",
+                "authentication_methods": {
+                    "title": "Authentication methods used between the two trust zones",
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/authentication-method"
@@ -440,7 +439,7 @@
                                 "$ref": "#/$defs/symbolic-name"
                             },
                             "encrypted": {
-                                "title": "Whether the data set is encrypted on this store",
+                                "title": "Whether the data set is encrypted on this data store",
                                 "type": "boolean"
                             }
                         }
@@ -452,10 +451,10 @@
                         "$ref": "#/$defs/data-sensitivity"
                     }
                 },
-                "access_control_method": {
+                "access_control_methods": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/access_control_method"
+                        "$ref": "#/$defs/access-control-method"
                     }
                 },
                 "record_count": {
@@ -530,8 +529,8 @@
                 },
                 "validity": {
                     "title": "Validity of the assumption",
-                    "enum": ["assumed", "confirmed", "rejected"],
-                    "default": "assumed"
+                    "enum": ["unconfirmed", "confirmed", "rejected"],
+                    "default": "unconfirmed"
                 }
             }
         },
@@ -609,6 +608,13 @@
                     "title": "Description of the threat",
                     "type": "string"
                 },
+                "components_affected": {
+                    "title": "Components affected by the threat",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/symbolic-name"
+                    }
+                },
                 "threat_persona": {
                     "title": "Symbolic name of the threat persona",
                     "$ref": "#/$defs/symbolic-name"
@@ -624,21 +630,23 @@
                         "enum": ["adversary", "human_error", "failure", "events_beyond_org_control"]
                     }
                 },
-                "attack_mechanism": {
-                    "title": "Attack mechanism per CAPEC taxonomy",
-                    "$ref": "#/$defs/capec-ref"
+                "attack_mechanisms": {
+                    "items": {
+                        "title": "Attack mechanism per CAPEC taxonomy",
+                        "$ref": "#/$defs/capec-ref"
+                    }
                 },
-                "vulnerabilities": {
+                "weaknesses": {
                     "type": "array",
                     "items": {
-                        "title": "Vulnerability factoring into the threat per CWE taxonomy",
+                        "title": "Weakness factoring into the threat per CWE taxonomy",
                         "$ref": "#/$defs/cwe-ref"
                     }
                 }
             }
         },
 
-        "mitigations": {
+        "control": {
             "type": "object",
             "required": [
                 "symbolic_name",
@@ -651,30 +659,30 @@
             "additionalProperties": false,
             "properties": {
                 "symbolic_name": {
-                    "title": "Symbolic name of the mitigation",
+                    "title": "Symbolic name of the control",
                     "$ref": "#/$defs/symbolic-name"
                 },
                 "title": {
-                    "title": "Title of the mitigation",
+                    "title": "Title of the control",
                     "type": "string"
                 },
                 "description": {
-                    "title": "Description of the mitigation",
+                    "title": "Description of the control",
                     "type": "string"
                 },
                 "threats": {
                     "type": "array",
                     "items": {
-                        "title": "Symbolic name of the threat addressed by the mitigation",
+                        "title": "Symbolic name of the threat addressed by the control",
                         "$ref": "#/$defs/symbolic-name"
                     }
                 },
                 "trust_boundary": {
-                    "title": "Trust boundary that the mitigation protects, if any",
+                    "title": "Trust boundary that the control protects, if any",
                     "$ref": "#/$defs/trust-boundary-ref"
                 },
                 "status": {
-                    "$ref": "#/$defs/mitigation-status"
+                    "$ref": "#/$defs/control-status"
                 },
                 "priority": {
                     "$ref": "#/$defs/priority"
@@ -743,11 +751,11 @@
 
         "mitigation-plan": {
             "title": "Mitigation plan for a particular risk",
-            "description": "Mitigation plan consisting of a set of implementation tasks to mitigate a particular risk. Currently the only type of implementation task supported is security mitigations.",
+            "description": "Mitigation plan consisting of a set of implementation tasks to mitigate a particular risk. Currently the only type of implementation task supported is security controls.",
             "type": "object",
             "required": [
                 "risk",
-                "mitigations"
+                "controls"
             ],
             "additionalProperties": false,
             "properties": {
@@ -755,10 +763,10 @@
                     "title": "Risk addressed by the mitigation plan",
                     "$ref": "#/$defs/symbolic-name"
                 },
-                "mitigations": {
+                "controls": {
                     "type": "array",
                     "items": {
-                        "title": "Security mitigation chosen for implementation to mitigate the risk",
+                        "title": "Security control chosen for implementation to mitigate the risk",
                         "$ref": "#/$defs/symbolic-name"
                     }
                 }
@@ -769,12 +777,12 @@
     "type": "object",
     "required": [
         "version",
-        "target",
+        "scope",
         "trust_zones",
         "trust_boundaries",
         "actors",
         "components",
-        "data_store",
+        "data_stores",
         "data_sets",
         "data_flows"
     ],
@@ -782,7 +790,7 @@
     "properties": {
         "$schema": {
             "title": "URI of JSON schema",
-            "const": "https://github.com/OWASP/www-project-threat-model-library/blob/main/threat-model-schema.json"
+            "const": "https://github.com/OWASP/www-project-threat-model-library/blob/main/threat-model.schema.json"
         },
 
         "version": {
@@ -790,9 +798,9 @@
             "$ref": "#/$defs/version"
         },
 
-        "target": {
+        "scope": {
             "title": "Scope of the threat model or security review",
-            "$ref": "#/$defs/target"
+            "$ref": "#/$defs/scope"
         },
 
         "description": {
@@ -870,7 +878,7 @@
             }
         },
 
-        "data_store": {
+        "data_stores": {
             "type": "array",
             "items": {
                 "title": "Data store used by the application or service",
@@ -902,72 +910,53 @@
             }
         },
 
-        "output": {
+        "assumptions": {
+            "type": "array",
+            "items": {
+                "title": "Assumption inferred about the application or service",
+                "$ref": "#/$defs/assumption"
+            }
+        },
+
+        "threat_personas": {
+            "type": "array",
+            "items": {
+                "title": "Threat persona that poses a threat to the application or service",
+                "$ref": "#/$defs/threat-persona"
+            }
+        },
+
+        "threats": {
+            "type": "array",
+            "items": {
+                "title": "Threat identified in the application or service",
+                "$ref": "#/$defs/threat"
+            }
+        },
+
+        "controls": {
+            "type": "array",
+            "items": {
+                "title": "Security control to address specific threats to the application or service",
+                "$ref": "#/$defs/control"
+            }
+        },
+
+        "risks": {
+            "type": "array",
+            "items": {
+                "title": "Risk identified in the application or service",
+                "$ref": "#/$defs/risk"
+            }
+        },
+
+        "extensions": {
+            "title": "Non-standard information",
+            "description": "Additional non-standard information that may be relevant. Each property must be named like a domain name followed by a slash and a URL path; this may or may not be a requestable URL (with an assumed scheme of 'http', providing documentation on the structure and semantics of the extension) but must be globally unique.",
             "type": "object",
-            "required": [
-                "assumptions",
-                "threat_personas",
-                "threats",
-                "mitigations",
-                "risks"
-            ],
             "additionalProperties": false,
-            "properties": {
-                "assumptions": {
-                    "type": "array",
-                    "items": {
-                        "title": "Assumption inferred about the application or service",
-                        "$ref": "#/$defs/assumption"
-                    }
-                },
-
-                "threat_personas": {
-                    "type": "array",
-                    "items": {
-                        "title": "Threat persona that poses a threat to the application or service",
-                        "$ref": "#/$defs/threat-persona"
-                    }
-                },
-
-                "threats": {
-                    "type": "array",
-                    "items": {
-                        "title": "Threat identified in the application or service",
-                        "$ref": "#/$defs/threat"
-                    }
-                },
-
-                "mitigations": {
-                    "type": "array",
-                    "items": {
-                        "title": "Security mitigation to address specific threats to the application or service",
-                        "$ref": "#/$defs/mitigations"
-                    }
-                },
-
-                "attributes": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "required": ["attribute", "value"],
-                        "properties": {
-                            "attribute": {
-                                "type": "string"
-                            },
-                            "value": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                },
-
-                "risks": {
-                    "type": "array",
-                    "items": {
-                        "title": "Risk identified in the application or service",
-                        "$ref": "#/$defs/risk"
-                    }
-                }
+            "patternProperties": {
+                "^([A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\\.)+[A-Za-z]+(/[-$%'()*+,.:;=@^_~0-9A-Za-z]+)+$": {}
             }
         }
     }
