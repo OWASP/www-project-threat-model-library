@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://github.com/OWASP/www-project-threat-model-library/blob/main/threat-model-schema.json",
+    "$id": "https://github.com/OWASP/www-project-threat-model-library/blob/v1.0.0/threat-model-schema.json",
     "$comment": "When updating the schema `$id`, also update the value of the constant `$schema` property below.",
     "title": "OWASP Threat Model Library Schema",
 
