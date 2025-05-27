@@ -14,8 +14,6 @@ pitch: Welcome to the first, open-sourced, structured, peer-reviewed threat mode
 > 🎯  
 > To enable secure software architectures by democratising threat modeling through open-source, community engagement and AI advancements with clean, vetted and reliable data.
 
-
-
 Welcome to the first, open-sourced, structured, peer-reviewed threat modeling dataset. By generating this open-source curated dataset of real-world threat models, we aim to:
 
 1. Promote and contribute to the standardization of threat modelling
@@ -30,9 +28,7 @@ Project will be presented at the OWASP Global AppSec in Barcelona on 29th of May
 
 [v1.0.0](https://github.com/OWASP/www-project-threat-model-library/blob/v1.0.0/threat-model.schema.json) of the schema is out! 
 
-
 ## Road Map
-
 
 1. **Start Receiving Contributions!**
     - See the schema, uploaded examples and start threat modelling!
@@ -74,7 +70,7 @@ Project will be presented at the OWASP Global AppSec in Barcelona on 29th of May
 
 5. **What happens after I submit a threat model?**
 
-   After submission, the maintainers and community will review the model. If it meets the standards, it will be merged into the project. We encourage contributors to continuously update and refine threat models as new information or threats emerge.
+   After submission, the maintainers and community will review the model. If it meets the standards, it will be merged into the library. We encourage contributors to continuously update and refine threat models as new information or threats emerge.
 
 6. **Will there be support or training for beginners in threat modeling?**
 
@@ -92,7 +88,8 @@ Thank you to our sponsors from DevArmor!
 Contributions will be used for organising hackathons and community engagement. 
 Register interest for a hackathon [here](https://airtable.com/appwu5c5wt1zJXhIQ/pagnNjTTHWSMQJIer/form). 
 
-Thank you to [CycloneDX](https://owasp.org/www-project-cyclonedx/) TM-BOM workgroup - inlcuding:
+Thank you to the [CycloneDX](https://owasp.org/www-project-cyclonedx/) TM-BOM workgroup - including:
+
 - [Steve Springett](mailto:steve.springett@owasp.org)
 - [Izar Tarandach](mailto:izar.tarandach@gmail.com)
 
@@ -100,4 +97,4 @@ Thank you to [CycloneDX](https://owasp.org/www-project-cyclonedx/) TM-BOM workgr
 
 - [Petra Vukmirovic](mailto:petra.vukmirovic@owasp.org)
 - [Julian Mehnle](mailto:julian@mehnle.net)
-- [OWASP Slack Channel](https://owasp.slack.com/archives/C08UNEQTPUY)
+- [OWASP #project-threat-model-library Slack channel](https://owasp.slack.com/archives/C08UNEQTPUY)
