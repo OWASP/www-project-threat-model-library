@@ -28,7 +28,7 @@ Welcome to the first, open-sourced, structured, peer-reviewed threat modeling da
 Project will be presented at the OWASP Global AppSec in Barcelona on 29th of May 2025, along with the release of the schema!
 ![Join us at OWASP Barcelona Global AppSec](/assets/images/barcelona.png)
 
-[v1.0](https://github.com/OWASP/www-project-threat-model-library/tree/v1.0.0) of the schema is out! 
+[v1.0.0](https://github.com/OWASP/www-project-threat-model-library/blob/v1.0.0/threat-model.schema.json) of the schema is out! 
 
 
 ## Road Map
@@ -99,12 +99,5 @@ Thank you to [CycloneDX](https://owasp.org/www-project-cyclonedx/) TM-BOM workgr
 ## Contact Us
 
 - [Petra Vukmirovic](mailto:petra.vukmirovic@owasp.org)
-- [Julian Mehnle](mailto:julian@devarmor.com)
+- [Julian Mehnle](mailto:julian@mehnle.net)
 - [OWASP Slack Channel](https://owasp.slack.com/archives/C08UNEQTPUY)
-
-
-
-
-
-
-
