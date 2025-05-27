@@ -902,14 +902,6 @@
             }
         },
 
-        "vulnerabilities": {
-            "type": "array",
-            "items": {
-                "title": "Vulnerability identified in the application or service",
-                "$ref": "#/$defs/vulnerability"
-            }
-        },
-
         "assumptions": {
             "type": "array",
             "items": {
