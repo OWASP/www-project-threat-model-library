@@ -23,12 +23,12 @@
             "additionalProperties": false,
             "properties": {
                 "type": {
-                    "title": "Type of the object being referenced",
-                    "description": "The type of the object being referenced, as a '#/$defs/...' or simple '...' type reference.",
-                    "type": "string"
+                "title": "Type of the object being referenced",
+                "description": "The type of the object being referenced, as a '#/$defs/...' or simple '...' type reference.",
+                "type": "string"
                 },
-                "object": {
-                    "$ref": "#/$defs/symbolic-name"
+                "name": {
+                "$ref": "#/$defs/symbolic-name"
                 }
             }
         },
