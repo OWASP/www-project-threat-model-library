@@ -19,16 +19,16 @@
         "typed-symbolic-name": {
             "title": "Symbolic name reference to an object of a specified type",
             "type": "object",
-            "required": ["type", "name"],
+            "required": ["type", "object"],
             "additionalProperties": false,
             "properties": {
                 "type": {
-                "title": "Type of the object being referenced",
-                "description": "The type of the object being referenced, as a '#/$defs/...' or simple '...' type reference.",
-                "type": "string"
+                    "title": "Type of the object being referenced",
+                    "description": "The type of the object being referenced, as a '#/$defs/...' or simple '...' type reference.",
+                    "type": "string"
                 },
-                "name": {
-                "$ref": "#/$defs/symbolic-name"
+                "object": {
+                    "$ref": "#/$defs/symbolic-name"
                 }
             }
         },
@@ -790,7 +790,7 @@
     "properties": {
         "$schema": {
             "title": "URI of JSON schema",
-            "const": "https://github.com/OWASP/www-project-threat-model-library/blob/main/threat-model.schema.json"
+            "const": "https://github.com/OWASP/www-project-threat-model-library/blob/v1.0.0/threat-model.schema.json"
         },
 
         "version": {

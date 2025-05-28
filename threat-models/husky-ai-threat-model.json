@@ -1,5 +1,5 @@
 {
-    "$schema": "https://github.com/OWASP/www-project-threat-model-library/blob/main/threat-model.schema.json",
+    "$schema": "https://github.com/OWASP/www-project-threat-model-library/blob/v1.0.0/threat-model.schema.json",
     "version": "1.0",
     "scope": {
       "title": "Husky AI",
@@ -12,7 +12,7 @@
     "description": "A machine learning system to classify Huskies vs dogs",
     "frozen": false,
     "release_docs_link": "https://github.com/wunderwuzzi23/huskyai",
-    "reviewed_at": "2024-11-15",
+    "reviewed_at": "2025-05-28",
     "repo_link": "https://github.com/wunderwuzzi23/huskyai",
     "diagrams": [
         {
@@ -298,8 +298,8 @@
             "symbolic_name": "azure-cognitive-gather-images",
             "title": "Azure Cognitive Services to Gather Images Application",
             "description": "Transfer data from Azure Cognitive Services to Gather Images Application in Python.",
-            "source": {"type": "actor", "name": "azure-cognitive-services"},
-            "destination": {"type": "component", "name": "gather-images"},
+            "source": {"type": "actor", "object": "azure-cognitive-services"},
+            "destination": {"type": "component", "object": "gather-images"},
             "has_sensitive_data": true,
             "encrypted": true
         },
@@ -307,8 +307,8 @@
             "symbolic_name": "third-party-tools-gather-images",
             "title": "Third Party Tools to Gather Images Application",
             "description": "Transfer data from Third Party tools and ML libraries to Gather Images Application in Python.",
-            "source": {"type": "actor", "name":"third-party-tools"},
-            "destination": {"type": "component", "name": "gather-images"},
+            "source": {"type": "actor", "object":"third-party-tools"},
+            "destination": {"type": "component", "object": "gather-images"},
             "has_sensitive_data": false,
             "encrypted": true
         },
@@ -316,8 +316,8 @@
             "symbolic_name": "third-party-tools-jupyter-notebook",
             "title": "Third Party Tools to Jupyter Notebook",
             "description": "Transfer data from Third Party tools and ML libraries to Jupyter Notebook.",
-            "source": {"type": "actor", "name":"third-party-tools"},
-            "destination": {"type": "component", "name": "jupyter"},
+            "source": {"type": "actor", "object":"third-party-tools"},
+            "destination": {"type": "component", "object": "jupyter"},
             "has_sensitive_data": false,
             "encrypted": true
         },
@@ -325,8 +325,8 @@
             "symbolic_name": "engineer-gather-images",
             "title": "Engineer to Gather Images Application",
             "description": "Transfer data from Engineer to Gather Images Application in Python.",
-            "source": {"type": "actor", "name":"engineer"},
-            "destination": {"type": "component", "name": "gather-images"},
+            "source": {"type": "actor", "object":"engineer"},
+            "destination": {"type": "component", "object": "gather-images"},
             "has_sensitive_data": false,
             "encrypted": true
         },
@@ -334,8 +334,8 @@
             "symbolic_name": "engineer-jupyter-notebook",
             "title": "Engineer to Jupyter Notebook",
             "description": "Transfer code and ML models from Engineer locally to Jupyter Notebook.",
-            "source": {"type": "actor", "name":"engineer"},
-            "destination": {"type": "component", "name": "jupyter"},
+            "source": {"type": "actor", "object":"engineer"},
+            "destination": {"type": "component", "object": "jupyter"},
             "has_sensitive_data": true,
             "encrypted": true
         },
@@ -343,8 +343,8 @@
             "symbolic_name": "gather-images-training-images",
             "title": "Gather Images to Training and Validation Images",
             "description": "Transfer images from Gather Images Application to Training and Validation Images.",
-            "source": {"type": "component", "name": "gather-images"},
-            "destination": {"type": "data_store", "name": "training-images-blob"},
+            "source": {"type": "component", "object": "gather-images"},
+            "destination": {"type": "data_store", "object": "training-images-blob"},
             "has_sensitive_data": true,
             "encrypted": false
         },
@@ -352,8 +352,8 @@
             "symbolic_name": "api-key-storage-gather-images",
             "title": "API Key Storage to Gather Images Application",
             "description": "API Key Storage to Gather Images Application in Python.",
-            "source": {"type": "data_store", "name":"api-key-storage"},
-            "destination": {"type": "component", "name": "gather-images"},
+            "source": {"type": "data_store", "object":"api-key-storage"},
+            "destination": {"type": "component", "object": "gather-images"},
             "has_sensitive_data": true,
             "encrypted": false
         },
@@ -361,8 +361,8 @@
             "symbolic_name": "training-images-jupyter-notebook",
             "title": "Training Images to Jupyter Notebook",
             "description": "Load from Training and Validation Images to Jupyter Notebook.",
-            "source": {"type": "data_store", "name": "training-images-blob"},
-            "destination": {"type": "component", "name": "jupyter"},
+            "source": {"type": "data_store", "object": "training-images-blob"},
+            "destination": {"type": "component", "object": "jupyter"},
             "has_sensitive_data": true,
             "encrypted": false
         },
@@ -370,8 +370,8 @@
             "symbolic_name": "gather-images-jupyter-notebook",
             "title": "Gather Images Application to Jupyter Notebook",
             "description": "Transfer data from Gather Images Application to Jupyter Notebook.",
-            "source": {"type": "component", "name": "gather-images"},
-            "destination": {"type": "component", "name": "jupyter"},
+            "source": {"type": "component", "object": "gather-images"},
+            "destination": {"type": "component", "object": "jupyter"},
             "has_sensitive_data": false,
             "encrypted": false
         },
@@ -379,8 +379,8 @@
             "symbolic_name": "jupyter-notebook-ml-model",
             "title": "Jupyter Notebook to Machine Learning Model",
             "description": "Transfer final model from Jupyter Notebook to Machine Learning Model.",
-            "source": {"type": "component", "name": "jupyter"},
-            "destination": {"type": "data_store", "name": "ml-models-blob"},
+            "source": {"type": "component", "object": "jupyter"},
+            "destination": {"type": "data_store", "object": "ml-models-blob"},
             "has_sensitive_data": true,
             "encrypted": false
         },
@@ -388,8 +388,8 @@
             "symbolic_name": "ml-model-deployment-service",
             "title": "Machine Learning Model to Deployment Service",
             "description": "Transfer from Machine Learning Model Blob to Deployment Service.",
-            "source": {"type": "data_store", "name": "ml-models-blob"},
-            "destination": {"type": "component", "name": "deployment-service"},
+            "source": {"type": "data_store", "object": "ml-models-blob"},
+            "destination": {"type": "component", "object": "deployment-service"},
             "has_sensitive_data": true,
             "encrypted": false
         },
@@ -397,8 +397,8 @@
             "symbolic_name": "source-code-deployment",
             "title": "Source Code and Configuration to Deployment",
             "description": "Transfer data from Source Code and Configuration to Deployment.",
-            "source": {"type": "data_store", "name":"source-code-config-storage"},
-            "destination": {"type": "component", "name": "deployment-service"},
+            "source": {"type": "data_store", "object":"source-code-config-storage"},
+            "destination": {"type": "component", "object": "deployment-service"},
             "has_sensitive_data": false,
             "encrypted": false
         },
@@ -406,8 +406,8 @@
             "symbolic_name": "user-api-gateway",
             "title": "User to API Gateway",
             "description": "Transfer from User to API Gateway.",
-            "source": {"type": "actor","name": "user"},
-            "destination": {"type": "component","name": "api-gateway"},
+            "source": {"type": "actor","object": "user"},
+            "destination": {"type": "component","object": "api-gateway"},
             "has_sensitive_data": true,
             "encrypted": true
         },
@@ -415,8 +415,8 @@
             "symbolic_name": "bastion-api-gateway",
             "title": "Bastion to API Gateway",
             "description": "Transfer data from Bastion to API Gateway.",
-            "source": {"type": "component","name": "bastion"},
-            "destination": {"type": "component","name": "api-gateway"},
+            "source": {"type": "component","object": "bastion"},
+            "destination": {"type": "component","object": "api-gateway"},
             "has_sensitive_data": false,
             "encrypted": false
         },
@@ -424,8 +424,8 @@
             "symbolic_name": "api-gateway-web-server",
             "title": "API Gateway to Simple Python Web Server",
             "description": "Transfer data from API Gateway to Simple Python Web Server.",
-            "source": {"type": "component","name": "api-gateway"},
-            "destination": {"type": "component","name": "web-service"},
+            "source": {"type": "component","object": "api-gateway"},
+            "destination": {"type": "component","object": "web-service"},
             "has_sensitive_data": false,
             "encrypted": false
         },
@@ -433,8 +433,8 @@
             "symbolic_name": "bastion-web-server",
             "title": "Bastion to Simple Python Web Server",
             "description": "Transfer data from Bastion to Simple Python Web Server.",
-            "source": {"type": "component","name": "bastion"},
-            "destination": {"type": "component","name": "web-service"},
+            "source": {"type": "component","object": "bastion"},
+            "destination": {"type": "component","object": "web-service"},
             "has_sensitive_data": false,
             "encrypted": false
         },
@@ -442,8 +442,8 @@
             "symbolic_name": "stored-ml-model-web-server",
             "title": "Stored Machine Learning Model to Simple Python Web Server",
             "description": "Transfer sensitive data from Stored Machine Learning Model to Simple Python Web Server.",
-            "source": {"type": "data_store", "name": "ml-models-blob"},
-            "destination": {"type": "component","name": "web-service"},
+            "source": {"type": "data_store", "object": "ml-models-blob"},
+            "destination": {"type": "component","object": "web-service"},
             "has_sensitive_data": true,
             "encrypted": false
         },
@@ -451,8 +451,8 @@
             "symbolic_name": "deployment-bastion",
             "title": "Deployment Service to Bastion",
             "description": "Transfer sensitive data from Deployment Service to Bastion.",
-            "source": {"type": "component", "name": "deployment-service"},
-            "destination": {"type": "component","name": "bastion"},
+            "source": {"type": "component", "object": "deployment-service"},
+            "destination": {"type": "component","object": "bastion"},
             "has_sensitive_data": true,
             "encrypted": true
         },
@@ -460,8 +460,8 @@
             "symbolic_name": "bastion-logs-storage",
             "title": "Bastion to Bastion Logs Storage",
             "description": "Transfer sensitive data from Bastion to Bastion Logs Storage.",
-            "source": {"type": "component","name": "bastion"},
-            "destination": {"type": "data_store","name":"bastion-logs-storage"},
+            "source": {"type": "component","object": "bastion"},
+            "destination": {"type": "data_store","object":"bastion-logs-storage"},
             "has_sensitive_data": true,
             "encrypted": false
         },
@@ -469,8 +469,8 @@
             "symbolic_name": "admin-bastion",
             "title": "Infrastructure Admin to Bastion",
             "description": "Transfer data from Infrastructure Admin to Bastion.",
-            "source": {"type": "actor", "name":"infrastructure-admin"},
-            "destination": {"type": "component","name": "bastion"},
+            "source": {"type": "actor", "object":"infrastructure-admin"},
+            "destination": {"type": "component","object": "bastion"},
             "has_sensitive_data": true,
             "encrypted": true
         },
@@ -478,8 +478,8 @@
             "symbolic_name": "bastion-stored-ml-model",
             "title": "Bastion to Stored Machine Learning Model",
             "description": "Transfer sensitive data from Bastion to Stored Machine Learning Model.",
-            "source": {"type": "component","name": "bastion"},
-            "destination": {"type": "data_store", "name": "ml-models-blob"},
+            "source": {"type": "component","object": "bastion"},
+            "destination": {"type": "data_store", "object": "ml-models-blob"},
             "has_sensitive_data": true,
             "encrypted": false
         },
@@ -487,8 +487,8 @@
             "symbolic_name": "authorized-keys-bastion",
             "title": "Authorized Keys Storage to Bastion",
             "description": "Transfer sensitive data from Authorized Keys Storage to Bastion.",
-            "source": {"type": "data_store","name":"secret-keys"},
-            "destination": {"type": "data_store", "name": "bastion"},
+            "source": {"type": "data_store","object":"secret-keys"},
+            "destination": {"type": "data_store", "object": "bastion"},
             "has_sensitive_data": true,
             "encrypted": true
         },
@@ -496,8 +496,8 @@
             "symbolic_name": "third-party-tools-web-server",
             "title": "Third Party Tools to Simple Python Web Server",
             "description": "Transfer data from Third Party tools and ML libraries to Simple Python Web Server.",
-            "source": {"type": "actor", "name": "third-party-tools"},
-            "destination": {"type": "component", "name": "web-service"},
+            "source": {"type": "actor", "object": "third-party-tools"},
+            "destination": {"type": "component", "object": "web-service"},
             "has_sensitive_data": false,
             "encrypted": true
         }

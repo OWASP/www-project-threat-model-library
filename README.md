@@ -1,6 +1,5 @@
 # OWASP Threat Model Library 📚
 
-
 **🎯 Our Mission**
 
 To enable secure software architectures by democratising threat modeling through open-source, community engagement and AI advancements with clean, vetted and reliable data.
@@ -38,10 +37,10 @@ Welcome to the first, open-sourced, structured, peer-reviewed threat modeling da
    - Contribute by donating - head over to the OWASP Projects Page, click [donate](https://owasp.org/donate/?reponame=owasp.github.io) and contributions can go directly to us if you donate more than $1000!
    - Register interest for a hackathon [here](https://airtable.com/appwu5c5wt1zJXhIQ/pagnNjTTHWSMQJIer/form). 
 
-2. **What is the CycloneDx TM-BOM?**
+2. **What is the CycloneDX TM-BOM?**
 
-   CycloneDx TM-BOM (Threat Model Bill of Materials) is an industry-standard specification that provides a way to describe threat models. The official release is pending! 
-   Once TM-BOM is released, there will be another version released of the Threat Model Library Schema to ensure compatibility.
+   CycloneDX TM-BOM (Threat Model Bill of Materials) is an industry-standard specification that provides a way to describe threat models. The official release is pending! 
+   Once TM-BOM is released, there will be another version released of the Threat Model Library Schema to ensure semantic compatibility.
 
 3. **What tools can I use for threat modeling?**
 
@@ -65,9 +64,18 @@ Welcome to the first, open-sourced, structured, peer-reviewed threat modeling da
 
    Yes, we plan to offer training resources, workshops, and tutorials for those who are new to threat modeling. These resources will help you understand the key concepts, tools, and best practices in threat modeling.
 
-9. **How do I report issues or suggest improvements to the project?**
+7. **How do I report issues or suggest improvements to the project?**
 
    If you encounter any issues or have suggestions for improvement, you can open an issue in the project’s GitHub repository. Be sure to provide as much detail as possible, and if applicable, a proposed solution or workaround.
+
+8. **How can I validate a threat model JSON file against the schema?**
+
+   We recommend the [`check-jsonschema`](https://github.com/python-jsonschema/check-jsonschema) or [`jsonschema`](https://github.com/python-jsonschema/jsonschema) Python CLI tools. For example:
+
+   ```shell
+   $ check-jsonschema --schemafile threat-model.schema.json threat-models/husky-ai-threat-model.json 
+   ok -- validation done
+   ```
 
 ## Thank You Notes
 
