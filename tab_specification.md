@@ -3,7 +3,7 @@ title: Specification
 layout:  null
 tab: true
 order: 1
-tags: schema-spec-tag
+tags: example-tag
 ---
 
 # **OWASP Threat Model Library Schema Specification**
