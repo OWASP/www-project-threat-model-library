@@ -1,5 +1,5 @@
 {
-    "$schema": "https://github.com/OWASP/www-project-threat-model-library/blob/v1.0.0/threat-model.schema.json",
+    "$schema": "https://github.com/OWASP/www-project-threat-model-library/blob/v1.0.1/threat-model.schema.json",
     "version": "1.0",
     "scope": {
       "title": "Husky AI",
@@ -538,10 +538,12 @@
             "threat_persona": "ratimir",
             "event": "denial of service or remote code execution",
             "sources": ["adversary"],
-            "attack_mechanisms": {
-                "capec_id": 100,
-                "capec_title": "Overflow Buffers"
-            },
+            "attack_mechanisms": [
+                {
+                    "capec_id": 100,
+                    "capec_title": "Overflow Buffers"
+                }
+            ],
             "weaknesses": [
                 {
                     "cwe_id": 120,
@@ -556,10 +558,12 @@
             "threat_persona": "ratimir",
             "event": "supply chain attack",
             "sources": ["adversary"],
-            "attack_mechanisms": {
-                "capec_id": 438,
-                "capec_title": "Modification During Manufacture"
-            },
+            "attack_mechanisms": [
+                {
+                    "capec_id": 438,
+                    "capec_title": "Modification During Manufacture"
+                }
+            ],
             "weaknesses": [
                 {
                     "cwe_id": 1104,
@@ -574,10 +578,12 @@
             "threat_persona": "michiko",
             "event": "Image tampering",
             "sources": ["adversary"],
-            "attack_mechanisms": {
-                "capec_id": 1,
-                "capec_title": "Accessing Functionality Not Properly Constrained by acls"
-            },
+            "attack_mechanisms": [
+                {
+                    "capec_id": 1,
+                    "capec_title": "Accessing Functionality Not Properly Constrained by acls"
+                }
+            ],
             "weaknesses": [
                 {
                     "cwe_id": 276,
@@ -596,10 +602,12 @@
             "threat_persona": "michiko",
             "event": "notebook tampering",
             "sources": ["adversary"],
-            "attack_mechanisms": {
-                "capec_id": 1,
-                "capec_title": "Accessing Functionality Not Properly Constrained by acls"
-            },
+            "attack_mechanisms": [
+                {
+                    "capec_id": 1,
+                    "capec_title": "Accessing Functionality Not Properly Constrained by acls"
+                }
+            ],
             "weaknesses": [
                 {
                     "cwe_id": 276,
@@ -618,10 +626,12 @@
             "threat_persona": "michiko",
             "event": "machine learning model tampering",
             "sources": ["adversary"],
-            "attack_mechanisms": {
-                "capec_id": 1,
-                "capec_title": "Accessing Functionality Not Properly Constrained by acls"
-            },
+            "attack_mechanisms": [
+                {
+                    "capec_id": 1,
+                    "capec_title": "Accessing Functionality Not Properly Constrained by acls"
+                }
+            ],
             "weaknesses": [
                 {
                     "cwe_id": 276,
@@ -640,10 +650,12 @@
             "threat_persona": "ratimir",
             "event": "perturbation attack",
             "sources": ["adversary"],
-            "attack_mechanisms": {
-                "capec_id": 28,
-                "capec_title": "Fuzzing"
-            },
+            "attack_mechanisms": [
+                {
+                    "capec_id": 28,
+                    "capec_title": "Fuzzing"
+                }
+            ],
             "weaknesses": [
                 {
                     "cwe_id": 20,
@@ -658,10 +670,12 @@
             "threat_persona": "michiko",
             "event": "accidental sensitive data exposure",
             "sources": ["adversary"],
-            "attack_mechanisms": {
-                "capec_id": 204,
-                "capec_title": "Lifting Sensitive Data Embedded in Cache"
-            },
+            "attack_mechanisms": [
+                {
+                    "capec_id": 204,
+                    "capec_title": "Lifting Sensitive Data Embedded in Cache"
+                }
+            ],
             "weaknesses": [
                 {
                     "cwe_id": 20,
@@ -676,10 +690,12 @@
             "threat_persona": "michiko",
             "event": "bastion compromise via SSH",
             "sources": ["adversary"],
-            "attack_mechanisms": {
-                "capec_id": 555,
-                "capec_title": "Remote Services with Stolen Credentials"
-            },
+            "attack_mechanisms": [
+                {
+                    "capec_id": 555,
+                    "capec_title": "Remote Services with Stolen Credentials"
+                }
+            ],
             "weaknesses": [
                 {
                     "cwe_id": 522,
@@ -694,10 +710,12 @@
             "threat_persona": "ratimir",
             "event": "bastion compromise via SSH",
             "sources": ["adversary"],
-            "attack_mechanisms": {
-                "capec_id": 300,
-                "capec_title": "Port Scanning"
-            },
+            "attack_mechanisms": [
+                {
+                    "capec_id": 300,
+                    "capec_title": "Port Scanning"
+                }
+            ],
             "weaknesses": [
                 {
                     "cwe_id": 200,
