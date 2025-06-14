@@ -104,6 +104,13 @@
             "description": "External third party tools for the services",
             "type": "third_party",
             "permissions": "No direct permissions works on pull"
+        },
+        {
+            "symbolic_name": "user",
+            "title": "User",
+            "description": "External user interacting with the HuskyAI system via the API Gateway.",
+            "type": "user",
+            "permissions": "Access the HuskyAI system through the API Gateway to classify images."
         }
     ],
     "components": [
@@ -233,7 +240,7 @@
             "description": "Stores API keys for secure access to external services.",
             "placements": [
                 {
-                    "data_store": "api-keys-storage",
+                    "data_store": "api-key-storage",
                     "encrypted": true
                 }
             ],
@@ -305,7 +312,7 @@
             "description": "Contains SSH keys used for securing administrative access.",
             "placements": [
                 {
-                    "data_store": "secret-keys-storage",
+                    "data_store": "secret-key-storage",
                     "encrypted": true
                 }
             ],
@@ -654,10 +661,10 @@
             "description": "Transfer sensitive data from Authorized Keys Storage to Bastion.",
             "source": {
                 "type": "data_store",
-                "object": "secret-keys"
+                "object": "secret-key-storage"
             },
             "destination": {
-                "type": "data_store",
+                "type": "component",
                 "object": "bastion"
             },
             "has_sensitive_data": true,
