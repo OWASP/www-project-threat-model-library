@@ -36,6 +36,8 @@ Welcome to the first, open-sourced, structured, peer-reviewed threat modeling da
    - To understand the schema better head over to the schema [specification tab on our page](https://owasp.org/www-project-threat-model-library/)!
    - Contribute by donating - head over to the OWASP Projects Page, click [donate](https://owasp.org/donate/?reponame=owasp.github.io) and contributions can go directly to us if you donate more than $1000!
    - Register interest for a hackathon [here](https://airtable.com/appwu5c5wt1zJXhIQ/pagnNjTTHWSMQJIer/form). 
+   - You can propose schema improvements by creating an issue with the label `schema-proposals` and we will discuss it on the TM-BOM workgroup. Before the TM-BOM comes out we will try to minimise any schema changes. 
+   - Get involved in the discussions on the **Discussions** tab.
 
 2. **What is the CycloneDX TM-BOM?**
 
