@@ -2,12 +2,14 @@
     "$schema": "https://github.com/OWASP/www-project-threat-model-library/blob/v1.0.1/threat-model.schema.json",
     "version": "1.0",
     "scope": {
-      "title": "Husky AI",
-      "description": "A machine learning system to classify Huskies vs dogs. HuskyAI is a machine learning system designed to classify images and distinguish between huskies and non-huskies. It integrates secure data handling practices with a robust convolutional neural network (CNN) for image recognition. Secure Image Retrieval: HuskyAI uses TLS to securely fetch images from Azure Cognitive Services, ensuring encryption during data transmission and validating the server's authenticity to prevent man-in-the-middle attacks. Data Storage and Access Controls: Azure Blob Storage is used to store datasets, with public access fully blocked. Access is controlled using Role-Based Access Control (rbac) and Attribute-Based Access Control (ABAC) to enforce granular, identity-based permissions. Jupyter Notebooks, which host model development and experimentation, are also secured with rbac and ABAC, preventing unauthorized public access. Developer Authentication: Developers access the system through SSH keys protected by passphrases. This adds an additional layer of security, reducing the likelihood of unauthorized access even if keys are exposed. Model and Dataset Dataset Composition: The dataset comprises approximately 1,300 husky images and 3,000 non-husky images sourced via Bing's image search. Data undergoes manual cleansing and is split into training and validation sets to enhance model performance. Model Design: HuskyAI employs a CNN with: Convolutional layers for feature extraction. Max-pooling layers for dimensionality reduction. Dropout layers to prevent overfitting. Dense layers for final classification. The model is trained with the Adam optimizer and a learning rate of 0.0005, optimized for accuracy and computational efficiency. Security Considerations rbac and ABAC controls across storage and development environments ensure sensitive data and configurations are protected. TLS ensures secure communication channels, preventing eavesdropping or data interception during image retrieval. Applications HuskyAI is tailored for accurate image classification and can be adapted for other domains requiring precise visual differentiation, with a focus on maintaining strong security postures. HuskyAI combines state-of-the-art machine learning techniques with stringent security controls, including secure communications, robust access management, and encrypted developer authentication, to deliver a reliable and secure image classification system.",
-      "business_criticality": "low",
-      "data_sensitivity": ["biz"],
-      "exposure": "external",
-      "tier": "non_critical"
+        "title": "Husky AI",
+        "description": "A machine learning system to classify Huskies vs dogs. HuskyAI is a machine learning system designed to classify images and distinguish between huskies and non-huskies. It integrates secure data handling practices with a robust convolutional neural network (CNN) for image recognition. Secure Image Retrieval: HuskyAI uses TLS to securely fetch images from Azure Cognitive Services, ensuring encryption during data transmission and validating the server's authenticity to prevent man-in-the-middle attacks. Data Storage and Access Controls: Azure Blob Storage is used to store datasets, with public access fully blocked. Access is controlled using Role-Based Access Control (rbac) and Attribute-Based Access Control (ABAC) to enforce granular, identity-based permissions. Jupyter Notebooks, which host model development and experimentation, are also secured with rbac and ABAC, preventing unauthorized public access. Developer Authentication: Developers access the system through SSH keys protected by passphrases. This adds an additional layer of security, reducing the likelihood of unauthorized access even if keys are exposed. Model and Dataset Dataset Composition: The dataset comprises approximately 1,300 husky images and 3,000 non-husky images sourced via Bing's image search. Data undergoes manual cleansing and is split into training and validation sets to enhance model performance. Model Design: HuskyAI employs a CNN with: Convolutional layers for feature extraction. Max-pooling layers for dimensionality reduction. Dropout layers to prevent overfitting. Dense layers for final classification. The model is trained with the Adam optimizer and a learning rate of 0.0005, optimized for accuracy and computational efficiency. Security Considerations rbac and ABAC controls across storage and development environments ensure sensitive data and configurations are protected. TLS ensures secure communication channels, preventing eavesdropping or data interception during image retrieval. Applications HuskyAI is tailored for accurate image classification and can be adapted for other domains requiring precise visual differentiation, with a focus on maintaining strong security postures. HuskyAI combines state-of-the-art machine learning techniques with stringent security controls, including secure communications, robust access management, and encrypted developer authentication, to deliver a reliable and secure image classification system.",
+        "business_criticality": "low",
+        "data_sensitivity": [
+            "biz"
+        ],
+        "exposure": "external",
+        "tier": "non_critical"
     },
     "description": "A machine learning system to classify Huskies vs dogs",
     "frozen": false,
@@ -42,20 +44,36 @@
         {
             "trust_zone_a": "prod-zone",
             "trust_zone_b": "experimental-zone",
-            "access_control_methods": ["rbac", "acl"],
-            "authentication_methods": ["public_key"]
+            "access_control_methods": [
+                "rbac",
+                "acl"
+            ],
+            "authentication_methods": [
+                "public_key"
+            ]
         },
         {
             "trust_zone_a": "public",
             "trust_zone_b": "experimental-zone",
-            "access_control_methods": ["rbac", "acl"],
-            "authentication_methods": ["password", "password"]
+            "access_control_methods": [
+                "rbac",
+                "acl"
+            ],
+            "authentication_methods": [
+                "password",
+                "password"
+            ]
         },
         {
             "trust_zone_a": "public",
             "trust_zone_b": "prod-zone",
-            "access_control_methods": ["rbac", "acl"],
-            "authentication_methods": ["sso"]
+            "access_control_methods": [
+                "rbac",
+                "acl"
+            ],
+            "authentication_methods": [
+                "sso"
+            ]
         }
     ],
     "actors": [
@@ -86,9 +104,15 @@
             "description": "External third party tools for the services",
             "type": "third_party",
             "permissions": "No direct permissions works on pull"
+        },
+        {
+            "symbolic_name": "user",
+            "title": "User",
+            "description": "External user interacting with the HuskyAI system via the API Gateway.",
+            "type": "user",
+            "permissions": "Access the HuskyAI system through the API Gateway to classify images."
         }
     ],
-
     "components": [
         {
             "symbolic_name": "web-service",
@@ -133,7 +157,6 @@
             "repo_link": "https://github.com/wunderwuzzi23/huskyai"
         }
     ],
-
     "data_stores": [
         {
             "symbolic_name": "training-images-blob",
@@ -196,7 +219,7 @@
         {
             "symbolic_name": "training-images",
             "title": "Training and Validation Images",
-            "description":  "Contains images used for training and validation of machine learning models.",
+            "description": "Contains images used for training and validation of machine learning models.",
             "placements": [
                 {
                     "data_store": "training-images-blob",
@@ -204,8 +227,12 @@
                 }
             ],
             "record_count": 100000,
-            "data_sensitivity": ["biz"],
-            "access_control_methods": ["rbac"]
+            "data_sensitivity": [
+                "biz"
+            ],
+            "access_control_methods": [
+                "rbac"
+            ]
         },
         {
             "symbolic_name": "api-keys",
@@ -213,13 +240,17 @@
             "description": "Stores API keys for secure access to external services.",
             "placements": [
                 {
-                    "data_store": "api-keys-storage",
+                    "data_store": "api-key-storage",
                     "encrypted": true
                 }
             ],
             "record_count": 20,
-            "data_sensitivity": ["cred"],
-            "access_control_methods": ["rbac"]
+            "data_sensitivity": [
+                "cred"
+            ],
+            "access_control_methods": [
+                "rbac"
+            ]
         },
         {
             "symbolic_name": "stored-ml-models",
@@ -232,8 +263,12 @@
                 }
             ],
             "record_count": 10,
-            "data_sensitivity": ["biz"],
-            "access_control_methods": ["rbac"]
+            "data_sensitivity": [
+                "biz"
+            ],
+            "access_control_methods": [
+                "rbac"
+            ]
         },
         {
             "symbolic_name": "source-code-config",
@@ -246,8 +281,12 @@
                 }
             ],
             "record_count": 200,
-            "data_sensitivity": ["biz"],
-            "access_control_methods": ["rbac"]
+            "data_sensitivity": [
+                "biz"
+            ],
+            "access_control_methods": [
+                "rbac"
+            ]
         },
         {
             "symbolic_name": "bastion-logs",
@@ -260,8 +299,12 @@
                 }
             ],
             "record_count": 5000,
-            "data_sensitivity": ["biz"],
-            "access_control_methods": ["acl"]
+            "data_sensitivity": [
+                "biz"
+            ],
+            "access_control_methods": [
+                "acl"
+            ]
         },
         {
             "symbolic_name": "authorized-keys",
@@ -269,13 +312,17 @@
             "description": "Contains SSH keys used for securing administrative access.",
             "placements": [
                 {
-                    "data_store": "secret-keys-storage",
+                    "data_store": "secret-key-storage",
                     "encrypted": true
                 }
             ],
             "record_count": 100,
-            "data_sensitivity": ["cred"],
-            "access_control_methods": ["rbac"]
+            "data_sensitivity": [
+                "cred"
+            ],
+            "access_control_methods": [
+                "rbac"
+            ]
         },
         {
             "symbolic_name": "uploaded-images",
@@ -292,14 +339,19 @@
             "access_control_methods": []
         }
     ],
-
     "data_flows": [
         {
             "symbolic_name": "azure-cognitive-gather-images",
             "title": "Azure Cognitive Services to Gather Images Application",
             "description": "Transfer data from Azure Cognitive Services to Gather Images Application in Python.",
-            "source": {"type": "actor", "object": "azure-cognitive-services"},
-            "destination": {"type": "component", "object": "gather-images"},
+            "source": {
+                "type": "actor",
+                "object": "azure-cognitive-services"
+            },
+            "destination": {
+                "type": "component",
+                "object": "gather-images"
+            },
             "has_sensitive_data": true,
             "encrypted": true
         },
@@ -307,8 +359,14 @@
             "symbolic_name": "third-party-tools-gather-images",
             "title": "Third Party Tools to Gather Images Application",
             "description": "Transfer data from Third Party tools and ML libraries to Gather Images Application in Python.",
-            "source": {"type": "actor", "object":"third-party-tools"},
-            "destination": {"type": "component", "object": "gather-images"},
+            "source": {
+                "type": "actor",
+                "object": "third-party-tools"
+            },
+            "destination": {
+                "type": "component",
+                "object": "gather-images"
+            },
             "has_sensitive_data": false,
             "encrypted": true
         },
@@ -316,8 +374,14 @@
             "symbolic_name": "third-party-tools-jupyter-notebook",
             "title": "Third Party Tools to Jupyter Notebook",
             "description": "Transfer data from Third Party tools and ML libraries to Jupyter Notebook.",
-            "source": {"type": "actor", "object":"third-party-tools"},
-            "destination": {"type": "component", "object": "jupyter"},
+            "source": {
+                "type": "actor",
+                "object": "third-party-tools"
+            },
+            "destination": {
+                "type": "component",
+                "object": "jupyter"
+            },
             "has_sensitive_data": false,
             "encrypted": true
         },
@@ -325,8 +389,14 @@
             "symbolic_name": "engineer-gather-images",
             "title": "Engineer to Gather Images Application",
             "description": "Transfer data from Engineer to Gather Images Application in Python.",
-            "source": {"type": "actor", "object":"engineer"},
-            "destination": {"type": "component", "object": "gather-images"},
+            "source": {
+                "type": "actor",
+                "object": "engineer"
+            },
+            "destination": {
+                "type": "component",
+                "object": "gather-images"
+            },
             "has_sensitive_data": false,
             "encrypted": true
         },
@@ -334,8 +404,14 @@
             "symbolic_name": "engineer-jupyter-notebook",
             "title": "Engineer to Jupyter Notebook",
             "description": "Transfer code and ML models from Engineer locally to Jupyter Notebook.",
-            "source": {"type": "actor", "object":"engineer"},
-            "destination": {"type": "component", "object": "jupyter"},
+            "source": {
+                "type": "actor",
+                "object": "engineer"
+            },
+            "destination": {
+                "type": "component",
+                "object": "jupyter"
+            },
             "has_sensitive_data": true,
             "encrypted": true
         },
@@ -343,8 +419,14 @@
             "symbolic_name": "gather-images-training-images",
             "title": "Gather Images to Training and Validation Images",
             "description": "Transfer images from Gather Images Application to Training and Validation Images.",
-            "source": {"type": "component", "object": "gather-images"},
-            "destination": {"type": "data_store", "object": "training-images-blob"},
+            "source": {
+                "type": "component",
+                "object": "gather-images"
+            },
+            "destination": {
+                "type": "data_store",
+                "object": "training-images-blob"
+            },
             "has_sensitive_data": true,
             "encrypted": false
         },
@@ -352,8 +434,14 @@
             "symbolic_name": "api-key-storage-gather-images",
             "title": "API Key Storage to Gather Images Application",
             "description": "API Key Storage to Gather Images Application in Python.",
-            "source": {"type": "data_store", "object":"api-key-storage"},
-            "destination": {"type": "component", "object": "gather-images"},
+            "source": {
+                "type": "data_store",
+                "object": "api-key-storage"
+            },
+            "destination": {
+                "type": "component",
+                "object": "gather-images"
+            },
             "has_sensitive_data": true,
             "encrypted": false
         },
@@ -361,8 +449,14 @@
             "symbolic_name": "training-images-jupyter-notebook",
             "title": "Training Images to Jupyter Notebook",
             "description": "Load from Training and Validation Images to Jupyter Notebook.",
-            "source": {"type": "data_store", "object": "training-images-blob"},
-            "destination": {"type": "component", "object": "jupyter"},
+            "source": {
+                "type": "data_store",
+                "object": "training-images-blob"
+            },
+            "destination": {
+                "type": "component",
+                "object": "jupyter"
+            },
             "has_sensitive_data": true,
             "encrypted": false
         },
@@ -370,8 +464,14 @@
             "symbolic_name": "gather-images-jupyter-notebook",
             "title": "Gather Images Application to Jupyter Notebook",
             "description": "Transfer data from Gather Images Application to Jupyter Notebook.",
-            "source": {"type": "component", "object": "gather-images"},
-            "destination": {"type": "component", "object": "jupyter"},
+            "source": {
+                "type": "component",
+                "object": "gather-images"
+            },
+            "destination": {
+                "type": "component",
+                "object": "jupyter"
+            },
             "has_sensitive_data": false,
             "encrypted": false
         },
@@ -379,8 +479,14 @@
             "symbolic_name": "jupyter-notebook-ml-model",
             "title": "Jupyter Notebook to Machine Learning Model",
             "description": "Transfer final model from Jupyter Notebook to Machine Learning Model.",
-            "source": {"type": "component", "object": "jupyter"},
-            "destination": {"type": "data_store", "object": "ml-models-blob"},
+            "source": {
+                "type": "component",
+                "object": "jupyter"
+            },
+            "destination": {
+                "type": "data_store",
+                "object": "ml-models-blob"
+            },
             "has_sensitive_data": true,
             "encrypted": false
         },
@@ -388,8 +494,14 @@
             "symbolic_name": "ml-model-deployment-service",
             "title": "Machine Learning Model to Deployment Service",
             "description": "Transfer from Machine Learning Model Blob to Deployment Service.",
-            "source": {"type": "data_store", "object": "ml-models-blob"},
-            "destination": {"type": "component", "object": "deployment-service"},
+            "source": {
+                "type": "data_store",
+                "object": "ml-models-blob"
+            },
+            "destination": {
+                "type": "component",
+                "object": "deployment-service"
+            },
             "has_sensitive_data": true,
             "encrypted": false
         },
@@ -397,8 +509,14 @@
             "symbolic_name": "source-code-deployment",
             "title": "Source Code and Configuration to Deployment",
             "description": "Transfer data from Source Code and Configuration to Deployment.",
-            "source": {"type": "data_store", "object":"source-code-config-storage"},
-            "destination": {"type": "component", "object": "deployment-service"},
+            "source": {
+                "type": "data_store",
+                "object": "source-code-config-storage"
+            },
+            "destination": {
+                "type": "component",
+                "object": "deployment-service"
+            },
             "has_sensitive_data": false,
             "encrypted": false
         },
@@ -406,8 +524,14 @@
             "symbolic_name": "user-api-gateway",
             "title": "User to API Gateway",
             "description": "Transfer from User to API Gateway.",
-            "source": {"type": "actor","object": "user"},
-            "destination": {"type": "component","object": "api-gateway"},
+            "source": {
+                "type": "actor",
+                "object": "user"
+            },
+            "destination": {
+                "type": "component",
+                "object": "api-gateway"
+            },
             "has_sensitive_data": true,
             "encrypted": true
         },
@@ -415,8 +539,14 @@
             "symbolic_name": "bastion-api-gateway",
             "title": "Bastion to API Gateway",
             "description": "Transfer data from Bastion to API Gateway.",
-            "source": {"type": "component","object": "bastion"},
-            "destination": {"type": "component","object": "api-gateway"},
+            "source": {
+                "type": "component",
+                "object": "bastion"
+            },
+            "destination": {
+                "type": "component",
+                "object": "api-gateway"
+            },
             "has_sensitive_data": false,
             "encrypted": false
         },
@@ -424,8 +554,14 @@
             "symbolic_name": "api-gateway-web-server",
             "title": "API Gateway to Simple Python Web Server",
             "description": "Transfer data from API Gateway to Simple Python Web Server.",
-            "source": {"type": "component","object": "api-gateway"},
-            "destination": {"type": "component","object": "web-service"},
+            "source": {
+                "type": "component",
+                "object": "api-gateway"
+            },
+            "destination": {
+                "type": "component",
+                "object": "web-service"
+            },
             "has_sensitive_data": false,
             "encrypted": false
         },
@@ -433,8 +569,14 @@
             "symbolic_name": "bastion-web-server",
             "title": "Bastion to Simple Python Web Server",
             "description": "Transfer data from Bastion to Simple Python Web Server.",
-            "source": {"type": "component","object": "bastion"},
-            "destination": {"type": "component","object": "web-service"},
+            "source": {
+                "type": "component",
+                "object": "bastion"
+            },
+            "destination": {
+                "type": "component",
+                "object": "web-service"
+            },
             "has_sensitive_data": false,
             "encrypted": false
         },
@@ -442,8 +584,14 @@
             "symbolic_name": "stored-ml-model-web-server",
             "title": "Stored Machine Learning Model to Simple Python Web Server",
             "description": "Transfer sensitive data from Stored Machine Learning Model to Simple Python Web Server.",
-            "source": {"type": "data_store", "object": "ml-models-blob"},
-            "destination": {"type": "component","object": "web-service"},
+            "source": {
+                "type": "data_store",
+                "object": "ml-models-blob"
+            },
+            "destination": {
+                "type": "component",
+                "object": "web-service"
+            },
             "has_sensitive_data": true,
             "encrypted": false
         },
@@ -451,8 +599,14 @@
             "symbolic_name": "deployment-bastion",
             "title": "Deployment Service to Bastion",
             "description": "Transfer sensitive data from Deployment Service to Bastion.",
-            "source": {"type": "component", "object": "deployment-service"},
-            "destination": {"type": "component","object": "bastion"},
+            "source": {
+                "type": "component",
+                "object": "deployment-service"
+            },
+            "destination": {
+                "type": "component",
+                "object": "bastion"
+            },
             "has_sensitive_data": true,
             "encrypted": true
         },
@@ -460,8 +614,14 @@
             "symbolic_name": "bastion-logs-storage",
             "title": "Bastion to Bastion Logs Storage",
             "description": "Transfer sensitive data from Bastion to Bastion Logs Storage.",
-            "source": {"type": "component","object": "bastion"},
-            "destination": {"type": "data_store","object":"bastion-logs-storage"},
+            "source": {
+                "type": "component",
+                "object": "bastion"
+            },
+            "destination": {
+                "type": "data_store",
+                "object": "bastion-logs-storage"
+            },
             "has_sensitive_data": true,
             "encrypted": false
         },
@@ -469,8 +629,14 @@
             "symbolic_name": "admin-bastion",
             "title": "Infrastructure Admin to Bastion",
             "description": "Transfer data from Infrastructure Admin to Bastion.",
-            "source": {"type": "actor", "object":"infrastructure-admin"},
-            "destination": {"type": "component","object": "bastion"},
+            "source": {
+                "type": "actor",
+                "object": "infrastructure-admin"
+            },
+            "destination": {
+                "type": "component",
+                "object": "bastion"
+            },
             "has_sensitive_data": true,
             "encrypted": true
         },
@@ -478,8 +644,14 @@
             "symbolic_name": "bastion-stored-ml-model",
             "title": "Bastion to Stored Machine Learning Model",
             "description": "Transfer sensitive data from Bastion to Stored Machine Learning Model.",
-            "source": {"type": "component","object": "bastion"},
-            "destination": {"type": "data_store", "object": "ml-models-blob"},
+            "source": {
+                "type": "component",
+                "object": "bastion"
+            },
+            "destination": {
+                "type": "data_store",
+                "object": "ml-models-blob"
+            },
             "has_sensitive_data": true,
             "encrypted": false
         },
@@ -487,8 +659,14 @@
             "symbolic_name": "authorized-keys-bastion",
             "title": "Authorized Keys Storage to Bastion",
             "description": "Transfer sensitive data from Authorized Keys Storage to Bastion.",
-            "source": {"type": "data_store","object":"secret-keys"},
-            "destination": {"type": "data_store", "object": "bastion"},
+            "source": {
+                "type": "data_store",
+                "object": "secret-key-storage"
+            },
+            "destination": {
+                "type": "component",
+                "object": "bastion"
+            },
             "has_sensitive_data": true,
             "encrypted": true
         },
@@ -496,8 +674,14 @@
             "symbolic_name": "third-party-tools-web-server",
             "title": "Third Party Tools to Simple Python Web Server",
             "description": "Transfer data from Third Party tools and ML libraries to Simple Python Web Server.",
-            "source": {"type": "actor", "object": "third-party-tools"},
-            "destination": {"type": "component", "object": "web-service"},
+            "source": {
+                "type": "actor",
+                "object": "third-party-tools"
+            },
+            "destination": {
+                "type": "component",
+                "object": "web-service"
+            },
             "has_sensitive_data": false,
             "encrypted": true
         }
@@ -530,14 +714,16 @@
             "applicability_to_org": "moderate"
         }
     ],
-    "threats":[
+    "threats": [
         {
             "symbolic_name": "buffer-overflow-image-processing",
             "title": "Buffer overflow in image processing causing remote code execution or DoS",
             "description": "An attacker crafts an image to cause buffer overflow in image processing, leading to potential remote code execution, denial of service, and errors.",
             "threat_persona": "ratimir",
             "event": "denial of service or remote code execution",
-            "sources": ["adversary"],
+            "sources": [
+                "adversary"
+            ],
             "attack_mechanisms": [
                 {
                     "capec_id": 100,
@@ -557,7 +743,9 @@
             "description": "An attacker poisons the supply chain of third-party libraries, leading to network or system compromise.",
             "threat_persona": "ratimir",
             "event": "supply chain attack",
-            "sources": ["adversary"],
+            "sources": [
+                "adversary"
+            ],
             "attack_mechanisms": [
                 {
                     "capec_id": 438,
@@ -577,7 +765,9 @@
             "description": "An attacker tampers with or deletes stored images to impact training or testing results and/or cause denial of service.",
             "threat_persona": "michiko",
             "event": "Image tampering",
-            "sources": ["adversary"],
+            "sources": [
+                "adversary"
+            ],
             "attack_mechanisms": [
                 {
                     "capec_id": 1,
@@ -601,7 +791,9 @@
             "description": "An attacker modifies a notebook file to insert a backdoor, such as a keylogger or data stealer.",
             "threat_persona": "michiko",
             "event": "notebook tampering",
-            "sources": ["adversary"],
+            "sources": [
+                "adversary"
+            ],
             "attack_mechanisms": [
                 {
                     "capec_id": 1,
@@ -625,7 +817,9 @@
             "description": "An attacker or insider modifies or reads persisted model files to steal intellectual property or degrade prediction accuracy.",
             "threat_persona": "michiko",
             "event": "machine learning model tampering",
-            "sources": ["adversary"],
+            "sources": [
+                "adversary"
+            ],
             "attack_mechanisms": [
                 {
                     "capec_id": 1,
@@ -649,7 +843,9 @@
             "description": "An attacker uses brute force with random or systematic perturbations to create images that lead to incorrect classifications.",
             "threat_persona": "ratimir",
             "event": "perturbation attack",
-            "sources": ["adversary"],
+            "sources": [
+                "adversary"
+            ],
             "attack_mechanisms": [
                 {
                     "capec_id": 28,
@@ -669,7 +865,9 @@
             "description": "An attacker or malicious insider gains access to sensitive uploaded images.",
             "threat_persona": "michiko",
             "event": "accidental sensitive data exposure",
-            "sources": ["adversary"],
+            "sources": [
+                "adversary"
+            ],
             "attack_mechanisms": [
                 {
                     "capec_id": 204,
@@ -689,7 +887,9 @@
             "description": "An attacker compromises a developer machine to steal SSH keys, impersonate users, or escalate privileges.",
             "threat_persona": "michiko",
             "event": "bastion compromise via SSH",
-            "sources": ["adversary"],
+            "sources": [
+                "adversary"
+            ],
             "attack_mechanisms": [
                 {
                     "capec_id": 555,
@@ -709,7 +909,9 @@
             "description": "An attacker exploits an open SSH port to escalate privileges or impersonate authorized users.",
             "threat_persona": "ratimir",
             "event": "bastion compromise via SSH",
-            "sources": ["adversary"],
+            "sources": [
+                "adversary"
+            ],
             "attack_mechanisms": [
                 {
                     "capec_id": 300,
@@ -723,13 +925,15 @@
                 }
             ]
         }
-    ],        
+    ],
     "controls": [
         {
             "symbolic_name": "sandboxing-for-image-processing",
             "title": "Implement sandboxing for image processing",
             "description": "Run image processing in isolated environment to limit impact of exploitation",
-            "threats": ["buffer-overflow-image-processing"],
+            "threats": [
+                "buffer-overflow-image-processing"
+            ],
             "trust_boundary": {
                 "trust_zone_a": "public",
                 "trust_zone_b": "prod-zone"
@@ -741,7 +945,9 @@
             "symbolic_name": "owasp-file-upload-guidelines",
             "title": "Follow OWASP Cheat Sheet for File Upload",
             "description": "Run image processing in isolated environment to limit impact of exploitation",
-            "threats": ["buffer-overflow-image-processing"],
+            "threats": [
+                "buffer-overflow-image-processing"
+            ],
             "trust_boundary": {
                 "trust_zone_a": "public",
                 "trust_zone_b": "prod-zone"
@@ -753,7 +959,9 @@
             "symbolic_name": "validate-tls-certificate-checks",
             "title": "Validate TLS usage and certificate checks are in place",
             "description": "Validate TLS usage and certificate checks are in place.",
-            "threats": ["supply-chain-attack"],
+            "threats": [
+                "supply-chain-attack"
+            ],
             "trust_boundary": {
                 "trust_zone_a": "public",
                 "trust_zone_b": "prod-zone"
@@ -765,7 +973,9 @@
             "symbolic_name": "sca-and-patching-for-third-party-libraries",
             "title": "SCA scanning and patching",
             "description": "Regularly scan third-party dependencies for vulnerabilities and malicious packages, fix any critical or high vulnerabilities",
-            "threats": ["supply-chain-attack"],
+            "threats": [
+                "supply-chain-attack"
+            ],
             "trust_boundary": {
                 "trust_zone_a": "public",
                 "trust_zone_b": "prod-zone"
@@ -777,7 +987,10 @@
             "symbolic_name": "access-control-for-azure-blobs",
             "title": "Ensure appropriate access control and authorization for any Azure Blob storage",
             "description": "Use ABAC, rbac, and other access control methods to ensure only authorized individuals can access the images.",
-            "threats": ["image-tampering", "model-tampering"],
+            "threats": [
+                "image-tampering",
+                "model-tampering"
+            ],
             "trust_boundary": {
                 "trust_zone_a": "public",
                 "trust_zone_b": "prod-zone"
@@ -789,7 +1002,10 @@
             "symbolic_name": "access-logging-for-azure-blob",
             "title": "Have access logging in place for Azure Blob storage",
             "description": "Turn on access logging for the Azure Blob and push logs to a SIEM for monitoring.",
-            "threats": ["image-tampering", "model-tampering"],
+            "threats": [
+                "image-tampering",
+                "model-tampering"
+            ],
             "trust_boundary": {
                 "trust_zone_a": "public",
                 "trust_zone_b": "prod-zone"
@@ -801,7 +1017,10 @@
             "symbolic_name": "backup-for-azure-blob-storage",
             "title": "Ensure backups for Azure Blob storage with different credentials",
             "description": "Ensure images have a backup stored securely and cannot be accessed with the same credentials as the production storage.",
-            "threats": ["image-tampering", "model-tampering"],
+            "threats": [
+                "image-tampering",
+                "model-tampering"
+            ],
             "trust_boundary": {
                 "trust_zone_a": "public",
                 "trust_zone_b": "prod-zone"
@@ -813,7 +1032,11 @@
             "symbolic_name": "store-and-check-hashes",
             "title": "Store hashes and validate integrity of images, jupyter notebooks and the machine learning models",
             "description": "Protect Jupyter Notebooks and the machine learning models from tampering by using stored hashes and validating them.",
-            "threats": ["image-tampering", "model-tampering","notebook-tampering"],
+            "threats": [
+                "image-tampering",
+                "model-tampering",
+                "notebook-tampering"
+            ],
             "trust_boundary": {
                 "trust_zone_a": "public",
                 "trust_zone_b": "prod-zone"
@@ -825,7 +1048,9 @@
             "symbolic_name": "jupyter-notebooks-access-control",
             "title": "Ensure appropriate access control and authorization in place for the Jupyter Notebooks",
             "description": "Use ABAC, rbac and other access control methods to ensure only people who are authorised can access Jupyter Notebooks.",
-            "threats": ["notebook-tampering"],
+            "threats": [
+                "notebook-tampering"
+            ],
             "trust_boundary": {
                 "trust_zone_a": "public",
                 "trust_zone_b": "experimental-zone"
@@ -837,7 +1062,9 @@
             "symbolic_name": "api-rate-limiting",
             "title": "Rate Limiting",
             "description": "Prevent brute force by restricting the number of requests an API client can make in a time frame.",
-            "threats": ["perturbation-attack"],
+            "threats": [
+                "perturbation-attack"
+            ],
             "trust_boundary": {
                 "trust_zone_a": "public",
                 "trust_zone_b": "prod-zone"
@@ -849,7 +1076,9 @@
             "symbolic_name": "adversarial-training",
             "title": "Adversarial Training",
             "description": "Train the model with adversarial examples to improve robustness against perturbation attacks.",
-            "threats": ["perturbation-attack"],
+            "threats": [
+                "perturbation-attack"
+            ],
             "trust_boundary": {
                 "trust_zone_a": "public",
                 "trust_zone_b": "prod-zone"
@@ -861,7 +1090,9 @@
             "symbolic_name": "input-filtering",
             "title": "Input Filtering",
             "description": "Detect and block adversarial inputs through preprocessing or anomaly detection.",
-            "threats": ["perturbation-attack"],
+            "threats": [
+                "perturbation-attack"
+            ],
             "trust_boundary": {
                 "trust_zone_a": "public",
                 "trust_zone_b": "prod-zone"
@@ -873,7 +1104,9 @@
             "symbolic_name": "confidence-thresholding",
             "title": "Confidence Thresholding",
             "description": "Set thresholds to avoid over-reliance on high-confidence but incorrect predictions.",
-            "threats": ["perturbation-attack"],
+            "threats": [
+                "perturbation-attack"
+            ],
             "trust_boundary": {
                 "trust_zone_a": "public",
                 "trust_zone_b": "prod-zone"
@@ -885,7 +1118,9 @@
             "symbolic_name": "in-memory-image-storage",
             "title": "The uploaded images are saved in memory - difficult to access",
             "description": "The fact that images are not inherently sensitive and stored in memory mitigates this threat to an acceptable level.",
-            "threats": ["sensitive-image-exposure"],
+            "threats": [
+                "sensitive-image-exposure"
+            ],
             "trust_boundary": {
                 "trust_zone_a": "public",
                 "trust_zone_b": "prod-zone"
@@ -897,7 +1132,9 @@
             "symbolic_name": "memory-access-restrictions",
             "title": "Memory access restrictions",
             "description": "Implement strict memory access restrictions to ensure only authorized processes or users can access the in-memory or cached data. This includes using mechanisms like process isolation and restricting debug or system tools that could read memory.",
-            "threats": ["sensitive-image-exposure"],
+            "threats": [
+                "sensitive-image-exposure"
+            ],
             "trust_boundary": {
                 "trust_zone_a": "public",
                 "trust_zone_b": "prod-zone"
@@ -909,7 +1146,9 @@
             "symbolic_name": "secure-cache-handling",
             "title": "Secure cache-handling",
             "description": "Use secure caching mechanisms that encrypt data stored in memory (e.g., using libraries like Redis with in-memory encryption) and ensure the cache has strict eviction policies to avoid prolonged data retention.",
-            "threats": ["sensitive-image-exposure"],
+            "threats": [
+                "sensitive-image-exposure"
+            ],
             "trust_boundary": {
                 "trust_zone_a": "public",
                 "trust_zone_b": "prod-zone"
@@ -921,7 +1160,9 @@
             "symbolic_name": "in-memory-data-lifecycle-management",
             "title": "In-memory data lifecycle management",
             "description": "Implement a strict lifecycle management policy to securely clear in-memory data immediately after use. For example, overwrite memory regions containing sensitive data and enforce short caching lifespans.",
-            "threats": ["sensitive-image-exposure"],
+            "threats": [
+                "sensitive-image-exposure"
+            ],
             "trust_boundary": {
                 "trust_zone_a": "public",
                 "trust_zone_b": "prod-zone"
@@ -933,7 +1174,10 @@
             "symbolic_name": "network-acl-ssh-restrictions",
             "title": "Use network-level access control lists (acls) to limit SSH access to specific IP ranges",
             "description": "Whitelist SSH ports to allow access only from specific IPs.",
-            "threats": ["ssh-compromise-developer-machine", "ssh-compromise-vulnerability"],
+            "threats": [
+                "ssh-compromise-developer-machine",
+                "ssh-compromise-vulnerability"
+            ],
             "trust_boundary": {
                 "trust_zone_a": "public",
                 "trust_zone_b": "prod-zone"
@@ -945,7 +1189,9 @@
             "symbolic_name": "complex-ssh-passphrases",
             "title": "Require passphrases for SSH private keys to be complex",
             "description": "Passphrases for SSH keys should have high complexity (minimum 12 characters and one type of complexity).",
-            "threats": ["ssh-compromise-developer-machine"],
+            "threats": [
+                "ssh-compromise-developer-machine"
+            ],
             "trust_boundary": {
                 "trust_zone_a": "user-key-store",
                 "trust_zone_b": "ssh-service"
@@ -957,7 +1203,12 @@
             "symbolic_name": "developer-machine-security",
             "title": "Developer machine endpoint security - EDR and posture management",
             "description": "Ensure developer machines are patched, have an up-to-date OS, and EDR in place.",
-            "threats": ["ssh-compromise-developer-machine", "image-tampering", "model-tampering","notebook-tampering"],
+            "threats": [
+                "ssh-compromise-developer-machine",
+                "image-tampering",
+                "model-tampering",
+                "notebook-tampering"
+            ],
             "trust_boundary": {
                 "trust_zone_a": "developer-machine",
                 "trust_zone_b": "endpoint-detection-response"
@@ -969,7 +1220,10 @@
             "symbolic_name": "ssh-access-logging",
             "title": "Configure logging for all SSH access attempts",
             "description": "Log all access attempts - including successes and failures, and implement alerting for suspicious activities such as repeated login failures, new keys, or logins from unexpected locations.",
-            "threats": ["ssh-compromise-developer-machine", "ssh-compromise-vulnerability"],
+            "threats": [
+                "ssh-compromise-developer-machine",
+                "ssh-compromise-vulnerability"
+            ],
             "trust_boundary": {
                 "trust_zone_a": "ssh-service",
                 "trust_zone_b": "logging-and-monitoring-system"
@@ -981,7 +1235,9 @@
             "symbolic_name": "bastion-host-patching-hardening",
             "title": "Ensure the Bastion host is patched and hardened",
             "description": "Have strict patching SLAs for the Bastion host.",
-            "threats": ["ssh-compromise-vulnerability"],
+            "threats": [
+                "ssh-compromise-vulnerability"
+            ],
             "trust_boundary": {
                 "trust_zone_a": "external-network",
                 "trust_zone_b": "bastion-host"
@@ -995,7 +1251,12 @@
             "symbolic_name": "adversarial-attack-on-huskyai",
             "title": "Adversarial attacks on the HuskyAI model",
             "description": "Attackers could manipulate the HuskyAI model through perturbation techniques or tampering with the training and testing sets, leading to incorrect predictions and erosion of trust in the system.",
-            "threats": ["image-tampering", "model-tampering","notebook-tampering", "perturbation-attack"],
+            "threats": [
+                "image-tampering",
+                "model-tampering",
+                "notebook-tampering",
+                "perturbation-attack"
+            ],
             "likelihood": "unlikely",
             "impact": "major",
             "impact_description": "Operational issues and loss of user confidence - reputational damage.",
@@ -1006,7 +1267,10 @@
             "symbolic_name": "web-attacks",
             "title": "Web Attacks",
             "description": "An attacker could launch web based attacks by sending crafted requests, leading to outages and reputational damage.",
-            "threats": ["supply-chain-attack", "buffer-overflow-image-processing"],
+            "threats": [
+                "supply-chain-attack",
+                "buffer-overflow-image-processing"
+            ],
             "likelihood": "possible",
             "impact": "moderate",
             "impact_description": "Operational disruptions could arise from endpoint flooding or configuration tampering, leading to downtime and reputational damage.",
@@ -1017,7 +1281,10 @@
             "symbolic_name": "unauthorized-ssh-access",
             "title": "Unauthorized SSH access via stolen or compromised keys",
             "description": "An attacker could gain unauthorized access to sensitive systems via stolen or compromised SSH keys, or by attacking the SSH port directly - leading to privilege escalation, information disclosure, reputational damage and potential operational disruption.",
-            "threats": ["ssh-compromise-developer-machine", "ssh-compromise-vulnerability"],
+            "threats": [
+                "ssh-compromise-developer-machine",
+                "ssh-compromise-vulnerability"
+            ],
             "likelihood": "possible",
             "impact": "severe",
             "impact_description": "Operational disruption requiring moderate to high recovery efforts with potentially reputational damage.",
