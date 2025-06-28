@@ -74,7 +74,6 @@ Welcome to the first, open-sourced, structured, peer-reviewed threat modeling da
 
    ```shell
    $ check-jsonschema --schemafile threat-model.schema.json threat-models/husky-ai-threat-model.json 
-   ok -- validation done
    ```
 
 ## Thank You Notes
