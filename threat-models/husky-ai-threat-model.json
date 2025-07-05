@@ -32,7 +32,7 @@
     {
       "symbolic_name": "experimental-zone",
       "title": "Experimental Trust Zone",
-      "description": "Internal VPC with the production deployment of HuskyAI"
+      "description": "Internal VPC with the experimental and development deployment for HuskyAI"
     },
     {
       "symbolic_name": "public",
@@ -654,7 +654,7 @@
       "description": "Transfer sensitive data from Authorized Keys Storage to Bastion.",
       "source": {
         "type": "data_store",
-        "object": "secret-keys"
+        "object": "secret-key-storage"
       },
       "destination": {
         "type": "data_store",
@@ -952,7 +952,7 @@
         "supply-chain-attack"
       ],
       "trust_boundary": {
-        "trust_zone_a": "public",
+        "trust_zone_a": "experimental-zone",
         "trust_zone_b": "prod-zone"
       },
       "status": "suggested",
@@ -1014,7 +1014,7 @@
       ],
       "trust_boundary": {
         "trust_zone_a": "public",
-        "trust_zone_b": "prod-zone"
+        "trust_zone_b": "experimental-zone"
       },
       "status": "suggested",
       "priority": "high"
@@ -1168,8 +1168,8 @@
         "ssh-compromise-developer-machine"
       ],
       "trust_boundary": {
-        "trust_zone_a": "user-key-store",
-        "trust_zone_b": "ssh-service"
+        "trust_zone_a": "public",
+        "trust_zone_b": "prod-zone"
       },
       "status": "suggested",
       "priority": "medium"
@@ -1185,8 +1185,8 @@
         "notebook-tampering"
       ],
       "trust_boundary": {
-        "trust_zone_a": "developer-machine",
-        "trust_zone_b": "endpoint-detection-response"
+        "trust_zone_a": "public",
+        "trust_zone_b": "prod-zone"
       },
       "status": "suggested",
       "priority": "critical"
@@ -1200,8 +1200,8 @@
         "ssh-compromise-vulnerability"
       ],
       "trust_boundary": {
-        "trust_zone_a": "ssh-service",
-        "trust_zone_b": "logging-and-monitoring-system"
+        "trust_zone_a": "public",
+        "trust_zone_b": "prod-zone"
       },
       "status": "active",
       "priority": "high"
@@ -1214,8 +1214,8 @@
         "ssh-compromise-vulnerability"
       ],
       "trust_boundary": {
-        "trust_zone_a": "external-network",
-        "trust_zone_b": "bastion-host"
+        "trust_zone_a": "public",
+        "trust_zone_b": "prod-zone"
       },
       "status": "suggested",
       "priority": "critical"
