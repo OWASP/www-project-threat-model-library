@@ -207,7 +207,7 @@ Based on the numerical value of the risk score, we define the following risk lev
 | 4         | Likely             | Expected to occur in some situations; happens at least once a year.           |
 | 5         | Almost Certain     | Expected to occur regularly; happens multiple times a year or more frequently.|
 
-## Impact Severity Definitions
+#### Impact Severity Definitions
 
 | **Value** | **Impact Severity**     | **Operational Impact**                                                | **Financial Impact**             | **Reputation Impact**                                            | **Regulatory/Legal Impact**                                     |
 |-----------|-------------------------|------------------------------------------------------------------------|----------------------------------|------------------------------------------------------------------|------------------------------------------------------------------|
