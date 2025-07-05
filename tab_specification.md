@@ -136,9 +136,87 @@ In short, “control” unifies threat modeling with risk governance and enterpr
 
 ### **`risks`**
 
-A combination of threat, likelihood, and impact. Ties the threat model to risk management practices and governance. Enables prioritization.
+Risk is a function of the likelihood of a threat event / scenario’s occurrence and potential adverse impact should the event occur. A risk should be present only if a vulnerability or weakness are present that could lead to a threat event. Ties the threat model to risk management practices and governance. Enables prioritization.
 
 Even though risks are influenced by org-specific factors (impact context, likelihood drivers), the schema retains this optional element to support linkage with enterprise risk registers.
+
+####  **`summary`**
+To formulate a risk summary consider how a threat with an exploitable weakness or vulnerability leads to a risk event and certain impact. 
+
+#### **`likelihood`**
+
+Likelihood is a factor of risk. To estimate the likelihood consider the applicability of the threat persona to the business context, threat source, threat scenario, existing vulnerabilities or pre-existing conditions.
+
+####  **`impact`**
+
+ Impact is a factor of Risk. Key considerations for impact are:
+
+ - **Operational Impact**: How the threat affects business processes.
+- **Financial Impact**: The potential monetary loss.
+- **Reputation Impact**: Public perception and long-term trust.
+- **Regulatory/Legal Impact**: Fines, penalties, or legal consequences.
+
+####  **`level`**
+
+- **Methodology**: `Likelihood x Impact`
+- **Output**:
+  - **Score**: Numerical
+  - **Descriptive**: Text label (e.g., Low, Medium, High)
+
+####  **`score`**
+
+The cross product of impact and likelihood yields the risk score, a scale from 1 to 25:
+
+#### 5x5 Risk Level Matrix
+
+The cross product of impact and likelihood yields the risk score (1–25). Color-coded with emojis to reflect severity bands:
+
+#### 5x5 Risk Level Matrix
+
+The cross product of impact and likelihood yields the risk score (1–25). The matrix below is color-coded with square emojis to reflect severity bands:
+
+| **Likelihood \ Impact** | **1 (Negligible)** | **2 (Minor)** | **3 (Moderate)** | **4 (Major)** | **5 (Severe)** |
+|--------------------------|--------------------|----------------|------------------|----------------|----------------|
+| **1 (Rare)**             | 🟩 1 _(Very Low)_   | 🟩 2 _(Very Low)_ | 🟨 3 _(Low)_     | 🟨 4 _(Low)_     | 🟧 5 _(Medium)_     |
+| **2 (Unlikely)**         | 🟩 2 _(Very Low)_   | 🟨 4 _(Low)_     | 🟧 6 _(Medium)_   | 🟧 8 _(Medium)_   | 🟥 10 _(High)_       |
+| **3 (Possible)**         | 🟨 3 _(Low)_        | 🟧 6 _(Medium)_   | 🟧 9 _(Medium)_   | 🟥 12 _(High)_    | 🟪 15 _(Very High)_  |
+| **4 (Likely)**           | 🟨 4 _(Low)_        | 🟧 8 _(Medium)_   | 🟥 12 _(High)_    | 🟪 16 _(Very High)_| 🔴 20 _(Critical)_    |
+| **5 (Almost Certain)**   | 🟧 5 _(Medium)_     | 🟥 10 _(High)_    | 🟪 15 _(Very High)_| 🔴 20 _(Critical)_ | 🔴 25 _(Critical)_    |
+
+
+
+Based on the numerical value of the risk score, we define the following risk levels:
+
+| **Risk Score Range** | **Risk Level** |
+|----------------------|----------------|
+| 🟩 1–2                  | Very Low       |
+| 🟨3–4                  | Low            |
+| 🟧 5–9                  | Medium         |
+| 🟥 10–12                | High           |
+| 🟪13–16                | Very High      |
+| 🔴20–25                | Critical       |
+
+#### Likelihood and impact assesment guidance
+
+
+| **Value** | **Likelihood**     | **Definition**                                                                 |
+|-----------|--------------------|--------------------------------------------------------------------------------|
+| 1         | Rare               | Very unlikely to occur; may happen only in exceptional circumstances, such as once in 10+ years. |
+| 2         | Unlikely           | Could occur but not expected; has happened once in 5–10 years.                |
+| 3         | Possible           | Might occur under some circumstances; happens every 2–5 years.               |
+| 4         | Likely             | Expected to occur in some situations; happens at least once a year.           |
+| 5         | Almost Certain     | Expected to occur regularly; happens multiple times a year or more frequently.|
+
+## Impact Severity Definitions
+
+| **Value** | **Impact Severity**     | **Operational Impact**                                                | **Financial Impact**             | **Reputation Impact**                                            | **Regulatory/Legal Impact**                                     |
+|-----------|-------------------------|------------------------------------------------------------------------|----------------------------------|------------------------------------------------------------------|------------------------------------------------------------------|
+| 1         | Insignificant           | Minimal disruption, no noticeable effect on business operations.       | <0.1% of annual revenue.         | No damage to reputation.                                         | No legal or regulatory implications.                            |
+| 2         | Minor                   | Some minor disruption, but recoverable with little effort.             | 0.1% to 0.5% of annual revenue.  | Small, localized damage to reputation, quickly recoverable.      | Minor compliance issues, no fines or legal action.              |
+| 3         | Moderate                | Noticeable operational impact, moderate recovery efforts required.     | 0.5% to 1% of annual revenue.    | Moderate reputation damage; some negative press, recoverable.    | Possible fines or legal action; warning from regulators.        |
+| 4         | Major                   | Significant operational disruption; requires substantial resources.    | 1% to 5% of annual revenue.      | Significant damage to reputation; major loss of customer trust.  | Substantial legal issues; fines and regulatory penalties.       |
+| 5         | Severe     | Critical operational impact; operations cease or major losses.         | >5% of annual revenue.           | Severe reputation damage; long-term loss of market position.     | Major legal action; large fines; potential shutdown.            |
+
 
 ## **Extensions**
 
