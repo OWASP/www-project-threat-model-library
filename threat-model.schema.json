@@ -302,7 +302,8 @@
                 "symbolic_name",
                 "title",
                 "description",
-                "type"
+                "type",
+                "trust_zone"
             ],
             "additionalProperties": false,
             "properties": {
@@ -325,6 +326,10 @@
                 "permissions": {
                     "title": "Free-form description of permissions typically available to the actor",
                     "type": "string"
+                },
+                "trust_zone": {
+                    "title": "Trust zone in which the actor operates",
+                    "$ref": "#/$defs/symbolic-name"
                 }
             }
         },
@@ -373,7 +378,8 @@
                 "symbolic_name",
                 "title",
                 "description",
-                "type"
+                "type",
+                "trust_zone"
             ],
             "additionalProperties": false,
             "properties": {
@@ -400,6 +406,10 @@
                 "product": {
                     "title": "Product implementing the data store",
                     "type": "string"
+                },
+                "trust_zone": {
+                    "title": "Trust zone where the data store resides",
+                    "$ref": "#/$defs/symbolic-name"
                 }
             }
         },
@@ -739,12 +749,12 @@
                 },
                 "score": {
                     "title": "Risk score based on likelihood and impact",
-                    "$comment": "http://go/threat-modeling-risk-score",
+                    "$comment": "https://owasp.org/www-project-threat-model-library/",
                     "$ref": "#/$defs/risk-score"
                 },
                 "level": {
                     "title": "Risk level band",
-                    "$comment": "http://go/threat-modeling-risk-score",
+                    "$comment": "https://owasp.org/www-project-threat-model-library/",
                     "type": "string"
                 }
             }
