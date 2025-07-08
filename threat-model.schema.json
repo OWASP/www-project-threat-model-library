@@ -1,7 +1,7 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://github.com/OWASP/www-project-threat-model-library/blob/v1.0.1/threat-model.schema.json",
-    "$comment": "When updating the schema `$id`, also update the value of the constant `$schema` property below.",
+    "$comment": "When updating the schema `$id`, also update the value of the constant `$schema` property below. See <https://owasp.org/www-project-threat-model-library/#div-specification>.",
     "title": "OWASP Threat Model Library Schema",
 
     "$defs": {
@@ -752,12 +752,12 @@
                 },
                 "score": {
                     "title": "Risk score based on likelihood and impact",
-                    "$comment": "https://owasp.org/www-project-threat-model-library/",
+                    "$comment": "https://owasp.org/www-project-threat-model-library/#div-specification",
                     "$ref": "#/$defs/risk-score"
                 },
                 "level": {
                     "title": "Risk level band",
-                    "$comment": "https://owasp.org/www-project-threat-model-library/",
+                    "$comment": "https://owasp.org/www-project-threat-model-library/#div-specification",
                     "$ref": "#/$defs/risk-level-band"
                 }
             }
