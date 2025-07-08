@@ -76,6 +76,9 @@
             "minimum": 0,
             "maximum": 25
         },
+        "risk-level-band": {
+            "enum": ["very_low", "low", "medium", "high", "very_high", "critical"]
+        },
         "tier": {
             "enum": ["mission_critical", "business_critical", "important", "non_critical"]
         },
@@ -755,7 +758,7 @@
                 "level": {
                     "title": "Risk level band",
                     "$comment": "https://owasp.org/www-project-threat-model-library/",
-                    "type": "string"
+                    "$ref": "#/$defs/risk-level-band"
                 }
             }
         },
