@@ -23,10 +23,13 @@ Welcome to the first, open-sourced, structured, peer-reviewed threat modeling da
 
 ## News
 
-Project will be presented at the OWASP Global AppSec in Barcelona on 29th of May 2025, along with the release of the schema!
-![Join us at OWASP Barcelona Global AppSec](/assets/images/barcelona.png)
+[OWASP Threat Dragon](https://owasp.org/www-project-threat-dragon/) to support OWASP Threat Model Library Schema export by end of the year! With also the fact that threat models in the [OWASP Threat Model Cookbook](https://github.com/OWASP/threat-model-cookbook) are imported as examples in Threat Dragon, this will help produce more threat models to push to the library!
 
-[v1.0.0](https://github.com/OWASP/www-project-threat-model-library/blob/v1.0.0/threat-model.schema.json) of the schema is out! 
+
+## Events
+
+Project was presented at the OWASP Global AppSec in Barcelona on 29th of May 2025, along with the v1.0 release of the schema!
+
 
 ## Road Map
 
@@ -45,9 +48,7 @@ Project will be presented at the OWASP Global AppSec in Barcelona on 29th of May
 
 1. **How do I contribute?**
 
-   - Start by threat modeling! The JSON schema is available, and there are example threat models too. Use these examples to create your threat model and submit a pull request (PR) on the repository. Detailed contribution guidelines will be provided once the schema is finalized.
-   - Contribute by donating - head over to the OWASP Projects Page, click [donate](https://owasp.org/donate/?reponame=owasp.github.io) and contributions can go directly to us if you donate more than $1000!
-   - Register interest for a hackathon [here](https://airtable.com/appwu5c5wt1zJXhIQ/pagnNjTTHWSMQJIer/form). 
+   See our Conributing Tab on the [project page](https://owasp.org/www-project-threat-model-library/)!
 
 2. **What is the CycloneDx TM-BOM?**
 
