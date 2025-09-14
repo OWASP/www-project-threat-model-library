@@ -11,12 +11,6 @@ Welcome to the first, open-sourced, structured, peer-reviewed threat modeling da
 3. Improve the security of open-source applications by having them openly threat modeled. Death to security via obscurity!
 4. Create a dataset to fine-tune existing pre-trained LLMs to achieve more reliable threat modeling results
 
-## News
-
-- Project will be presented at the OWASP Global AppSec in Barcelona on 29th of May 2025, along with the release of the schema!
-
-- [v1.0.0](https://github.com/OWASP/www-project-threat-model-library/blob/v1.0.0/threat-model.schema.json) of the schema is out! 
-
 ## Road Map
 
 1. **Start Receiving Contributions!**
@@ -32,12 +26,8 @@ Welcome to the first, open-sourced, structured, peer-reviewed threat modeling da
 
 1. **How do I contribute?**
 
-   - Start by threat modeling! The JSON schema is available, and there are example threat models too. Use these examples to create your threat model and submit a pull request (PR) on the repository. Detailed contribution guidelines will be provided once the schema is finalized.
-   - To understand the schema better head over to the schema [specification tab on our page](https://owasp.org/www-project-threat-model-library/)!
-   - Contribute by donating - head over to the OWASP Projects Page, click [donate](https://owasp.org/donate/?reponame=owasp.github.io) and contributions can go directly to us if you donate more than $1000!
-   - Register interest for a hackathon [here](https://airtable.com/appwu5c5wt1zJXhIQ/pagnNjTTHWSMQJIer/form). 
-   - You can propose schema improvements by creating an issue with the label `schema-proposals` and we will discuss it on the TM-BOM workgroup. Before the TM-BOM comes out we will try to minimise any schema changes. 
-   - Get involved in the discussions on the **Discussions** tab.
+   See our Conributing Tab on the [project page](https://owasp.org/www-project-threat-model-library/)!
+
 
 2. **What is the CycloneDX TM-BOM?**
 
