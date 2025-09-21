@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owasp.org/www-project-threat-model-library/schemas/index.schema.json",
+  "title": "Threat Model Library Index",
+  "type": "object",
+  "required": [
+    "version",
+    "threat-models"
+],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Version of the index file format."
+    },
+    "threat-models": {
+      "type": "array",
+      "description": "List of indexed threat models.",
+      "items": {
+        "type": "object",
+        "required": [
+          "symbolic_name",
+          "path",
+          "category",
+          "tags",
+          "description"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "symbolic_name": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:[\\-_.][a-z0-9]+)*$",
+            "description": "Unique, machine-friendly identifier (slug)."
+          },
+          "path": {
+            "type": "string",
+			"pattern": "^threat-models\\/.+\\/.+\\.json$",
+            "description": "Relative path to the model JSON file."
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "web-applications",
+              "infrastructure",
+              "ai-ml-systems"
+            ],
+            "description": "Top-level category of the model."
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of descriptive tags for filtering/search."
+          },
+          "description": {
+            "type": "string",
+            "description": "Short description of the threat model."
+          }
+        }
+      }
+    }
+  }
+}

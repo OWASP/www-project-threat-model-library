@@ -1,0 +1,12 @@
+{
+  "version": "1.0",
+  "threat-models": [
+    {
+      "symbolic_name": "husky-ai",
+      "path": "threat-models/ai-ml-systems/husky-ai-threat-model.json",
+      "category": "ai-ml-systems",
+      "tags": ["ml"],
+      "description": "Machine learning system with image ingestion and validation."
+    }
+  ]
+}
