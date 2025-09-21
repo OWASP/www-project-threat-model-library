@@ -1,0 +1,30 @@
+name: pull request checks
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+# for security reasons the github actions are pinned to specific release versions
+jobs:
+  link_checker:
+    name: Schema checker
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout all files
+        uses: actions/checkout@v5.0.0
+
+      - name: Check index
+        uses: dsanders11/json-schema-validate-action@v1.4.0
+        with:
+          schema: ./index.schema.json
+          files: ./index.md
+
+      - name: Check threat models
+        uses: dsanders11/json-schema-validate-action@v1.4.0
+        with:
+          schema: ./threat-model.schema.json
+          files: |
+            ./threat-models/web-applications/*.json
+            ./threat-models/infrastructure/*.json
+            ./threat-models/ai-ml-systems/*.json
