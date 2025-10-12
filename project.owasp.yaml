@@ -1,0 +1,29 @@
+audience:
+  - builder
+community:
+  - name: project-threat-model-library
+    platform: slack
+    url: https://owasp.slack.com/archives/C08UNEQTPUY
+    description: <https://owasp.org/www-project-threat-model-library/>
+leaders:
+  - name: Petra Vukmirovic
+    email: petra.vukmirovic@owasp.org
+    github: P3tra-WP
+  - name: Julian Mehnle
+    email: julian@mehnle.net
+    github: jmehnle
+level: 2
+license:
+  - MIT
+name: OWASP Threat Model Library
+pitch: Welcome to the first, open-sourced, structured, peer-reviewed threat modeling dataset
+repositories:
+  - name: www-project-threat-model-library
+    url: https://github.com/OWASP/www-project-threat-model-library
+    description: OWASP Foundation web repository
+tags:
+  - example-tag
+  - custom-tag-1
+  - custom-tag-2
+type: code
+website: https://owasp.org/www-project-threat-model-library
