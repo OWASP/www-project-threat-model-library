@@ -65,7 +65,7 @@ Welcome to the first, open-sourced, structured, peer-reviewed threat modeling da
    We recommend the [`check-jsonschema`](https://github.com/python-jsonschema/check-jsonschema) or [`jsonschema`](https://github.com/python-jsonschema/jsonschema) Python CLI tools. For example:
 
    ```shell
-   $ check-jsonschema --schemafile threat-model.schema.json threat-models/husky-ai-threat-model.json 
+   $ check-jsonschema --schemafile threat-model.schema.json threat-models/ai-ml-systems/husky-ai-threat-model.json 
    ```
 
 ## Thank You Notes
