@@ -18,7 +18,7 @@ jobs:
         uses: dsanders11/json-schema-validate-action@v1.4.0
         with:
           schema: ./index.schema.json
-          files: ./index.md
+          files: ./index.json
 
       - name: Check threat models
         uses: dsanders11/json-schema-validate-action@v1.4.0
@@ -28,3 +28,4 @@ jobs:
             ./threat-models/web-applications/*.json
             ./threat-models/infrastructure/*.json
             ./threat-models/ai-ml-systems/*.json
+          all-errors: true

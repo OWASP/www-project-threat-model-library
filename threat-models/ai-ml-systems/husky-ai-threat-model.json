@@ -1,5 +1,5 @@
 {
-  "$schema": "https://github.com/OWASP/www-project-threat-model-library/blob/v1.0.0/threat-model.schema.json",
+  "$schema": "https://github.com/OWASP/www-project-threat-model-library/blob/v1.0.1/threat-model.schema.json",
   "version": "1.0",
   "scope": {
     "title": "Husky AI",
@@ -82,28 +82,32 @@
       "title": "Data Engineer",
       "description": "An engineer responsible for building, training, and deploying machine learning models.",
       "type": "engineer",
-      "permissions": "Develop and deploy machine learning models; interact with Experimentation tools such as Jupyter Notebook."
+      "permissions": "Develop and deploy machine learning models; interact with Experimentation tools such as Jupyter Notebook.",
+      "trust_zone": "public"
     },
     {
       "symbolic_name": "infrastructure-admin",
       "title": "Azure Platform Engineer",
       "description": "Administrator responsible for securing and maintaining production infrastructure.",
       "type": "administrator",
-      "permissions": "Manage production infrastructure; control access via the Bastion; monitor logs and update keys."
+      "permissions": "Manage production infrastructure; control access via the Bastion; monitor logs and update keys.",
+      "trust_zone": "public"
     },
     {
       "symbolic_name": "azure-cognitive-services",
       "title": "Azure Cognitive Services",
       "description": "External service providing resources for machine learning experimentation.",
       "type": "third_party",
-      "permissions": "Provide images for training and validation through an external service."
+      "permissions": "Provide images for training and validation through an external service.",
+      "trust_zone": "public"
     },
     {
       "symbolic_name": "third-party-tools",
       "title": "Third party tools",
       "description": "External third party tools for the services",
       "type": "third_party",
-      "permissions": "No direct permissions works on pull"
+      "permissions": "No direct permissions works on pull",
+      "trust_zone": "public"
     }
   ],
   "components": [
@@ -156,6 +160,7 @@
       "title": "Training And Validation Images Storage Blob",
       "description": "Contains images used for training and validation of machine learning models.",
       "type": "object",
+      "trust_zone": "experimental-zone",
       "vendor": "Azure",
       "product": "Blob"
     },
@@ -164,6 +169,7 @@
       "title": "API Key Storage",
       "description": "Stores API keys for secure access to external services.",
       "type": "key_value",
+      "trust_zone": "experimental-zone",
       "vendor": "Azure",
       "product": "Key Vault"
     },
@@ -172,6 +178,7 @@
       "title": "Authorized Keys Storage",
       "description": "Contains SSH keys used for securing administrative access.",
       "type": "key_value",
+      "trust_zone": "prod-zone",
       "vendor": "Azure",
       "product": "Key Vault"
     },
@@ -180,6 +187,7 @@
       "title": "Machine Learning Model Storage Blob",
       "description": "Contains storage for machine learning models in serialized format.",
       "type": "object",
+      "trust_zone": "prod-zone",
       "vendor": "Azure",
       "product": "Blob"
     },
@@ -188,6 +196,7 @@
       "title": "Source Code And Configuration Storage",
       "description": "Stores source code and configuration files for deployment and production setup.",
       "type": "object",
+      "trust_zone": "experimental-zone",
       "vendor": "GitHub",
       "product": "GitHub Repositories"
     },
@@ -196,6 +205,7 @@
       "title": "Bastion Logs Storage",
       "description": "Contains logs related to SSH access and activity through the Bastion.",
       "type": "object",
+      "trust_zone": "prod-zone",
       "vendor": "Azure",
       "product": "Azure Monitor"
     },
@@ -204,6 +214,7 @@
       "title": "Azure Cache for Redis",
       "description": "Provides an in-memory data structure store for caching and message brokering.",
       "type": "object",
+      "trust_zone": "prod-zone",
       "vendor": "Azure",
       "product": "Azure Cache for Redis"
     }
@@ -717,10 +728,12 @@
       "sources": [
         "adversary"
       ],
-      "attack_mechanisms": {
-        "capec_id": 100,
-        "capec_title": "Overflow Buffers"
-      },
+      "attack_mechanisms": [
+        {
+          "capec_id": 100,
+          "capec_title": "Overflow Buffers"
+        }
+      ],
       "weaknesses": [
         {
           "cwe_id": 120,
@@ -737,10 +750,12 @@
       "sources": [
         "adversary"
       ],
-      "attack_mechanisms": {
-        "capec_id": 438,
-        "capec_title": "Modification During Manufacture"
-      },
+      "attack_mechanisms": [
+        {
+          "capec_id": 438,
+          "capec_title": "Modification During Manufacture"
+        }
+      ],
       "weaknesses": [
         {
           "cwe_id": 1104,
@@ -757,10 +772,12 @@
       "sources": [
         "adversary"
       ],
-      "attack_mechanisms": {
-        "capec_id": 1,
-        "capec_title": "Accessing Functionality Not Properly Constrained by acls"
-      },
+      "attack_mechanisms": [
+        {
+          "capec_id": 1,
+          "capec_title": "Accessing Functionality Not Properly Constrained by acls"
+        }
+      ],
       "weaknesses": [
         {
           "cwe_id": 276,
@@ -781,10 +798,12 @@
       "sources": [
         "adversary"
       ],
-      "attack_mechanisms": {
-        "capec_id": 1,
-        "capec_title": "Accessing Functionality Not Properly Constrained by acls"
-      },
+      "attack_mechanisms": [
+        {
+          "capec_id": 1,
+          "capec_title": "Accessing Functionality Not Properly Constrained by acls"
+        }
+      ],
       "weaknesses": [
         {
           "cwe_id": 276,
@@ -805,10 +824,12 @@
       "sources": [
         "adversary"
       ],
-      "attack_mechanisms": {
-        "capec_id": 1,
-        "capec_title": "Accessing Functionality Not Properly Constrained by acls"
-      },
+      "attack_mechanisms": [
+        {
+          "capec_id": 1,
+          "capec_title": "Accessing Functionality Not Properly Constrained by acls"
+        }
+      ],
       "weaknesses": [
         {
           "cwe_id": 276,
@@ -829,10 +850,12 @@
       "sources": [
         "adversary"
       ],
-      "attack_mechanisms": {
-        "capec_id": 28,
-        "capec_title": "Fuzzing"
-      },
+      "attack_mechanisms": [
+        {
+          "capec_id": 28,
+          "capec_title": "Fuzzing"
+        }
+      ],
       "weaknesses": [
         {
           "cwe_id": 20,
@@ -849,10 +872,12 @@
       "sources": [
         "adversary"
       ],
-      "attack_mechanisms": {
-        "capec_id": 204,
-        "capec_title": "Lifting Sensitive Data Embedded in Cache"
-      },
+      "attack_mechanisms": [
+        {
+          "capec_id": 204,
+          "capec_title": "Lifting Sensitive Data Embedded in Cache"
+        }
+      ],
       "weaknesses": [
         {
           "cwe_id": 20,
@@ -869,10 +894,12 @@
       "sources": [
         "adversary"
       ],
-      "attack_mechanisms": {
-        "capec_id": 555,
-        "capec_title": "Remote Services with Stolen Credentials"
-      },
+      "attack_mechanisms": [
+        {
+          "capec_id": 555,
+          "capec_title": "Remote Services with Stolen Credentials"
+        }
+      ],
       "weaknesses": [
         {
           "cwe_id": 522,
@@ -889,10 +916,12 @@
       "sources": [
         "adversary"
       ],
-      "attack_mechanisms": {
-        "capec_id": 300,
-        "capec_title": "Port Scanning"
-      },
+      "attack_mechanisms": [
+        {
+          "capec_id": 300,
+          "capec_title": "Port Scanning"
+        }
+      ],
       "weaknesses": [
         {
           "cwe_id": 200,
