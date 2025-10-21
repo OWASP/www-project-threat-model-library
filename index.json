@@ -2,11 +2,18 @@
   "version": "1.0",
   "threat-models": [
     {
-      "symbolic_name": "husky-ai",
+      "symbolic_name": "husky-ai-threat-model",
       "path": "threat-models/ai-ml-systems/husky-ai-threat-model.json",
       "category": "ai-ml-systems",
       "tags": ["ml"],
       "description": "Machine learning system with image ingestion and validation."
+    },
+    {
+      "symbolic_name": "hashicorp-vault-threat-model",
+      "path": "threat-models/infrastructure/hashicorp-vault-threat-model.json",
+      "category": "infrastructure",
+      "tags": ["secrets-management"],
+      "description": "Enterprise secrets management and cryptographic services for applications and operators."
     }
   ]
 }
