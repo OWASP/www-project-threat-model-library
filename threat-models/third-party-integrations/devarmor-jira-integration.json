@@ -1,661 +1,639 @@
 {
-  "$schema": "https://github.com/OWASP/www-project-threat-model-library/blob/v1.0.1/threat-model.schema.json",
-  "version": "1.0",
-  "scope": {
-    "title": "DevArmor Jira Integration",
-    "description": "Integration between DevArmor's backend services and Atlassian Jira Cloud via an Atlassian Forge application that synchronizes security findings and tenant metadata.",
-    "business_criticality": "moderate",
-    "data_sensitivity": [
-      "biz",
-      "cred"
+    "$schema": "https://github.com/OWASP/www-project-threat-model-library/blob/v1.0.2/threat-model.schema.json",
+    "version": "1.0",
+    "scope": {
+        "title": "DevArmor-Forge App Integration",
+        "description": "The scope is the integration of the Forge-based Jira Cloud application that lets developers request secure design reviews and synchronizes tenant metadata with the DevArmor backend.",
+        "business_criticality": "moderate",
+        "data_sensitivity": [
+            "biz",
+            "cred"
+        ],
+        "exposure": "external",
+        "tier": "important"
+    },
+    "description": "The DevArmor Forge App extends Jira Cloud so customers' product teams can raise security review requests without leaving their workflow. Forge UI modules and remote handlers run on Atlassian premises, issue short-lived installation tokens, and invoke a DevArmor backend in AWS through an API Gateway protected by a custom authorizer. The DevArmor backend stores external organization metadata in PostgreSQL and caches Atlassian access tokens in Secrets Manager before calling the Jira REST API to push status updates.",
+    "frozen": false,
+    "release_docs_link": "",
+    "reviewed_at": "2025-10-26",
+    "repo_link": "",
+    "diagrams": [
+        {
+            "title": "Forge integration context",
+            "type": "mermaid",
+            "source": "flowchart TD\n\n%% === Atlassian Trust Zone (outer greenish box) ===\nsubgraph Atlassian[\"Atlassian (Trust Zone)\"]\n  direction TB\n\n  %% --- Jira Cloud UI and REST API ---\n  A1[\"Developer / Jira User\"];\n  JCUI[\"Jira Cloud UI\"]:::jira;\n  A2[\"Jira Cloud (REST API)\"]:::jira;\n  A3[\"Confluence (optional)\"]:::jira;\n\n  %% --- Forge Platform (nested) ---\n  subgraph Forge[\"Forge Platform (Atlassian-managed)\"]\n    direction TB\n    F1[\"Forge App (Custom UI & Logic)\"]:::forge;\n    F2[\"Forge Remote Handler\"]:::forge;\n    F3[\"Forge Scheduler (Token Refresh)\"]:::forge;\n    %% F4 omitted per feedback: Web triggers not implemented\n  end\nend\n\n%% === DevArmor Backend (AWS) ===\nsubgraph DevArmor[\"DevArmor Backend (AWS)\"]\n  D1[\"API Gateway (Custom Lambda Authorizer)\"]:::devarmor;\n  D2[\"FastAPI App (Business Logic)\"]:::devarmor;\n  D4[\"AWS Secrets Manager (Short-lived access tokens & FITs)\"]:::infra;\n  D5[\"Postgres (orgs / users / ext_organization / ext_user)\"]:::infra;\nend\n\n%% === Flows ===\nA1 -->|\"Operates\"| JCUI;\nJCUI -->|\"Calls\"| A2;\n\nA1 -.->|\"Installs or uses app\"| F1;\n\nF1 -->|\"Lifecycle event: app-installed or user-triggered action (e.g. request design review)\"| D1;\nF2 -->|\"Forge Remote request via handler (event, user action, or scheduler)\"| D1;\nF3 -->|\"Scheduled (hourly) trigger generates Forge Remote request\"| D1;\n\n%% Jira Cloud Issue Events Triggering Forge\nA2 -->|\"Issue event (created/updated/commented) triggers Forge event handler\"| F2;\n\nD1 -->|\"Validate FIT, receive Jira data (issues, etc.), and short-lived system/user tokens via Atlassian JWKS\"| D2;\n\nD2 -->|\"Create or update ext_organization\"| D5;\nD2 -->|\"Store or update token\"| D4;\n\n%% Note: web trigger flows skipped/omitted per new decision\n\n%% AWS Secrets Manager (fetch token)\nD4 -->|\"Get latest token\"| D2;\n\nD2 -->|\"Call Jira REST API (using token)\"| A2;\nD2 -->|\"Push findings or tasks to Jira\"| A2;\n\n%% === Styles ===\nclassDef forge fill:#f8f9ff,stroke:#758bfd,stroke-width:1.5px,color:#000;\nclassDef devarmor fill:#fff8f8,stroke:#ff6b6b,stroke-width:1.5px,color:#000;\nclassDef infra fill:#f9fff8,stroke:#55a630,stroke-width:1.5px,color:#000;\nclassDef jira fill:#f2f9ff,stroke:#2684ff,stroke-width:1.5px,color:#000;\n\n%% Layered grouping colors:\nstyle Atlassian fill:#e8faff,stroke:#82d5ff,stroke-width:2px\nstyle Forge fill:#f4f7ff,stroke:#a0b3eb,stroke-width:1.5px\n\n%% Optionally: visually fade omitted web trigger \n%% F4[\"Forge Web Triggers (on-demand token refresh)\"]:::forge\n%% style F4 fill:#f7f7f7,stroke:#cccccc,stroke-width:1px,color:#aaaaaa\n%% and any flows going to/from"
+        }
     ],
-    "exposure": "external",
-    "tier": "important"
-  },
-  "description": "The DevArmor Jira integration enables DevArmor's AWS-hosted backend to exchange installation lifecycle events, issue updates, and refreshed Forge Installation Tokens (FIT) with Atlassian Jira Cloud. A Forge application mediates user interactions and Jira issue events, relaying them through DevArmor's API Gateway and FastAPI services, which persist tenant mappings and short-lived secrets in AWS managed stores before calling Jira REST APIs to project findings back into customer projects.",
-  "frozen": false,
-  "diagrams": [
-    {
-      "title": "DevArmor Jira Integration Data Flow",
-      "type": "mermaid",
-      "source": "flowchart TD\n\n%% === External Systems ===\nA1[\"Developer / Jira User\"];\nA2[\"Jira Cloud (REST API)\"]:::jira;\nA3[\"Confluence (optional)\"]:::jira;\n\n%% === Forge Layer ===\nsubgraph Forge[\"Atlassian Forge Platform\"]\n  F1[\"Forge App (Custom UI & Logic)\"]:::forge;\n  F2[\"Forge Remote Handler\"]:::forge;\n  F3[\"Forge Scheduler (Token Refresh)\"]:::forge;\n  F4[\"Forge Web Triggers (Issue Events)\"]:::forge;\nend\n\n%% === DevArmor Backend ===\nsubgraph DevArmor[\"DevArmor Backend (AWS)\"]\n  D1[\"API Gateway (Custom Lambda Authorizer)\"]:::devarmor;\n  D2[\"FastAPI App (Business Logic)\"]:::devarmor;\n  D4[\"AWS Secrets Manager (4h Tokens)\"]:::infra;\n  D5[\"Postgres (Orgs / Users / ext_organization / ext_user)\"]:::infra;\nend\n\n%% === Flows ===\nA1 -->|\"Installs or uses app\"| F1;\nF1 -->|\"Lifecycle event: avi:forge:installed:app\"| D1;\n\nA2 -->|\"Issue created / updated / commented\"| F4;\nF4 -->|\"POST /i/atlassian/events/...\"| D1;\n\nD1 -->|\"Validate FIT via Atlassian JWKS\"| D2;\nD2 -->|\"Create or update ext_organization\"| D5;\n\nF3 -->|\"Hourly trigger\"| F2;\nF2 -->|\"Forge Remote request with refreshed FIT token\"| D1;\nD2 -->|\"Store or update token\"| D4;\n\nD2 -->|\"Get latest token\"| D4;\nD2 -->|\"Call Jira REST API\"| A2;\n\nA1 -->|\"Create or edit Jira issue\"| A2;\nD2 -->|\"Push findings or tasks to Jira\"| A2;\n\n%% === Styles ===\nclassDef forge fill:#f8f9ff,stroke:#758bfd,stroke-width:1px,color:#000;\nclassDef devarmor fill:#fff8f8,stroke:#ff6b6b,stroke-width:1px,color:#000;\nclassDef infra fill:#f9fff8,stroke:#55a630,stroke-width:1px,color:#000;\nclassDef jira fill:#f2f9ff,stroke:#2684ff,stroke-width:1px,color:#000;"
-    }
-  ],
-  "trust_zones": [
-    {
-      "symbolic_name": "public-internet",
-      "title": "Public Internet",
-      "description": "Untrusted networks from which Jira end users initiate requests."
-    },
-    {
-      "symbolic_name": "atlassian-cloud",
-      "title": "Atlassian Cloud",
-      "description": "Atlassian-managed SaaS environment hosting Jira Cloud and optional Confluence services."
-    },
-    {
-      "symbolic_name": "forge-runtime",
-      "title": "Atlassian Forge Runtime",
-      "description": "Managed execution environment for the Forge application UI, remote handlers, web triggers, and scheduler."
-    },
-    {
-      "symbolic_name": "devarmor-api-edge",
-      "title": "DevArmor API Edge",
-      "description": "DevArmor's AWS perimeter exposing API Gateway and the custom Lambda authorizer."
-    },
-    {
-      "symbolic_name": "devarmor-app-tier",
-      "title": "DevArmor Application Tier",
-      "description": "FastAPI services processing Jira events, storing state, and orchestrating outbound integrations."
-    },
-    {
-      "symbolic_name": "devarmor-secure-storage",
-      "title": "DevArmor Secure Storage",
-      "description": "Protected AWS data services that retain Forge tokens and tenant records."
-    }
-  ],
-  "trust_boundaries": [
-    {
-      "trust_zone_a": "public-internet",
-      "trust_zone_b": "atlassian-cloud",
-      "access_control_methods": [
-        "rbac"
-      ],
-      "authentication_methods": [
-        "sso"
-      ],
-      "can_user_logout": true,
-      "can_system_logout": true
-    },
-    {
-      "trust_zone_a": "atlassian-cloud",
-      "trust_zone_b": "forge-runtime",
-      "access_control_methods": [
-        "abac"
-      ],
-      "authentication_methods": [
-        "token"
-      ]
-    },
-    {
-      "trust_zone_a": "forge-runtime",
-      "trust_zone_b": "devarmor-api-edge",
-      "access_control_methods": [
-        "abac"
-      ],
-      "authentication_methods": [
-        "token"
-      ],
-      "access_token_expires": true,
-      "access_token_ttl": 14400,
-      "has_refresh_token": false
-    },
-    {
-      "trust_zone_a": "devarmor-api-edge",
-      "trust_zone_b": "devarmor-app-tier",
-      "access_control_methods": [
-        "rbac"
-      ],
-      "authentication_methods": [
-        "token"
-      ]
-    },
-    {
-      "trust_zone_a": "devarmor-app-tier",
-      "trust_zone_b": "devarmor-secure-storage",
-      "access_control_methods": [
-        "abac"
-      ],
-      "authentication_methods": [
-        "token"
-      ]
-    },
-    {
-      "trust_zone_a": "devarmor-app-tier",
-      "trust_zone_b": "atlassian-cloud",
-      "access_control_methods": [
-        "rbac"
-      ],
-      "authentication_methods": [
-        "token"
-      ],
-      "access_token_expires": true,
-      "access_token_ttl": 3600,
-      "has_refresh_token": false
-    }
-  ],
-  "actors": [
-    {
-      "symbolic_name": "developer-jira-user",
-      "title": "Developer or Jira User",
-      "description": "Authenticated Jira user who installs the DevArmor app and manages issues within their Atlassian site.",
-      "type": "user",
-      "permissions": "Can install marketplace apps and update Jira issues within authorized projects.",
-      "trust_zone": "public-internet"
-    }
-  ],
-  "components": [
-    {
-      "symbolic_name": "jira-cloud-rest-api",
-      "title": "Jira Cloud REST API",
-      "description": "Atlassian-managed REST endpoints used to deliver issue lifecycle events and accept DevArmor updates.",
-      "trust_zone": "atlassian-cloud"
-    },
-    {
-      "symbolic_name": "forge-app-ui",
-      "title": "Forge App UI",
-      "description": "Forge-hosted user interface and custom logic presented inside Jira for DevArmor configuration and launch.",
-      "trust_zone": "forge-runtime"
-    },
-    {
-      "symbolic_name": "forge-web-trigger",
-      "title": "Forge Web Trigger",
-      "description": "Forge HTTP endpoint that receives Jira issue events and relays them to DevArmor.",
-      "trust_zone": "forge-runtime"
-    },
-    {
-      "symbolic_name": "forge-remote-handler",
-      "title": "Forge Remote Handler",
-      "description": "Forge component invoked remotely to refresh Forge Installation Tokens and forward them to DevArmor.",
-      "trust_zone": "forge-runtime"
-    },
-    {
-      "symbolic_name": "forge-scheduler",
-      "title": "Forge Scheduler",
-      "description": "Forge scheduled job that triggers token refresh workflows on an hourly cadence.",
-      "trust_zone": "forge-runtime"
-    },
-    {
-      "symbolic_name": "devarmor-api-gateway",
-      "title": "DevArmor API Gateway",
-      "description": "AWS API Gateway with a custom Lambda authorizer that validates Forge tokens and routes requests to FastAPI services.",
-      "trust_zone": "devarmor-api-edge"
-    },
-    {
-      "symbolic_name": "devarmor-fastapi",
-      "title": "DevArmor FastAPI Service",
-      "description": "FastAPI application that processes Forge events, persists tenant metadata, manages token storage, and pushes findings to Jira.",
-      "trust_zone": "devarmor-app-tier"
-    }
-  ],
-  "data_stores": [
-    {
-      "symbolic_name": "aws-secrets-manager",
-      "title": "AWS Secrets Manager",
-      "description": "Secrets Manager vault holding short-lived Forge Installation Tokens for tenants.",
-      "type": "key_value",
-      "vendor": "AWS",
-      "product": "AWS Secrets Manager",
-      "trust_zone": "devarmor-secure-storage"
-    },
-    {
-      "symbolic_name": "devarmor-postgres",
-      "title": "DevArmor Postgres",
-      "description": "PostgreSQL database storing tenant, user, and Jira synchronization state records.",
-      "type": "sql",
-      "vendor": "AWS",
-      "product": "Amazon RDS for PostgreSQL",
-      "trust_zone": "devarmor-secure-storage"
-    }
-  ],
-  "data_sets": [
-    {
-      "symbolic_name": "forge-installation-tokens",
-      "title": "Forge Installation Token Cache",
-      "description": "Short-lived Forge Installation Tokens required to authenticate DevArmor's remote calls back to Atlassian services.",
-      "placements": [
+    "trust_zones": [
         {
-          "data_store": "aws-secrets-manager",
-          "encrypted": true
-        }
-      ],
-      "data_sensitivity": [
-        "cred"
-      ],
-      "access_control_methods": [
-        "rbac"
-      ]
-    },
-    {
-      "symbolic_name": "tenant-directory-mappings",
-      "title": "Tenant Directory Mappings",
-      "description": "Records linking DevArmor organizations, ext_user, and ext_organization identifiers to Atlassian account identities.",
-      "placements": [
+            "symbolic_name": "public-internet",
+            "title": "Public Internet",
+            "description": "Untrusted networks where Jira users operate their browsers."
+        },
         {
-          "data_store": "devarmor-postgres",
-          "encrypted": true
-        }
-      ],
-      "data_sensitivity": [
-        "biz"
-      ],
-      "access_control_methods": [
-        "rbac"
-      ],
-      "record_count": 500
-    },
-    {
-      "symbolic_name": "jira-sync-payloads",
-      "title": "Jira Synchronization Payloads",
-      "description": "Normalized payloads of Jira issue events and DevArmor findings used to reconcile state between systems.",
-      "placements": [
+            "symbolic_name": "atlassian-saas",
+            "title": "Atlassian SaaS",
+            "description": "Atlassian-managed Jira Cloud and Forge services hosting UI surfaces, REST APIs, and Confluence."
+        },
         {
-          "data_store": "devarmor-postgres",
-          "encrypted": true
+            "symbolic_name": "devarmor-backend",
+            "title": "DevArmor Backend",
+            "description": "DevArmor-controlled AWS environment that hosts API Gateway, FastAPI service, Secrets Manager, and Postgres."
         }
-      ],
-      "data_sensitivity": [
-        "biz"
-      ],
-      "access_control_methods": [
-        "rbac"
-      ]
-    }
-  ],
-  "data_flows": [
-    {
-      "symbolic_name": "developer-installs-forge-app",
-      "title": "Developer installs or uses the Forge app",
-      "description": "Developers interact with the Forge UI inside Jira to install or configure the DevArmor application over HTTPS.",
-      "source": {
-        "type": "actor",
-        "object": "developer-jira-user"
-      },
-      "destination": {
-        "type": "component",
-        "object": "forge-app-ui"
-      },
-      "has_sensitive_data": false,
-      "encrypted": true
-    },
-    {
-      "symbolic_name": "forge-app-lifecycle-event",
-      "title": "Forge lifecycle event to DevArmor",
-      "description": "Forge emits lifecycle installation events that are relayed to the DevArmor API Gateway for onboarding flows.",
-      "source": {
-        "type": "component",
-        "object": "forge-app-ui"
-      },
-      "destination": {
-        "type": "component",
-        "object": "devarmor-api-gateway"
-      },
-      "has_sensitive_data": true,
-      "encrypted": true
-    },
-    {
-      "symbolic_name": "jira-event-to-web-trigger",
-      "title": "Jira issue event into Forge Web Trigger",
-      "description": "Jira Cloud sends issue lifecycle events to the Forge web trigger endpoint exposed by the DevArmor app.",
-      "source": {
-        "type": "component",
-        "object": "jira-cloud-rest-api"
-      },
-      "destination": {
-        "type": "component",
-        "object": "forge-web-trigger"
-      },
-      "has_sensitive_data": true,
-      "encrypted": true
-    },
-    {
-      "symbolic_name": "web-trigger-relays-event",
-      "title": "Forge Web Trigger relays event",
-      "description": "The Forge web trigger forwards validated Jira event payloads to the DevArmor API entry point.",
-      "source": {
-        "type": "component",
-        "object": "forge-web-trigger"
-      },
-      "destination": {
-        "type": "component",
-        "object": "devarmor-api-gateway"
-      },
-      "has_sensitive_data": true,
-      "encrypted": true
-    },
-    {
-      "symbolic_name": "api-gateway-forwards-event",
-      "title": "API Gateway forwards to FastAPI",
-      "description": "DevArmor API Gateway forwards authenticated requests to the FastAPI service for business processing.",
-      "source": {
-        "type": "component",
-        "object": "devarmor-api-gateway"
-      },
-      "destination": {
-        "type": "component",
-        "object": "devarmor-fastapi"
-      },
-      "has_sensitive_data": true,
-      "encrypted": true
-    },
-    {
-      "symbolic_name": "fastapi-upserts-tenant",
-      "title": "FastAPI persists tenant directory data",
-      "description": "FastAPI stores or updates organization and user mapping records within the Postgres database.",
-      "source": {
-        "type": "component",
-        "object": "devarmor-fastapi"
-      },
-      "destination": {
-        "type": "data_store",
-        "object": "devarmor-postgres"
-      },
-      "has_sensitive_data": true,
-      "encrypted": true
-    },
-    {
-      "symbolic_name": "scheduler-triggers-remote-handler",
-      "title": "Forge scheduler triggers remote handler",
-      "description": "The Forge scheduler invokes the remote handler on a fixed cadence to refresh Forge tokens.",
-      "source": {
-        "type": "component",
-        "object": "forge-scheduler"
-      },
-      "destination": {
-        "type": "component",
-        "object": "forge-remote-handler"
-      },
-      "has_sensitive_data": false,
-      "encrypted": true
-    },
-    {
-      "symbolic_name": "remote-handler-refreshes-token",
-      "title": "Forge remote handler refreshes FIT token",
-      "description": "The Forge remote handler retrieves a new FIT token and submits it to the DevArmor API Gateway.",
-      "source": {
-        "type": "component",
-        "object": "forge-remote-handler"
-      },
-      "destination": {
-        "type": "component",
-        "object": "devarmor-api-gateway"
-      },
-      "has_sensitive_data": true,
-      "encrypted": true
-    },
-    {
-      "symbolic_name": "fastapi-stores-fit-token",
-      "title": "FastAPI stores FIT token",
-      "description": "FastAPI writes refreshed Forge Installation Tokens into AWS Secrets Manager for later retrieval.",
-      "source": {
-        "type": "component",
-        "object": "devarmor-fastapi"
-      },
-      "destination": {
-        "type": "data_store",
-        "object": "aws-secrets-manager"
-      },
-      "has_sensitive_data": true,
-      "encrypted": true
-    },
-    {
-      "symbolic_name": "secrets-manager-returns-fit-token",
-      "title": "Secrets Manager returns FIT token",
-      "description": "AWS Secrets Manager returns the latest stored Forge Installation Token to the FastAPI service when needed.",
-      "source": {
-        "type": "data_store",
-        "object": "aws-secrets-manager"
-      },
-      "destination": {
-        "type": "component",
-        "object": "devarmor-fastapi"
-      },
-      "has_sensitive_data": true,
-      "encrypted": true
-    },
-    {
-      "symbolic_name": "fastapi-calls-jira",
-      "title": "FastAPI calls Jira REST API",
-      "description": "FastAPI uses Forge tokens to push DevArmor findings and tasks into Jira via the REST API.",
-      "source": {
-        "type": "component",
-        "object": "devarmor-fastapi"
-      },
-      "destination": {
-        "type": "component",
-        "object": "jira-cloud-rest-api"
-      },
-      "has_sensitive_data": true,
-      "encrypted": true
-    },
-    {
-      "symbolic_name": "developer-manages-jira-issues",
-      "title": "Developer manages Jira issues",
-      "description": "Developers create or edit Jira issues which subsequently trigger Forge webhooks consumed by DevArmor.",
-      "source": {
-        "type": "actor",
-        "object": "developer-jira-user"
-      },
-      "destination": {
-        "type": "component",
-        "object": "jira-cloud-rest-api"
-      },
-      "has_sensitive_data": true,
-      "encrypted": true
-    }
-  ],
-  "assumptions": [
-    {
-      "description": "Atlassian Forge web triggers and remote handlers execute inside Atlassian-managed infrastructure that blocks direct public network access.",
-      "topics": [
-        "forge-web-trigger"
-      ],
-      "validity": "confirmed"
-    },
-    {
-      "description": "DevArmor services enforce TLS 1.2 or higher and require mTLS between the API Gateway and FastAPI workloads.",
-      "topics": [
-        "devarmor-api-gateway",
-        "devarmor-fastapi"
-      ],
-      "validity": "confirmed"
-    }
-  ],
-  "threat_personas": [
-    {
-      "symbolic_name": "external-service-attacker",
-      "title": "External Service Attacker",
-      "description": "Unauthenticated adversary on the public internet attempting to compromise exposed Forge and DevArmor endpoints.",
-      "is_person": true,
-      "skill_level": "engineer",
-      "access_level": "anonymous",
-      "malicious_intent": true,
-      "applicability_to_org": "moderate"
-    },
-    {
-      "symbolic_name": "marketplace-tenant-admin",
-      "title": "Malicious Atlassian Tenant Administrator",
-      "description": "Authorized administrator of an Atlassian tenant who intentionally abuses or exploits the DevArmor integration.",
-      "is_person": true,
-      "skill_level": "engineer",
-      "access_level": "admin",
-      "malicious_intent": true,
-      "applicability_to_org": "low"
-    }
-  ],
-  "threats": [
-    {
-      "symbolic_name": "forged-webhook-events",
-      "title": "Spoofed Forge web trigger events",
-      "description": "An attacker crafts HTTP requests to the Forge web trigger endpoint to inject fabricated Jira events or payloads into DevArmor workflows.",
-      "components_affected": [
-        "forge-web-trigger",
-        "devarmor-api-gateway",
-        "devarmor-fastapi"
-      ],
-      "threat_persona": "external-service-attacker",
-      "event": "The attacker sends unsigned or replayed webhook requests toward the Forge endpoint, bypassing validation logic.",
-      "sources": [
-        "adversary"
-      ],
-      "attack_mechanisms": [
+    ],
+    "trust_boundaries": [
         {
-          "capec_id": 272,
-          "capec_title": "Protocol Manipulation"
-        }
-      ]
-    },
-    {
-      "symbolic_name": "fit-token-exfiltration",
-      "title": "Forge Installation Token exfiltration",
-      "description": "Compromise of the Forge remote handler or DevArmor ingress results in theft of short-lived Forge Installation Tokens stored in Secrets Manager.",
-      "components_affected": [
-        "forge-remote-handler",
-        "devarmor-api-gateway",
-        "devarmor-fastapi",
-        "aws-secrets-manager"
-      ],
-      "threat_persona": "external-service-attacker",
-      "event": "The adversary gains execution in the Forge function or intercepts API traffic to read or forward tokens to an external host.",
-      "sources": [
-        "adversary"
-      ],
-      "attack_mechanisms": [
+            "trust_zone_a": "public-internet",
+            "trust_zone_b": "atlassian-saas",
+            "access_control_methods": [
+                "rbac"
+            ]
+        },
         {
-          "capec_id": 640,
-          "capec_title": "Exfiltration Over Command and Control Channel"
+            "trust_zone_a": "atlassian-saas",
+            "trust_zone_b": "devarmor-backend",
+            "access_control_methods": [
+                "acl",
+                "rbac"
+            ],
+            "authentication_methods": [
+                "token"
+            ],
+            "access_token_expires": true,
+            "access_token_ttl": 300,
+            "has_refresh_token": false,
+            "refresh_token_expires": false,
+            "can_user_logout": false,
+            "can_system_logout": true
         }
-      ]
-    },
-    {
-      "symbolic_name": "jwks-validation-bypass",
-      "title": "Forge token validation bypass",
-      "description": "Improper validation of Atlassian-signed JWTs or JWKS keys lets attackers replay or forge tokens to access DevArmor endpoints.",
-      "components_affected": [
-        "devarmor-api-gateway",
-        "devarmor-fastapi"
-      ],
-      "threat_persona": "external-service-attacker",
-      "event": "Validation logic skips issuer, audience, or signature checks, allowing crafted tokens to be accepted as legitimate.",
-      "sources": [
-        "adversary"
-      ],
-      "attack_mechanisms": [
+    ],
+    "actors": [
         {
-          "capec_id": 231,
-          "capec_title": "Guessing or Predicting Authentication Information"
+            "symbolic_name": "jira-developer",
+            "title": "Developer",
+            "description": "Tenant user who files issues and invokes the DevArmor Forge module inside Jira.",
+            "type": "user",
+            "permissions": "Can create and edit Jira issues within the tenant project scope.",
+            "trust_zone": "public-internet"
         }
-      ]
-    },
-    {
-      "symbolic_name": "excessive-jira-privileges",
-      "title": "Jira privilege escalation via integration",
-      "description": "A malicious tenant administrator abuses DevArmor's Jira scopes to modify or leak project data beyond the intended integration use cases.",
-      "components_affected": [
-        "devarmor-fastapi",
-        "jira-cloud-rest-api"
-      ],
-      "threat_persona": "marketplace-tenant-admin",
-      "event": "An authorized tenant admin reconfigures or scripts the integration to post unauthorized changes or export sensitive content.",
-      "sources": [
-        "adversary"
-      ],
-      "attack_mechanisms": [
+    ],
+    "components": [
         {
-          "capec_id": 98,
-          "capec_title": "Resource Manipulation"
+            "symbolic_name": "jira-cloud-ui",
+            "title": "Jira Cloud UI",
+            "description": "Atlassian-hosted browser UI where users interact with issues and load the Forge module, considered untrusted as it runs in the browser.",
+            "trust_zone": "public-internet"
+        },
+        {
+            "symbolic_name": "jira-rest-api",
+            "title": "Jira REST API",
+            "description": "Jira Cloud REST API that emits issue events and accepts updates from integrations.",
+            "trust_zone": "atlassian-saas"
+        },
+        {
+            "symbolic_name": "confluence-api",
+            "title": "Confluence API",
+            "description": "Optional Confluence integration surfaces design documentation linked from the app.",
+            "trust_zone": "atlassian-saas"
+        },
+        {
+            "symbolic_name": "forge-app",
+            "title": "Forge App",
+            "description": "Custom Forge App that has a backend and a UI that displays inside Jira issue views to capture security review requests.",
+            "trust_zone": "atlassian-saas"
+        },
+        {
+            "symbolic_name": "forge-remote-handler",
+            "title": "Forge Remote Handler",
+            "description": "Forge backend handler that receives Jira lifecycle events and forwards enriched payloads to DevArmor APIs.",
+            "trust_zone": "atlassian-saas"
+        },
+        {
+            "symbolic_name": "forge-scheduler",
+            "title": "Forge Scheduler",
+            "description": "Hourly Forge scheduler function refreshing installation tokens by invoking the remote handler.",
+            "trust_zone": "atlassian-saas"
+        },
+        {
+            "symbolic_name": "api-gateway-authorizer",
+            "title": "API Gateway with custom authorizer",
+            "description": "AWS API Gateway front door that validates Forge-issued JWTs via a custom Lambda authorizer before routing traffic.",
+            "trust_zone": "devarmor-backend"
+        },
+        {
+            "symbolic_name": "fastapi-service",
+            "title": "FastAPI service",
+            "description": "Core DevArmor service executing business logic, persisting org metadata, and calling Jira APIs.",
+            "trust_zone": "devarmor-backend"
         }
-      ]
-    }
-  ],
-  "controls": [
-    {
-      "symbolic_name": "validate-atlassian-jwks",
-      "title": "Validate Atlassian JWKS and token claims",
-      "description": "Verify issuer, audience, expiry, and signature for all Forge tokens using the latest Atlassian JWKS set with strict clock skew limits and replay protection.",
-      "threats": [
-        "jwks-validation-bypass",
-        "forged-webhook-events"
-      ],
-      "trust_boundary": {
-        "trust_zone_a": "forge-runtime",
-        "trust_zone_b": "devarmor-api-edge"
-      },
-      "status": "active",
-      "priority": "critical"
-    },
-    {
-      "symbolic_name": "restrict-secrets-manager-access",
-      "title": "Enforce least privilege for Secrets Manager",
-      "description": "Limit IAM roles and resource policies so only the token refresh Lambda and FastAPI workloads can read or write Forge Installation Tokens, with CloudTrail monitoring enabled.",
-      "threats": [
-        "fit-token-exfiltration"
-      ],
-      "trust_boundary": {
-        "trust_zone_a": "devarmor-app-tier",
-        "trust_zone_b": "devarmor-secure-storage"
-      },
-      "status": "active",
-      "priority": "high"
-    },
-    {
-      "symbolic_name": "webhook-replay-detection",
-      "title": "Implement webhook replay detection",
-      "description": "Track webhook invocation IDs, enforce short expiration windows, and alert on duplicates to detect spoofed or replayed Forge events.",
-      "threats": [
-        "forged-webhook-events"
-      ],
-      "trust_boundary": {
-        "trust_zone_a": "forge-runtime",
-        "trust_zone_b": "devarmor-api-edge"
-      },
-      "status": "suggested",
-      "priority": "high"
-    },
-    {
-      "symbolic_name": "jira-scope-review",
-      "title": "Review and minimize Jira scopes",
-      "description": "Restrict the integration to the minimum Jira OAuth scopes, routinely audit granted permissions, and guide customers on project-level access controls.",
-      "threats": [
-        "excessive-jira-privileges"
-      ],
-      "trust_boundary": {
-        "trust_zone_a": "devarmor-app-tier",
-        "trust_zone_b": "atlassian-cloud"
-      },
-      "status": "suggested",
-      "priority": "medium"
-    }
-  ],
-  "risks": [
-    {
-      "symbolic_name": "fit-token-compromise",
-      "title": "Compromise of Forge Installation Tokens",
-      "description": "If FIT tokens are stolen, attackers can impersonate DevArmor and pivot into tenant Jira environments.",
-      "threats": [
-        "fit-token-exfiltration",
-        "jwks-validation-bypass"
-      ],
-      "likelihood": "possible",
-      "impact": "major",
-      "impact_description": "Unauthorized access to multiple tenant Jira projects and DevArmor APIs could occur before tokens expire, leading to data exposure and trust erosion.",
-      "score": 12,
-      "level": "high"
-    },
-    {
-      "symbolic_name": "spoofed-event-integrity",
-      "title": "Integrity loss from spoofed Forge events",
-      "description": "Forged events could create noise, overwrite DevArmor findings, or trigger unwanted automation in customer projects.",
-      "threats": [
-        "forged-webhook-events"
-      ],
-      "likelihood": "possible",
-      "impact": "moderate",
-      "impact_description": "Teams may act on incorrect issues or experience automation loops that degrade trust in the integration.",
-      "score": 9,
-      "level": "high"
-    },
-    {
-      "symbolic_name": "jira-privilege-abuse",
-      "title": "Abuse of Jira privileges via integration",
-      "description": "Overly broad Jira scopes or misconfiguration enable malicious tenants to export or manipulate sensitive project artifacts.",
-      "threats": [
-        "excessive-jira-privileges"
-      ],
-      "likelihood": "unlikely",
-      "impact": "major",
-      "impact_description": "Compromised tenant administrators could leak sensitive backlog details or inject malicious tasks that disrupt customer workflows.",
-      "score": 8,
-      "level": "medium"
-    }
-  ]
+    ],
+    "data_stores": [
+        {
+            "symbolic_name": "jira-data-store",
+            "title": "Jira Cloud data store",
+            "description": "Tenant-scoped Jira data managed by Atlassian.",
+            "type": "graph",
+            "vendor": "Atlassian",
+            "product": "Jira Cloud",
+            "trust_zone": "atlassian-saas"
+        },
+        {
+            "symbolic_name": "secrets-manager-store",
+            "title": "AWS Secrets Manager",
+            "description": "Stores short-lived installation tokens and Forge Identity Tokens (FITs).",
+            "type": "key_value",
+            "vendor": "AWS",
+            "product": "Secrets Manager",
+            "trust_zone": "devarmor-backend"
+        },
+        {
+            "symbolic_name": "postgres-core-db",
+            "title": "Postgres metadata database",
+            "description": "Holds external organizations, user mappings, and review state needed by DevArmor.",
+            "type": "sql",
+            "vendor": "AWS",
+            "product": "Aurora PostgreSQL",
+            "trust_zone": "devarmor-backend"
+        }
+    ],
+    "data_sets": [
+        {
+            "symbolic_name": "jira-issues",
+            "title": "Jira issue metadata",
+            "description": "Jira issue details, comments, and links captured within Jira issues.",
+            "placements": [
+                {
+                    "data_store": "jira-data-store",
+                    "encrypted": true
+                }
+            ],
+            "data_sensitivity": [
+                "biz",
+                "pii"
+            ],
+            "access_control_methods": [
+                "rbac"
+            ],
+            "record_count": 10000
+        },
+        {
+            "symbolic_name": "short-lived-access-tokens",
+            "title": "Forge installation tokens",
+            "description": "Short-lived FITs and access tokens needed for outbound Jira API calls.",
+            "placements": [
+                {
+                    "data_store": "secrets-manager-store",
+                    "encrypted": true
+                }
+            ],
+            "data_sensitivity": [
+                "cred"
+            ],
+            "access_control_methods": [
+                "abac"
+            ],
+            "record_count": 200
+        },
+        {
+            "symbolic_name": "external-organization-records",
+            "title": "External organization records",
+            "description": "Mapping of Jira tenants, users, and DevArmor external organization identifiers.",
+            "placements": [
+                {
+                    "data_store": "postgres-core-db",
+                    "encrypted": true
+                }
+            ],
+            "data_sensitivity": [
+                "pii",
+                "biz"
+            ],
+            "access_control_methods": [
+                "rbac"
+            ],
+            "record_count": 1500
+        }
+    ],
+    "data_flows": [
+        {
+            "symbolic_name": "jira-user-loads-forge-panel",
+            "title": "Jira user loads DevArmor Forge module",
+            "description": "End user interacts with Jira UI that embeds the Forge module and issue details.",
+            "source": {
+                "type": "actor",
+                "object": "jira-developer"
+            },
+            "destination": {
+                "type": "component",
+                "object": "jira-cloud-ui"
+            },
+            "has_sensitive_data": true,
+            "encrypted": true
+        },
+        {
+            "symbolic_name": "jira-events-trigger-remote-handler",
+            "title": "Jira events trigger remote handler",
+            "description": "Issue lifecycle events raised by Jira call into the Forge remote handler.",
+            "source": {
+                "type": "component",
+                "object": "jira-rest-api"
+            },
+            "destination": {
+                "type": "component",
+                "object": "forge-remote-handler"
+            },
+            "has_sensitive_data": true,
+            "encrypted": true
+        },
+        {
+            "symbolic_name": "forge-ui-calls-api-gateway",
+            "title": "Forge UI calls DevArmor API",
+            "description": "Forge UI submits review requests to the DevArmor API Gateway using Atlassian-signed tokens.",
+            "source": {
+                "type": "component",
+                "object": "forge-app-ui"
+            },
+            "destination": {
+                "type": "component",
+                "object": "api-gateway-authorizer"
+            },
+            "has_sensitive_data": true,
+            "encrypted": true
+        },
+        {
+            "symbolic_name": "remote-handler-calls-api-gateway",
+            "title": "Remote handler pushes events to DevArmor",
+            "description": "Forge remote handler forwards enriched Jira events to the API Gateway for processing.",
+            "source": {
+                "type": "component",
+                "object": "forge-remote-handler"
+            },
+            "destination": {
+                "type": "component",
+                "object": "api-gateway-authorizer"
+            },
+            "has_sensitive_data": true,
+            "encrypted": true
+        },
+        {
+            "symbolic_name": "scheduler-refreshes-access-token",
+            "title": "Scheduler refreshes access token",
+            "description": "Forge scheduler periodically refreshes tokens by making remote handler calls into the API Gateway.",
+            "source": {
+                "type": "component",
+                "object": "forge-scheduler"
+            },
+            "destination": {
+                "type": "component",
+                "object": "api-gateway-authorizer"
+            },
+            "has_sensitive_data": true,
+            "encrypted": true
+        },
+        {
+            "symbolic_name": "api-gateway-proxies-fastapi",
+            "title": "API Gateway proxies FastAPI",
+            "description": "Custom authorizer validated requests are routed to the FastAPI backend.",
+            "source": {
+                "type": "component",
+                "object": "api-gateway-authorizer"
+            },
+            "destination": {
+                "type": "component",
+                "object": "fastapi-service"
+            },
+            "has_sensitive_data": true,
+            "encrypted": true
+        },
+        {
+            "symbolic_name": "fastapi-persists-org-data",
+            "title": "FastAPI persists organization data",
+            "description": "FastAPI writes organization relationships and request state into Postgres.",
+            "source": {
+                "type": "component",
+                "object": "fastapi-service"
+            },
+            "destination": {
+                "type": "data_store",
+                "object": "postgres-core-db"
+            },
+            "has_sensitive_data": true,
+            "encrypted": true
+        },
+        {
+            "symbolic_name": "fastapi-stores-short-lived-tokens",
+            "title": "FastAPI stores short-lived tokens",
+            "description": "FastAPI rotates and stores FIT-derived tokens in Secrets Manager for reuse within TTL.",
+            "source": {
+                "type": "component",
+                "object": "fastapi-service"
+            },
+            "destination": {
+                "type": "data_store",
+                "object": "secrets-manager-store"
+            },
+            "has_sensitive_data": true,
+            "encrypted": true
+        },
+        {
+            "symbolic_name": "fastapi-calls-jira-rest",
+            "title": "FastAPI calls Jira REST",
+            "description": "FastAPI posts comments or transitions issues through Atlassian REST endpoints.",
+            "source": {
+                "type": "component",
+                "object": "fastapi-service"
+            },
+            "destination": {
+                "type": "component",
+                "object": "jira-rest-api"
+            },
+            "has_sensitive_data": true,
+            "encrypted": true
+        }
+    ],
+    "assumptions": [
+        {
+            "description": "Forge remote handler invocations always originate from Atlassian-managed infrastructure and carry valid signatures.",
+            "topics": [
+                "signature",
+                "authentication",
+                "access-token"
+            ],
+            "validity": "confirmed"
+        },
+        {
+            "description": "The FastAPI service can be reached from the internet only by going through the configured API Gateway and authorizer.",
+            "topics": [
+                "attack-surface"
+            ],
+            "validity": "confirmed"
+        }
+    ],
+    "threat_personas": [
+        {
+            "symbolic_name": "marisol-power-user",
+            "title": "Marisol – malicious Jira tenant power user",
+            "description": "Authenticated tenant user capable of configuring workflows and injecting data into issue payloads.",
+            "is_person": true,
+            "skill_level": "engineer",
+            "access_level": "user",
+            "malicious_intent": true,
+            "applicability_to_org": "moderate"
+        },
+        {
+            "symbolic_name": "rahul-token-harvester",
+            "title": "Rahul – token harvesting operator",
+            "description": "Advanced attacker intercepting Forge-to-AWS traffic or exploiting backend weaknesses to steal Atlassian access tokens.",
+            "is_person": true,
+            "skill_level": "expert_engineer",
+            "access_level": "user",
+            "malicious_intent": true,
+            "applicability_to_org": "low"
+        },
+        {
+            "symbolic_name": "botnet-traffic-generator",
+            "title": "Botnet traffic generator",
+            "description": "Distributed bot or misconfigured automation producing high request volumes against the API Gateway.",
+            "is_person": false,
+            "skill_level": "script_kid",
+            "access_level": "anonymous",
+            "malicious_intent": true,
+            "applicability_to_org": "moderate"
+        }
+    ],
+    "threats": [
+        {
+            "symbolic_name": "forge-event-payload-poisoning",
+            "title": "Malicious issue payload poisons Forge events",
+            "description": "A tenant power user crafts Jira issue data or comments containing oversized or injection payloads that the Forge remote handler forwards to DevArmor.",
+            "components_affected": [
+                "forge-app-ui",
+                "forge-remote-handler",
+                "fastapi-service"
+            ],
+            "threat_persona": "marisol-power-user",
+            "event": "Malicious payload submitted through Jira issue that triggers Forge event handlers.",
+            "sources": [
+                "adversary"
+            ],
+            "attack_mechanisms": [
+                {
+                    "capec_id": 153,
+                    "capec_title": "Input Data Manipulation"
+                },
+                {
+                    "capec_id": 125,
+                    "capec_title": "Flooding Information Channel"
+                }
+            ],
+            "weaknesses": [
+                {
+                    "cwe_id": 74,
+                    "cwe_title": "Injection"
+                }
+            ]
+        },
+        {
+            "symbolic_name": "short-lived-token-theft",
+            "title": "Short-lived tokens are stolen and used without authorisation",
+            "description": "An attacker intercepts or retrieves Atlassian access tokens from the DevArmor backend and uses them to obtain unauthorised access to customer Atlassian APIs.",
+            "components_affected": [
+                "fastapi-service",
+                "jira-rest-api",
+                "confluence-api"
+            ],
+            "threat_persona": "rahul-token-harvester",
+            "event": "Compromise of token handling path between Forge runtime and AWS backend.",
+            "sources": [
+                "adversary"
+            ],
+            "attack_mechanisms": [
+                {
+                    "capec_id": 117,
+                    "capec_title": "Man-in-the-Middle Attack"
+                },
+                {
+                    "capec_id": 555,
+                    "capec_title": "Remote Services with Stolen Credentials"
+                }
+            ]
+        },
+        {
+            "symbolic_name": "api-gateway-resource-exhaustion",
+            "title": "API Gateway overwhelmed by automation",
+            "description": "Automated traffic targets the API Gateway endpoints, exhausting concurrency and starving legitimate Forge invocations.",
+            "components_affected": [
+                "api-gateway-authorizer",
+                "fastapi-service"
+            ],
+            "threat_persona": "botnet-traffic-generator",
+            "event": "Burst of requests hitting Forge remote handlers or public endpoints.",
+            "sources": [
+                "adversary"
+            ],
+            "attack_mechanisms": [
+                {
+                    "capec_id": 488,
+                    "capec_title": "HTTP Flooding"
+                },
+                {
+                    "capec_id": 147,
+                    "capec_title": "Resource Depletion via Flooding"
+                }
+            ]
+        },
+        {
+            "symbolic_name": "token-memory-exfiltration",
+            "title": "Temporary tokens exfiltrated from process memory",
+            "description": "An attacker that compromises the FastAPI runtime or custom authorizer extracts Atlassian access tokens from memory or debugging interfaces before they are rotated.",
+            "components_affected": [
+                "api-gateway-authorizer",
+                "fastapi-service",
+                "secrets-manager-store"
+            ],
+            "threat_persona": "rahul-token-harvester",
+            "event": "Execution of malicious payload or tooling on DevArmor infrastructure that inspects memory where Atlassian access tokens are processed.",
+            "sources": [
+                "adversary"
+            ],
+            "attack_mechanisms": [
+                {
+                    "capec_id": 640,
+                    "capec_title": "Memory Inspection"
+                }
+            ]
+        }
+    ],
+    "controls": [
+        {
+            "symbolic_name": "forge-payload-validation",
+            "title": "Validate and sanitize Forge payloads",
+            "description": "Devarmor backend should apply strict schema validation, field length checks, and encoding safeguards for any remote handler payloads received.",
+            "threats": [
+                "forge-event-payload-poisoning",
+                "token-memory-exfiltration"
+            ],
+            "trust_boundary": {
+                "trust_zone_a": "atlassian-saas",
+                "trust_zone_b": "devarmor-backend"
+            },
+            "status": "active",
+            "priority": "high"
+        },
+        {
+            "symbolic_name": "secure-secret-storage",
+            "title": "Ensure the Atlassian tokens are stored in a secure manner",
+            "description": "Use a secure credentials store like AWS secrets manager or Hashicorp Vault to store the tokens securely - encrypted and with strict access controls and strong cryptographic keys",
+            "threats": [
+                "short-lived-token-theft"
+            ],
+            "trust_boundary": {
+                "trust_zone_a": "public-internet",
+                "trust_zone_b": "devarmor-backend"
+            },
+            "status": "active",
+            "priority": "medium"
+        },
+        {
+            "symbolic_name": "scoped-secrets-manager-access",
+            "title": "Least privilege credential store access",
+            "description": "Use per-tenant secrets, and least-privilege IAM roles for secret read/write operations.",
+            "threats": [
+                "short-lived-token-theft",
+                "token-memory-exfiltration"
+            ],
+            "trust_boundary": {
+                "trust_zone_a": "atlassian-saas",
+                "trust_zone_b": "devarmor-backend"
+            },
+            "status": "active",
+            "priority": "high"
+        },
+        {
+            "symbolic_name": "api-gateway-throttling",
+            "title": "API Gateway throttling and monitoring",
+            "description": "Configure per-tenant throttles, WAF rules, and alarms on saturation metrics to absorb bursts and alert operators.",
+            "threats": [
+                "api-gateway-resource-exhaustion"
+            ],
+            "trust_boundary": {
+                "trust_zone_a": "atlassian-saas",
+                "trust_zone_b": "devarmor-backend"
+            },
+            "status": "scheduled",
+            "priority": "medium"
+        },
+        {
+            "symbolic_name": "secure-code-controls",
+            "title": "Secure the code by patching and gate code changes",
+            "description": "Use SAST, SCA, peer reviews / secure coding reviews, and rapid patching to eliminate remote-code or memory-corruption bugs that attackers could abuse to dump Atlassian access tokens from memory or hijack payload handlers.",
+            "threats": [
+                "token-memory-exfiltration",
+                "forge-event-payload-poisoning"
+            ],
+            "trust_boundary": {
+                "trust_zone_a": "public-internet",
+                "trust_zone_b": "devarmor-backend"
+            },
+            "status": "active",
+            "priority": "high"
+        },
+        {
+            "symbolic_name": "secrets-access-monitoring",
+            "title": "Monitor Secrets Manager access for anomalies",
+            "description": "Enable detailed CloudTrail logging and anomaly detection to catch attempts to exfiltrate Atlassian access tokens.",
+            "threats": [
+                "short-lived-token-theft"
+            ],
+            "trust_boundary": {
+                "trust_zone_a": "atlassian-saas",
+                "trust_zone_b": "devarmor-backend"
+            },
+            "status": "active",
+            "priority": "medium"
+        }
+    ],
+    "risks": [
+        {
+            "symbolic_name": "forge-payload-system-compromise-risk",
+            "title": "Malicious Forge payload compromises DevArmor backend",
+            "description": "Injected Jira data could bypass validation, trigger server-side code paths, corrupt DevArmor records, or abuse outbound Jira calls—leading to backend compromise and false security outcomes.",
+            "threats": [
+                "forge-event-payload-poisoning"
+            ],
+            "likelihood": "possible",
+            "impact": "major",
+            "impact_description": "DevArmor FastAPI or data stores may be tampered with, causing unauthorized automation, corrupted evidence, or exploit chains into short-lived tokens and Jira outputs.",
+            "score": 12,
+            "level": "high"
+        },
+        {
+            "symbolic_name": "token-unauthorised-use-risk",
+            "title": "Unauthorised use of Atlassian access tokens",
+            "description": "If Atlassian access tokens leak, attackers may impersonate the app or escalate privileges against Jira tenants.",
+            "threats": [
+                "short-lived-token-theft",
+                "token-memory-exfiltration"
+            ],
+            "likelihood": "unlikely",
+            "impact": "major",
+            "impact_description": "Unauthorized updates to Jira or DevArmor data with high operational and reputational impact.",
+            "score": 10,
+            "level": "medium"
+        },
+        {
+            "symbolic_name": "Devarmor-backend-dos-risk",
+            "title": "Devarmor backend becomes unavailable",
+            "description": "Request floods overwhelm the API Gateway, delaying or dropping legitimate review automation.",
+            "threats": [
+                "api-gateway-resource-exhaustion",
+                "forge-event-payload-poisoning"
+            ],
+            "likelihood": "possible",
+            "impact": "moderate",
+            "impact_description": "Customer dissatisfaction due to delayed design reviews and threat models until capacity recovers.",
+            "score": 9,
+            "level": "medium"
+        }
+    ]
 }
