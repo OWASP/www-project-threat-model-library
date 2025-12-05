@@ -1,0 +1,320 @@
+{
+  "$schema": "https://github.com/OWASP/www-project-threat-model-library/blob/v1.0.1/threat-model.schema.json",
+  "version": "1.0",
+  "title": "Cryptocurrency Wallet & Exchange System",
+  "description": "Threat model derived from OWASP-style diagram covering a desktop wallet, mobile app, exchange backend/API, and blockchain interaction.",
+  "scope": {
+    "title": "Electrum Wallet + Exchange + Blockchain Integration",
+    "description": "All components shown in the diagram, including wallet, exchange backend & API, mobile app, and blockchain integration. Out of scope: user’s OS, hardware device, third-party dependencies not shown.",
+    "business_criticality": "high",
+    "data_sensitivity": "high",
+    "exposure": "external",
+   “tier”: “business_critical”
+  },
+  "description": "A data flow diagram of a cryptocurrency wallet submitted by Jonathan Marcil to the OWASP Threat Model Cookbook.",
+    "frozen": false,
+    "release_docs_link": "threat-model-cookbook/Flow Diagram/cryptocurrency-wallet at master · OWASP/threat-model-cookbook",
+    "reviewed_at": "2025-12-05",
+    "repo_link": "OWASP/threat-model-cookbook: This project is about creating and publishing threat model examples.",
+    "diagrams": [
+      {
+          "title": "Cryptocurrency Wallet DFD", "type": "mermaid",
+          "source": "flowchart LR; User --> GUI; User --> Browser; User --> MobileApp; GUI --> Daemon; Daemon -- \"HTTP JSON-RPC (localhost random port)\" --> Browser; Daemon -- \"TCP+SSL 50002<br/>JSON-RPC\" --> ElectrumX; ElectrumX -- SPV --> Blockchain; Browser -- HTTPS --> ExchangeWeb; ExchangeWeb -- HTTPS --> ExchangeBackend; ExchangeBackend -- HTTP --> ExchangeAPI; ExchangeAPI --> MongoDB; ExchangeAPI --> BlockchainIntegration; BlockchainIntegration --> Blockchain; MobileApp -- HTTPS --> ExchangeAPI; TradingBot -- \"WebSocket Secure\" --> ExchangeAPI; ExchangeBackend -. \"MySQL user & config\" .-> ExchangeBackend."
+      }
+],
+"trust_zones": [
+    {
+      "id": "tz_internet",
+      "name": "Public Internet",
+      "description": "Untrusted network over which external components communicate."
+    },
+    {
+      "id": "tz_user_device",
+      "name": "User Device (Localhost / Mobile Device)",
+      "description": "User’s desktop or mobile device — considered partially trusted because the user controls it."
+    },
+    {
+      "id": "tz_exchange_internal",
+      "name": "Exchange Internal Network / Backend",
+      "description": "Internal servers, databases, and backend services."
+    },
+    {
+      "id": "tz_blockchain_network",
+      "name": "Blockchain Network",
+      "description": "Public blockchain network / distributed ledger."
+    }
+  ],
+
+  "trust_boundaries": [
+    {
+      "id": "tb_wallet_to_internet",
+      "from_zone": "tz_user_device",
+      "to_zone": "tz_internet",
+      "description": "Boundary when desktop wallet daemon connects out to ElectrumX or exchange API over Internet."
+    },
+    {
+      "id": "tb_mobile_to_internet",
+      "from_zone": "tz_user_device",
+      "to_zone": "tz_internet",
+      "description": "Boundary for mobile app communicating over Internet."
+    },
+    {
+      "id": "tb_internet_to_exchange",
+      "from_zone": "tz_internet",
+      "to_zone": "tz_exchange_internal",
+      "description": "Boundary at the exchange API/website ingress."
+    },
+    {
+      "id": "tb_exchange_to_blockchain",
+      "from_zone": "tz_exchange_internal",
+      "to_zone": "tz_blockchain_network",
+      "description": "Boundary when exchange backend or blockchain integration module interacts with blockchain network."
+    }
+  ],
+
+  "actors": [
+    {
+      "id": "actor_user",
+      "type": "human",
+      "name": "End-User",
+      "description": "A legitimate user interacting via wallet GUI, browser or mobile app."
+    }
+  ],
+
+  "components": [
+    {
+      "id": "comp_wallet_gui",
+      "name": "Electrum Wallet GUI",
+      "trust_zone": "tz_user_device",
+      "description": "Desktop wallet graphical user interface."
+    },
+    {
+      "id": "comp_wallet_daemon",
+      "name": "Electrum Wallet Daemon",
+      "trust_zone": "tz_user_device",
+      "description": "Local wallet backend process exposing HTTP JSON-RPC on localhost."
+    },
+    {
+      "id": "comp_electrumx",
+      "name": "ElectrumX Server",
+      "trust_zone": "tz_internet",
+      "description": "Third-party SPV server that wallets connect to for blockchain data."
+    },
+    {
+      "id": "comp_browser",
+      "name": "Web Browser",
+      "trust_zone": "tz_user_device",
+      "description": "Browser used to access exchange website or interact with local wallet UI."
+    },
+    {
+      "id": "comp_mobile_app",
+      "name": "Mobile App",
+      "trust_zone": "tz_user_device",
+      "description": "Mobile application variant for wallet or exchange interaction."
+    },
+    {
+      "id": "comp_exchange_website",
+      "name": "Exchange Website (Front-end)",
+      "trust_zone": "tz_internet",
+      "description": "Frontend served to users, interacts with backend via HTTPS."
+    },
+    {
+      "id": "comp_exchange_backend",
+      "name": "Exchange Backend",
+      "trust_zone": "tz_exchange_internal",
+      "description": "Backend server handling business logic, config, user data, etc."
+    },
+    {
+      "id": "comp_exchange_api",
+      "name": "Exchange API (Node.js)",
+      "trust_zone": "tz_exchange_internal",
+      "description": "API server providing programmatic access to exchange functions (e.g. trading, account data)."
+    },
+    {
+      "id": "comp_trading_bot",
+      "name": "Trading Bot",
+      "trust_zone": "tz_user_device",
+      "description": "User-run bot using API keys to interact with Exchange API (via secure WebSocket)."
+    },
+    {
+      "id": "comp_blockchain_integration",
+      "name": "Blockchain Integration Module",
+      "trust_zone": "tz_exchange_internal",
+      "description": "Module that interfaces with blockchain network to read/write blockchain state."
+    }
+  ],
+
+  "data_stores": [
+    {
+      "id": "store_wallet_file",
+      "name": "Wallet File",
+      "trust_zone": "tz_user_device",
+      "description": "Local wallet file stored at rest (should be encrypted)."
+    },
+    {
+      "id": "store_mysql_config",
+      "name": "MySQL (User & Config)",
+      "trust_zone": "tz_exchange_internal",
+      "description": "Relational database storing user accounts and configuration."
+    },
+    {
+      "id": "store_mongodb",
+      "name": "MongoDB (Exchange Data)",
+      "trust_zone": "tz_exchange_internal",
+      "description": "NoSQL store used by Exchange API for trading data, logs, etc."
+    }
+  ],
+
+  "data_sets": [
+    {
+      "id": "ds_wallet_data",
+      "name": "Wallet Data",
+      "stores": ["store_wallet_file"]
+    },
+    {
+      "id": "ds_exchange_user_data",
+      "name": "Exchange User & Config Data",
+      "stores": ["store_mysql_config"]
+    },
+    {
+      "id": "ds_exchange_operational_data",
+      "name": "Exchange Operational Data (trades, logs, metadata)",
+      "stores": ["store_mongodb"]
+    }
+  ],
+
+  "data_flows": [
+    {
+      "id": "df_user_to_browser",
+      "source": "actor_user",
+      "destination": "comp_browser",
+      "description": "User interacts with browser."
+    },
+    {
+      "id": "df_user_to_wallet_gui",
+      "source": "actor_user",
+      "destination": "comp_wallet_gui",
+      "description": "User interacts with wallet GUI."
+    },
+    {
+      "id": "df_wallet_gui_to_daemon",
+      "source": "comp_wallet_gui",
+      "destination": "comp_wallet_daemon",
+      "description": "Local IPC/loopback HTTP JSON-RPC calls from GUI to daemon.",
+      "protocol": "HTTP JSON-RPC",
+      "authentication": "none (localhost)"
+    },
+    {
+      "id": "df_wallet_daemon_to_electrumx",
+      "source": "comp_wallet_daemon",
+      "destination": "comp_electrumx",
+      "description": "Daemon connects to ElectrumX over Internet for SPV / blockchain queries.",
+      "protocol": "TCP + SSL",
+      "authentication": "none",
+      "crosses_trust_boundary": "tb_wallet_to_internet"
+    },
+    {
+      "id": "df_browser_to_exchange_website",
+      "source": "comp_browser",
+      "destination": "comp_exchange_website",
+      "description": "HTTPS requests to exchange website frontend.",
+      "protocol": "HTTPS",
+      "crosses_trust_boundary": "tz_user_device → tz_internet"
+    },
+    {
+      "id": "df_website_to_backend",
+      "source": "comp_exchange_website",
+      "destination": "comp_exchange_backend",
+      "description": "HTTPS requests from front-end to backend.",
+      "protocol": "HTTPS",
+      "crosses_trust_boundary": "tz_internet → tz_exchange_internal"
+    },
+    {
+      "id": "df_trading_bot_to_exchange_api",
+      "source": "comp_trading_bot",
+      "destination": "comp_exchange_api",
+      "description": "Secure WebSocket (or HTTPS) API calls to exchange API.",
+      "protocol": "WebSocket Secure (or HTTPS)",
+      "crosses_trust_boundary": "tz_user_device → tz_exchange_internal"
+    },
+    {
+      "id": "df_backend_to_mongodb",
+      "source": "comp_exchange_backend",
+      "destination": "store_mongodb",
+      "description": "Backend writes/reads operational data to MongoDB."
+    },
+    {
+      "id": "df_backend_to_mysql",
+      "source": "comp_exchange_backend",
+      "destination": "store_mysql_config",
+      "description": "Backend writes/reads user & config data."
+    },
+    {
+      "id": "df_backend_to_blockchain_module",
+      "source": "comp_exchange_backend",
+      "destination": "comp_blockchain_integration",
+      "description": "Backend triggers blockchain read/write operations via integration module."
+    },
+    {
+      "id": "df_blockchain_module_to_network",
+      "source": "comp_blockchain_integration",
+      "destination": "tz_blockchain_network",
+      "description": "Blockchain integration module interacts with public blockchain network.",
+      "crosses_trust_boundary": "tb_exchange_to_blockchain"
+    }
+  ],
+
+  "assumptions": [
+    {
+      "id": "A1",
+      "description": "TLS terminates at load balancer; all front-end ↔ backend communication uses HTTPS.",
+      "validity": "unconfirmed"
+    },
+    {
+      "id": "A2",
+      "description": "User device is not compromised and wallet file encryption (if enabled) protects against local unauthorized access.",
+      "validity": "unconfirmed"
+    }
+  ],
+
+  "threat_personas": [
+    {
+      "id": "tp_external_attacker",
+      "name": "Remote External Attacker",
+      "description": "An unauthenticated adversary on the public Internet trying to intercept or spoof communications."
+    }
+  ],
+
+  "threats": [
+    {
+      "id": "T1",
+      "title": "No authentication for wallet-to-SPV server connection",
+      "description": "The wallet daemon connects to the SPV server over TCP+SSL without authentication, allowing a man-in-the-middle or rogue SPV server to feed false blockchain data.",
+      "persona": "tp_external_attacker",
+      "vector": "Network spoofing / MITM",
+      "weakness": "Missing authentication / server validation",
+      "applies_to": ["comp_wallet_daemon", "comp_electrumx", "df_wallet_daemon_to_electrumx"]
+    }
+  ],
+
+  "controls": [
+    {
+      "id": "C1",
+      "name": "Encrypt wallet file at rest",
+      "description": "Ensure the local wallet file is encrypted to protect against unauthorized access if device is compromised.",
+      "applies_to": ["store_wallet_file"]
+    },
+    {
+      "id": "C2",
+      "name": "Use read-only API key for trading bot",
+      "description": "Restrict API key used by trading bot to read-only permissions to minimize risk of unauthorized operations.",
+      "applies_to": ["comp_trading_bot", "comp_exchange_api"]
+    },
+    {
+      "id": "C3",
+      "name": "Add authentication and host-header validation for exchange API and backend",
+      "description": "Require proper authentication, validate host headers, and enforce TLS to prevent unauthorized or spoofed requests.",
+      "applies_to": ["comp_exchange_api", "comp_exchange_backend", "df_trading_bot_to_exchange_api", "df_website_to_backend"]
+    }
+  ]
+}
