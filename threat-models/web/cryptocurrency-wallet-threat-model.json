@@ -131,22 +131,25 @@
   
     "data_stores": [
       {
-        "id": "store_wallet_file",
-        "name": "Wallet File",
+        "symbolic_name": "store_wallet_file",
+        "title": "Wallet File",
         "trust_zone": "tz_user_device",
-        "description": "Local wallet file stored at rest (should be encrypted)."
+        "description": "Local wallet file stored at rest (should be encrypted).",
+        "type": "file"
       },
       {
-        "id": "store_mysql_config",
-        "name": "MySQL (User & Config)",
+        "symbolic_name": "store_mysql_config",
+        "title": "MySQL (User & Config)",
         "trust_zone": "tz_exchange_internal",
-        "description": "Relational database storing user accounts and configuration."
+        "description": "Relational database storing user accounts and configuration.",
+        "type": "database"
       },
       {
-        "id": "store_mongodb",
-        "name": "MongoDB (Exchange Data)",
+        "symbolic_name": "store_mongodb",
+        "title": "MongoDB (Exchange Data)",
         "trust_zone": "tz_exchange_internal",
-        "description": "NoSQL store used by Exchange API for trading data, logs, etc."
+        "description": "NoSQL store used by Exchange API for trading data, logs, etc.",
+        "type": "database"
       }
     ],
   
