@@ -68,62 +68,62 @@
   
     "components": [
       {
-        "id": "comp_wallet_gui",
-        "name": "Electrum Wallet GUI",
+        "symbolic_name": "comp_wallet_gui",
+        "title": "Electrum Wallet GUI",
         "trust_zone": "tz_user_device",
         "description": "Desktop wallet graphical user interface."
       },
       {
-        "id": "comp_wallet_daemon",
-        "name": "Electrum Wallet Daemon",
+        "symbolic_name": "comp_wallet_daemon",
+        "title": "Electrum Wallet Daemon",
         "trust_zone": "tz_user_device",
         "description": "Local wallet backend process exposing HTTP JSON-RPC on localhost."
       },
       {
-        "id": "comp_electrumx",
-        "name": "ElectrumX Server",
+        "symbolic_name": "comp_electrumx",
+        "title": "ElectrumX Server",
         "trust_zone": "tz_internet",
         "description": "Third-party SPV server that wallets connect to for blockchain data."
       },
       {
-        "id": "comp_browser",
-        "name": "Web Browser",
+        "symbolic_name": "comp_browser",
+        "title": "Web Browser",
         "trust_zone": "tz_user_device",
         "description": "Browser used to access exchange website or interact with local wallet UI."
       },
       {
-        "id": "comp_mobile_app",
-        "name": "Mobile App",
+        "symbolic_name": "comp_mobile_app",
+        "title": "Mobile App",
         "trust_zone": "tz_user_device",
         "description": "Mobile application variant for wallet or exchange interaction."
       },
       {
-        "id": "comp_exchange_website",
-        "name": "Exchange Website (Front-end)",
+        "symbolic_name": "comp_exchange_website",
+        "title": "Exchange Website (Front-end)",
         "trust_zone": "tz_internet",
         "description": "Frontend served to users, interacts with backend via HTTPS."
       },
       {
-        "id": "comp_exchange_backend",
-        "name": "Exchange Backend",
+        "symbolic_name": "comp_exchange_backend",
+        "title": "Exchange Backend",
         "trust_zone": "tz_exchange_internal",
         "description": "Backend server handling business logic, config, user data, etc."
       },
       {
-        "id": "comp_exchange_api",
-        "name": "Exchange API (Node.js)",
+        "symbolic_name": "comp_exchange_api",
+        "title": "Exchange API (Node.js)",
         "trust_zone": "tz_exchange_internal",
         "description": "API server providing programmatic access to exchange functions (e.g. trading, account data)."
       },
       {
-        "id": "comp_trading_bot",
-        "name": "Trading Bot",
+        "symbolic_name": "comp_trading_bot",
+        "title": "Trading Bot",
         "trust_zone": "tz_user_device",
         "description": "User-run bot using API keys to interact with Exchange API (via secure WebSocket)."
       },
       {
-        "id": "comp_blockchain_integration",
-        "name": "Blockchain Integration Module",
+        "symbolic_name": "comp_blockchain_integration",
+        "title": "Blockchain Integration Module",
         "trust_zone": "tz_exchange_internal",
         "description": "Module that interfaces with blockchain network to read/write blockchain state."
       }
