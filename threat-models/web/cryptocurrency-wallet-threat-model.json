@@ -293,12 +293,10 @@
   
     "assumptions": [
       {
-        "id": "A1",
         "description": "TLS terminates at load balancer; all front-end ↔ backend communication uses HTTPS.",
         "validity": "unconfirmed"
       },
       {
-        "id": "A2",
         "description": "User device is not compromised and wallet file encryption (if enabled) protects against local unauthorized access.",
         "validity": "unconfirmed"
       }
@@ -306,27 +304,31 @@
   
     "threat_personas": [
       {
-        "id": "tp_external_attacker",
-        "name": "Remote External Attacker",
-        "description": "An unauthenticated adversary on the public Internet trying to intercept or spoof communications."
+        "symbolic_name": "tp_external_attacker",
+        "title": "Remote External Attacker",
+        "description": "An unauthenticated adversary on the public Internet trying to intercept or spoof communications.",
+        "is_person": true,
+        "skill_level": "intermediate",
+        "access_level": "public",
+        "malicious_intent": true,
+        "applicability_to_org": "high" 
       }
     ],
   
     "threats": [
       {
-        "id": "T1",
+        "symbolic_name": "T1",
         "title": "No authentication for wallet-to-SPV server connection",
         "description": "The wallet daemon connects to the SPV server over TCP+SSL without authentication, allowing a man-in-the-middle or rogue SPV server to feed false blockchain data.",
-        "persona": "tp_external_attacker",
-        "vector": "Network spoofing / MITM",
+        "threat_persona": "tp_external_attacker",
+        "event": "Network spoofing / MITM",
         "weakness": "Missing authentication / server validation",
-        "applies_to": ["comp_wallet_daemon", "comp_electrumx", "df_wallet_daemon_to_electrumx"]
+        "sources": ["comp_wallet_daemon", "comp_electrumx", "df_wallet_daemon_to_electrumx"]
       }
     ],
   
     "controls": [
       {
-        "id": "C1",
         "symbolic_name": "Encrypt wallet file at rest",
         "title": "Encrypt wallet file at rest",
         "description": "Ensure the local wallet file is encrypted to protect against unauthorized access if device is compromised.",
@@ -335,7 +337,6 @@
         "priority": "high"
       },
       {
-        "id": "C2",
         "symbolic_name": "Use read-only API key for trading bot",
         "title": "Use read-only API key for trading bot",
         "description": "Restrict API key used by trading bot to read-only permissions to minimize risk of unauthorized operations.",
@@ -344,11 +345,12 @@
         "priority": "high"
       },
       {
-        "id": "C3",
         "symbolic_name": "Add authentication and host-header validation for exchange API and backend",
         "title": "Add authentication and host-header validation for exchange API and backend",
         "description": "Require proper authentication, validate host headers, and enforce TLS to prevent unauthorized or spoofed requests.",
-        "applies_to": ["comp_exchange_api", "comp_exchange_backend", "df_trading_bot_to_exchange_api", "df_website_to_backend"]
+        "threats": ["comp_exchange_api", "comp_exchange_backend", "df_trading_bot_to_exchange_api", "df_website_to_backend"],
+        "status": "in_progress",
+        "priority": "high"
       }
     ]
 }
