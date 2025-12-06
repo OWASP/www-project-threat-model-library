@@ -1,8 +1,6 @@
 {
     "$schema": "https://github.com/OWASP/www-project-threat-model-library/blob/v1.0.1/threat-model.schema.json",
     "version": "1.0",
-    "title": "Cryptocurrency Wallet & Exchange System",
-    "description": "Threat model derived from OWASP-style diagram covering a desktop wallet, mobile app, exchange backend/API, and blockchain interaction.",
     "scope": {
       "title": "Electrum Wallet + Exchange + Blockchain Integration",
       "description": "All components shown in the diagram, including wallet, exchange backend & API, mobile app, and blockchain integration. Out of scope: user’s OS, hardware device, third-party dependencies not shown.",
@@ -28,26 +26,25 @@
     ],
     "trust_zones": [
       {
-        "id": "tz_user_device",
-        "name": "User Device",
+        "symbolic_name": "tz-user-device",
+        "title": "User Device",
         "description": "The user's device, including the wallet, browser, and mobile app."
       },
       {
-        "id": "tz_internet",
-        "name": "Internet",
+        "symbolic_name": "tz-internet",
+        "title": "Internet",
         "description": "The public Internet."
       },
       {
-        "id": "tz_exchange_internal",
-        "name": "Exchange Internal",
+        "symbolic_name": "tz-exchange-internal",
+        "title": "Exchange Internal",
         "description": "The internal network of the exchange."
       }
     ],
     "trust_boundaries": [
       {
-        "id": "tb_wallet_to_internet",
-        "trust_zone_a": "tz_user_device",
-        "trust_zone_b": "tz_internet",
+        "trust_zone_a": "tz-user-device",
+        "trust_zone_b": "tz-internet",
         "access_control_methods": [
             "abac"
         ],
@@ -59,148 +56,165 @@
   
     "actors": [
       {
-        "id": "actor_user",
-        "type": "human",
-        "name": "End-User",
-        "description": "A legitimate user interacting via wallet GUI, browser or mobile app."
+        "symbolic_name": "actor-user",
+        "title": "End User",
+        "type": "user",
+        "permissions": "Public unauthenticated user",
+        "description": "A legitimate user interacting via wallet GUI, browser or mobile app.",
+        "trust_zone": "tz-user-device"
       }
     ],
   
     "components": [
       {
-        "symbolic_name": "comp_wallet_gui",
+        "symbolic_name": "comp-wallet-gui",
         "title": "Electrum Wallet GUI",
-        "trust_zone": "tz_user_device",
+        "trust_zone": "tz-user-device",
         "description": "Desktop wallet graphical user interface."
       },
       {
-        "symbolic_name": "comp_wallet_daemon",
+        "symbolic_name": "comp-wallet-daemon",
         "title": "Electrum Wallet Daemon",
-        "trust_zone": "tz_user_device",
+        "trust_zone": "tz-user-device",
         "description": "Local wallet backend process exposing HTTP JSON-RPC on localhost."
       },
       {
-        "symbolic_name": "comp_electrumx",
+        "symbolic_name": "comp-electrumx",
         "title": "ElectrumX Server",
-        "trust_zone": "tz_internet",
+        "trust_zone": "tz-internet",
         "description": "Third-party SPV server that wallets connect to for blockchain data."
       },
       {
-        "symbolic_name": "comp_browser",
+        "symbolic_name": "comp-browser",
         "title": "Web Browser",
-        "trust_zone": "tz_user_device",
+        "trust_zone": "tz-user-device",
         "description": "Browser used to access exchange website or interact with local wallet UI."
       },
       {
-        "symbolic_name": "comp_mobile_app",
+        "symbolic_name": "comp-mobile-app",
         "title": "Mobile App",
-        "trust_zone": "tz_user_device",
+        "trust_zone": "tz-user-device",
         "description": "Mobile application variant for wallet or exchange interaction."
       },
       {
-        "symbolic_name": "comp_exchange_website",
+        "symbolic_name": "comp-exchange-website",
         "title": "Exchange Website (Front-end)",
-        "trust_zone": "tz_internet",
+        "trust_zone": "tz-internet",
         "description": "Frontend served to users, interacts with backend via HTTPS."
       },
       {
-        "symbolic_name": "comp_exchange_backend",
+        "symbolic_name": "comp-exchange-backend",
         "title": "Exchange Backend",
-        "trust_zone": "tz_exchange_internal",
+        "trust_zone": "tz-exchange-internal",
         "description": "Backend server handling business logic, config, user data, etc."
       },
       {
-        "symbolic_name": "comp_exchange_api",
+        "symbolic_name": "comp-exchange-api",
         "title": "Exchange API (Node.js)",
-        "trust_zone": "tz_exchange_internal",
+        "trust_zone": "tz-exchange-internal",
         "description": "API server providing programmatic access to exchange functions (e.g. trading, account data)."
       },
       {
-        "symbolic_name": "comp_trading_bot",
+        "symbolic_name": "comp-trading-bot",
         "title": "Trading Bot",
-        "trust_zone": "tz_user_device",
+        "trust_zone": "tz-user-device",
         "description": "User-run bot using API keys to interact with Exchange API (via secure WebSocket)."
       },
       {
-        "symbolic_name": "comp_blockchain_integration",
+        "symbolic_name": "comp-blockchain-integration",
         "title": "Blockchain Integration Module",
-        "trust_zone": "tz_exchange_internal",
+        "trust_zone": "tz-exchange-internal",
         "description": "Module that interfaces with blockchain network to read/write blockchain state."
       }
     ],
   
     "data_stores": [
       {
-        "symbolic_name": "store_wallet_file",
+        "symbolic_name": "store-wallet-file",
         "title": "Wallet File",
-        "trust_zone": "tz_user_device",
+        "trust_zone": "tz-user-device",
         "description": "Local wallet file stored at rest (should be encrypted).",
-        "type": "file"
+        "type": "document"
       },
       {
-        "symbolic_name": "store_mysql_config",
+        "symbolic_name": "store-mysql-config",
         "title": "MySQL (User & Config)",
-        "trust_zone": "tz_exchange_internal",
+        "trust_zone": "tz-exchange-internal",
         "description": "Relational database storing user accounts and configuration.",
-        "type": "database"
+        "type": "sql"
       },
       {
-        "symbolic_name": "store_mongodb",
+        "symbolic_name": "store-mongodb",
         "title": "MongoDB (Exchange Data)",
-        "trust_zone": "tz_exchange_internal",
+        "trust_zone": "tz-exchange-internal",
         "description": "NoSQL store used by Exchange API for trading data, logs, etc.",
-        "type": "database"
+        "type": "object"
       }
     ],
   
     "data_sets": [
-      {
-        "symbolic_name": "ds_wallet_data",
+        {
+        "symbolic_name": "ds-wallet-data",
         "title": "Wallet Data",
         "description": "Data stored in the wallet file.",
-        "placements": ["store_wallet_file"],
+        "placements": [
+            {
+                "data_store": "store-wallet-file",
+                "encrypted": true
+            }
+        ],
         "data_sensitivity": ["cred"]
       },
       {
-        "symbolic_name": "ds_exchange_user_data",
+        "symbolic_name": "ds-exchange-user-data",
         "title": "Exchange User & Config Data",
         "description": "Data stored in the MySQL database.",
-        "placements": ["store_mysql_config"],
+        "placements": [
+            {
+                "data_store": "store-mysql-config",
+                "encrypted": true
+            }
+        ],
         "data_sensitivity": ["cred"]
       },
       {
-        "symbolic_name": "ds_exchange_operational_data",
+        "symbolic_name": "ds-exchange-operational-data",
         "title": "Exchange Operational Data (trades, logs, metadata)",
         "description": "Data stored in the MongoDB database.",
-        "placements": ["store_mongodb"],
+        "placements": [
+            {
+                "data_store": "store-mongodb",
+                "encrypted": true
+            }
+        ],
         "data_sensitivity": ["biz"]
       }
     ],
   
     "data_flows": [
       {
-        "symbolic_name": "df_user_to_browser",
+        "symbolic_name": "df-user-to-browser",
         "title": "User to Browser",
-        "source": "actor_user",
-        "destination": "comp_browser",
+        "source": "actor-user",
+        "destination": "comp-   browser",
         "description": "User interacts with browser.",
         "has_sensitive_data": false,
         "encrypted": true
       },
       {
-        "symbolic_name": "df_user_to_wallet_gui",
+        "symbolic_name": "df-user-to-wallet-gui",
         "title": "User to Wallet GUI",
-        "source": "actor_user",
-        "destination": "comp_wallet_gui",
+        "source": "actor-user",
+        "destination": "comp-wallet-gui",
         "description": "User interacts with wallet GUI.",
         "has_sensitive_data": false,
         "encrypted": true
       },
       {
-        "symbolic_name": "df_wallet_gui_to_daemon",
+        "symbolic_name": "df-wallet-gui-to-daemon",
         "title": "Wallet GUI to Daemon",
-        "source": "comp_wallet_gui",
-        "destination": "comp_wallet_daemon",
+        "source": "comp-wallet-gui",
+        "destination": "comp-wallet-daemon",
         "description": "Local IPC/loopback HTTP JSON-RPC calls from GUI to daemon.",
         "protocol": "HTTP JSON-RPC",
         "authentication": "none (localhost)",
@@ -208,33 +222,33 @@
         "encrypted": true
       },
       {
-        "symbolic_name": "df_wallet_daemon_to_electrumx",
+        "symbolic_name": "df-wallet-daemon-to-electrumx",
         "title": "Wallet Daemon to ElectrumX",
-        "source": "comp_wallet_daemon",
-        "destination": "comp_electrumx",
+        "source": "comp-wallet-daemon",
+        "destination": "comp-electrumx",
         "description": "Daemon connects to ElectrumX over Internet for SPV / blockchain queries.",
         "protocol": "TCP + SSL",
         "authentication": "none",
-        "crosses_trust_boundary": "tb_wallet_to_internet",
+        "crosses_trust_boundary": "tb-wallet-to-internet",
         "has_sensitive_data": false,
         "encrypted": true
       },
       {
-        "symbolic_name": "df_browser_to_exchange_website",
+        "symbolic_name": "df-browser-to-exchange-website",
         "title": "Browser to Exchange Website",
-        "source": "comp_browser",
-        "destination": "comp_exchange_website",
+        "source": "comp-browser",
+        "destination": "comp-exchange-website",
         "description": "HTTPS requests to exchange website frontend.",
         "protocol": "HTTPS",
-        "crosses_trust_boundary": "tz_user_device → tz_internet",
+        "crosses_trust_boundary": "tz-user-device → tz-internet",
         "has_sensitive_data": false,
         "encrypted": true
       },
       {
-        "symbolic_name": "df_website_to_backend",
+        "symbolic_name": "df-website-to-backend",
         "title": "Website to Backend",
-        "source": "comp_exchange_website",
-        "destination": "comp_exchange_backend",
+        "source": "comp-exchange-website",
+        "destination": "comp-exchange-backend",
         "description": "HTTPS requests from front-end to backend.",
         "protocol": "HTTPS",
         "crosses_trust_boundary": "tz_internet → tz_exchange_internal",
@@ -244,48 +258,48 @@
       {
         "symbolic_name": "df_trading_bot_to_exchange_api",
         "title": "Trading Bot to Exchange API",
-        "source": "comp_trading_bot",
+        "source": "comp-trading-bot",
         "destination": "comp_exchange_api",
         "description": "Secure WebSocket (or HTTPS) API calls to exchange API.",
         "protocol": "WebSocket Secure (or HTTPS)",
-        "crosses_trust_boundary": "tz_user_device → tz_exchange_internal",
+        "crosses_trust_boundary": "tz-user-device → tz-exchange-internal",
         "has_sensitive_data": false,
         "encrypted": true
       },
       {
-        "symbolic_name": "df_backend_to_mongodb",
+        "symbolic_name": "df-backend-to-mongodb",
         "title": "Backend to MongoDB",
-        "source": "comp_exchange_backend",
-        "destination": "store_mongodb",
+        "source": "comp-exchange-backend",
+        "destination": "store-mongodb",
         "description": "Backend writes/reads operational data to MongoDB.",
         "has_sensitive_data": false,
         "encrypted": true
       },
       {
-        "symbolic_name": "df_backend_to_mysql",
+        "symbolic_name": "df-backend-to-mysql",
         "title": "Backend to MySQL",
-        "source": "comp_exchange_backend",
-        "destination": "store_mysql_config",
+        "source": "comp-exchange-backend",
+        "destination": "store-mysql-config",
         "description": "Backend writes/reads user & config data.",
         "has_sensitive_data": false,
         "encrypted": true
       },
       {
-        "symbolic_name": "df_backend_to_blockchain_module",
+        "symbolic_name": "df-backend-to-blockchain-module",
         "title": "Backend to Blockchain Module",
-        "source": "comp_exchange_backend",
-        "destination": "comp_blockchain_integration",
+        "source": "comp-exchange-backend",
+        "destination": "comp-blockchain-integration",
         "description": "Backend triggers blockchain read/write operations via integration module.",
         "has_sensitive_data": false,
         "encrypted": true
       },
       {
-        "symbolic_name": "df_blockchain_module_to_network",
+        "symbolic_name": "df-blockchain-module-to-network",
         "title": "Blockchain Module to Network",
-        "source": "comp_blockchain_integration",
-        "destination": "tz_blockchain_network",
+        "source": "comp-blockchain-integration",
+        "destination": "tz-blockchain-network",
         "description": "Blockchain integration module interacts with public blockchain network.",
-        "crosses_trust_boundary": "tb_exchange_to_blockchain",
+        "crosses_trust_boundary": "tb-exchange-to-blockchain",
         "has_sensitive_data": false,
         "encrypted": true
       }
@@ -304,7 +318,7 @@
   
     "threat_personas": [
       {
-        "symbolic_name": "tp_external_attacker",
+        "symbolic_name": "tp-external-attacker",
         "title": "Remote External Attacker",
         "description": "An unauthenticated adversary on the public Internet trying to intercept or spoof communications.",
         "is_person": true,
@@ -333,7 +347,7 @@
         "title": "Encrypt wallet file at rest",
         "description": "Ensure the local wallet file is encrypted to protect against unauthorized access if device is compromised.",
         "threats": ["store_wallet_file"],
-        "status": "in_progress",
+        "status": "under_review",
         "priority": "high"
       },
       {
