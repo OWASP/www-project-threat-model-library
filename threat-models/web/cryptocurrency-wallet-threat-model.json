@@ -155,19 +155,25 @@
   
     "data_sets": [
       {
-        "id": "ds_wallet_data",
-        "name": "Wallet Data",
-        "stores": ["store_wallet_file"]
+        "symbolic_name": "ds_wallet_data",
+        "title": "Wallet Data",
+        "description": "Data stored in the wallet file.",
+        "placements": ["store_wallet_file"],
+        "data_sensitivity": ["cred"]
       },
       {
-        "id": "ds_exchange_user_data",
-        "name": "Exchange User & Config Data",
-        "stores": ["store_mysql_config"]
+        "symbolic_name": "ds_exchange_user_data",
+        "title": "Exchange User & Config Data",
+        "description": "Data stored in the MySQL database.",
+        "placements": ["store_mysql_config"],
+        "data_sensitivity": ["cred"]
       },
       {
-        "id": "ds_exchange_operational_data",
-        "name": "Exchange Operational Data (trades, logs, metadata)",
-        "stores": ["store_mongodb"]
+        "symbolic_name": "ds_exchange_operational_data",
+        "title": "Exchange Operational Data (trades, logs, metadata)",
+        "description": "Data stored in the MongoDB database.",
+        "placements": ["store_mongodb"],
+        "data_sensitivity": ["biz"]
       }
     ],
   
