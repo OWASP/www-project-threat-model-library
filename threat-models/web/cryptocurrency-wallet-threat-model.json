@@ -49,30 +49,11 @@
         "trust_zone_a": "tz_user_device",
         "trust_zone_b": "tz_internet",
         "access_control_methods": [
-            "rbac",
-            "acl"
+            "abac"
         ],
         "authentication_methods": [
-
+            "none"
         ]
-      },
-      {
-        "id": "tb_mobile_to_internet",
-        "from_zone": "tz_user_device",
-        "to_zone": "tz_internet",
-        "description": "Boundary for mobile app communicating over Internet."
-      },
-      {
-        "id": "tb_internet_to_exchange",
-        "from_zone": "tz_internet",
-        "to_zone": "tz_exchange_internal",
-        "description": "Boundary at the exchange API/website ingress."
-      },
-      {
-        "id": "tb_exchange_to_blockchain",
-        "from_zone": "tz_exchange_internal",
-        "to_zone": "tz_blockchain_network",
-        "description": "Boundary when exchange backend or blockchain integration module interacts with blockchain network."
       }
     ],
   
