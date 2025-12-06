@@ -179,82 +179,115 @@
   
     "data_flows": [
       {
-        "id": "df_user_to_browser",
+        "symbolic_name": "df_user_to_browser",
+        "title": "User to Browser",
         "source": "actor_user",
         "destination": "comp_browser",
-        "description": "User interacts with browser."
+        "description": "User interacts with browser.",
+        "has_sensitive_data": false,
+        "encrypted": true
       },
       {
-        "id": "df_user_to_wallet_gui",
+        "symbolic_name": "df_user_to_wallet_gui",
+        "title": "User to Wallet GUI",
         "source": "actor_user",
         "destination": "comp_wallet_gui",
-        "description": "User interacts with wallet GUI."
+        "description": "User interacts with wallet GUI.",
+        "has_sensitive_data": false,
+        "encrypted": true
       },
       {
-        "id": "df_wallet_gui_to_daemon",
+        "symbolic_name": "df_wallet_gui_to_daemon",
+        "title": "Wallet GUI to Daemon",
         "source": "comp_wallet_gui",
         "destination": "comp_wallet_daemon",
         "description": "Local IPC/loopback HTTP JSON-RPC calls from GUI to daemon.",
         "protocol": "HTTP JSON-RPC",
-        "authentication": "none (localhost)"
+        "authentication": "none (localhost)",
+        "has_sensitive_data": false,
+        "encrypted": true
       },
       {
-        "id": "df_wallet_daemon_to_electrumx",
+        "symbolic_name": "df_wallet_daemon_to_electrumx",
+        "title": "Wallet Daemon to ElectrumX",
         "source": "comp_wallet_daemon",
         "destination": "comp_electrumx",
         "description": "Daemon connects to ElectrumX over Internet for SPV / blockchain queries.",
         "protocol": "TCP + SSL",
         "authentication": "none",
-        "crosses_trust_boundary": "tb_wallet_to_internet"
+        "crosses_trust_boundary": "tb_wallet_to_internet",
+        "has_sensitive_data": false,
+        "encrypted": true
       },
       {
-        "id": "df_browser_to_exchange_website",
+        "symbolic_name": "df_browser_to_exchange_website",
+        "title": "Browser to Exchange Website",
         "source": "comp_browser",
         "destination": "comp_exchange_website",
         "description": "HTTPS requests to exchange website frontend.",
         "protocol": "HTTPS",
-        "crosses_trust_boundary": "tz_user_device → tz_internet"
+        "crosses_trust_boundary": "tz_user_device → tz_internet",
+        "has_sensitive_data": false,
+        "encrypted": true
       },
       {
-        "id": "df_website_to_backend",
+        "symbolic_name": "df_website_to_backend",
+        "title": "Website to Backend",
         "source": "comp_exchange_website",
         "destination": "comp_exchange_backend",
         "description": "HTTPS requests from front-end to backend.",
         "protocol": "HTTPS",
-        "crosses_trust_boundary": "tz_internet → tz_exchange_internal"
+        "crosses_trust_boundary": "tz_internet → tz_exchange_internal",
+        "has_sensitive_data": false,
+        "encrypted": true
       },
       {
-        "id": "df_trading_bot_to_exchange_api",
+        "symbolic_name": "df_trading_bot_to_exchange_api",
+        "title": "Trading Bot to Exchange API",
         "source": "comp_trading_bot",
         "destination": "comp_exchange_api",
         "description": "Secure WebSocket (or HTTPS) API calls to exchange API.",
         "protocol": "WebSocket Secure (or HTTPS)",
-        "crosses_trust_boundary": "tz_user_device → tz_exchange_internal"
+        "crosses_trust_boundary": "tz_user_device → tz_exchange_internal",
+        "has_sensitive_data": false,
+        "encrypted": true
       },
       {
-        "id": "df_backend_to_mongodb",
+        "symbolic_name": "df_backend_to_mongodb",
+        "title": "Backend to MongoDB",
         "source": "comp_exchange_backend",
         "destination": "store_mongodb",
-        "description": "Backend writes/reads operational data to MongoDB."
+        "description": "Backend writes/reads operational data to MongoDB.",
+        "has_sensitive_data": false,
+        "encrypted": true
       },
       {
-        "id": "df_backend_to_mysql",
+        "symbolic_name": "df_backend_to_mysql",
+        "title": "Backend to MySQL",
         "source": "comp_exchange_backend",
         "destination": "store_mysql_config",
-        "description": "Backend writes/reads user & config data."
+        "description": "Backend writes/reads user & config data.",
+        "has_sensitive_data": false,
+        "encrypted": true
       },
       {
-        "id": "df_backend_to_blockchain_module",
+        "symbolic_name": "df_backend_to_blockchain_module",
+        "title": "Backend to Blockchain Module",
         "source": "comp_exchange_backend",
         "destination": "comp_blockchain_integration",
-        "description": "Backend triggers blockchain read/write operations via integration module."
+        "description": "Backend triggers blockchain read/write operations via integration module.",
+        "has_sensitive_data": false,
+        "encrypted": true
       },
       {
-        "id": "df_blockchain_module_to_network",
+        "symbolic_name": "df_blockchain_module_to_network",
+        "title": "Blockchain Module to Network",
         "source": "comp_blockchain_integration",
         "destination": "tz_blockchain_network",
         "description": "Blockchain integration module interacts with public blockchain network.",
-        "crosses_trust_boundary": "tb_exchange_to_blockchain"
+        "crosses_trust_boundary": "tb_exchange_to_blockchain",
+        "has_sensitive_data": false,
+        "encrypted": true
       }
     ],
   
