@@ -18,9 +18,9 @@
     {
       "symbolic_name": "devarmor-jira-integration",
       "path": "threat-models/third-party-integrations/devarmor-jira-integration.json",
-      "category": "third-party-integrations",
+      "category": "web-applications",
       "tags": ["secrets-management"],
-      "description": "Integration of the Forge app witht the Devarmor backend, used to create and store Design Reviews"
+      "description": "Integration of the Forge app with the Devarmor backend, used to create and store Design Reviews"
     }
   ]
 }
