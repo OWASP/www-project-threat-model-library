@@ -14,9 +14,7 @@
     },
     "description": "The DevArmor Forge App extends Jira Cloud so customers' product teams can raise security review requests without leaving their workflow. Forge UI modules and remote handlers run on Atlassian premises, issue short-lived installation tokens, and invoke a DevArmor backend in AWS through an API Gateway protected by a custom authorizer. The DevArmor backend stores external organization metadata in PostgreSQL and caches Atlassian access tokens in Secrets Manager before calling the Jira REST API to push status updates.",
     "frozen": false,
-    "release_docs_link": "",
     "reviewed_at": "2025-10-26",
-    "repo_link": "",
     "diagrams": [
         {
             "title": "Forge integration context",
@@ -251,7 +249,7 @@
             "description": "Forge UI submits review requests to the DevArmor API Gateway using Atlassian-signed tokens.",
             "source": {
                 "type": "component",
-                "object": "forge-app-ui"
+                "object": "forge-app"
             },
             "destination": {
                 "type": "component",
@@ -407,7 +405,7 @@
             "title": "Malicious issue payload poisons Forge events",
             "description": "A tenant power user crafts Jira issue data or comments containing oversized or injection payloads that the Forge remote handler forwards to DevArmor.",
             "components_affected": [
-                "forge-app-ui",
+                "forge-app",
                 "forge-remote-handler",
                 "fastapi-service"
             ],
@@ -622,7 +620,7 @@
             "level": "medium"
         },
         {
-            "symbolic_name": "Devarmor-backend-dos-risk",
+            "symbolic_name": "devarmor-backend-dos-risk",
             "title": "Devarmor backend becomes unavailable",
             "description": "Request floods overwhelm the API Gateway, delaying or dropping legitimate review automation.",
             "threats": [
