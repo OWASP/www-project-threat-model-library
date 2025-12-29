@@ -42,7 +42,8 @@
             "enum": [
               "web-applications",
               "infrastructure",
-              "ai-ml-systems"
+              "ai-ml-systems",
+              "third-party-integrations"
             ],
             "description": "Top-level category of the model."
           },
