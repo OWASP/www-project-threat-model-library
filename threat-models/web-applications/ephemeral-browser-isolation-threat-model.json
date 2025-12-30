@@ -13,7 +13,7 @@
     "exposure": "external",
     "tier": "business_critical"
   },
-  "description": "Privacy-focused disposable browser environment with container-based session isolation",
+  "description": "Disposable browser isolation service for secure browsing sessions",
   "frozen": false,
   "reviewed_at": "2025-12-30",
   "diagrams": [
@@ -223,7 +223,7 @@
           "encrypted": false
         }
       ],
-      "record_count": 10000,
+      "record_count": 50000,
       "data_sensitivity": [
         "pii",
         "cred",
@@ -243,7 +243,7 @@
           "encrypted": true
         }
       ],
-      "record_count": 10000,
+      "record_count": 25000,
       "data_sensitivity": [
         "cred",
         "pii"
@@ -483,7 +483,7 @@
       "validity": "confirmed"
     },
     {
-      "description": "Session streaming uses end-to-end encryption, preventing man-in-the-middle attacks on browser output.",
+      "description": "Session streaming uses end-to-end encryption between encoder and client, though control plane can access unencrypted frames for policy enforcement.",
       "validity": "confirmed"
     },
     {
@@ -501,6 +501,10 @@
     {
       "description": "Network egress from containers can be filtered but performance impacts are acceptable.",
       "validity": "confirmed"
+    },
+    {
+      "description": "WebRTC and UDP-based protocols may bypass network filtering; additional controls needed for comprehensive egress filtering.",
+      "validity": "unconfirmed"
     }
   ],
   "threat_personas": [
@@ -909,8 +913,8 @@
     },
     {
       "symbolic_name": "audit-logging",
-      "title": "Comprehensive audit logging of session lifecycle",
-      "description": "Log all session creation, authentication events, policy violations, and termination with tamper-evident storage for forensics.",
+      "title": "Audit logging of session lifecycle",
+      "description": "Log session creation, authentication events, policy violations, and termination to tamper-evident storage.",
       "threats": [
         "control-plane-unauthorized-session",
         "ttl-bypass-session-extension"
@@ -991,6 +995,21 @@
         "ttl-bypass-session-extension"
       ],
       "status": "suggested",
+      "priority": "medium"
+    },
+    {
+      "symbolic_name": "webrtc-udp-filtering",
+      "title": "WebRTC and UDP protocol filtering",
+      "description": "Block or restrict WebRTC, WebSockets, and UDP-based protocols that could bypass standard HTTP egress filtering.",
+      "threats": [
+        "malware-persistence",
+        "streaming-layer-exposure"
+      ],
+      "trust_boundary": {
+        "trust_zone_a": "container-runtime",
+        "trust_zone_b": "public-internet"
+      },
+      "status": "under_review",
       "priority": "medium"
     }
   ],
