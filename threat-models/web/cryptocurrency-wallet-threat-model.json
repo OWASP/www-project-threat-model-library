@@ -197,11 +197,11 @@
         "title": "User to Browser",
         "source": {
             "type": "actor",
-            "object": "user"
+            "object": "actor-user"
         },
         "destination": {
             "type": "component",
-            "object": "browser"
+            "object": "comp-browser"
         },
         "description": "User interacts with browser.",
         "has_sensitive_data": false,
@@ -212,7 +212,7 @@
         "title": "User to Wallet GUI",
         "source":  {
             "type": "actor",
-            "object": "user"
+            "object": "actor-user"
         },
         "destination": {
             "type": "component",
