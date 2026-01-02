@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout all files
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.1
 
       - name: Check index
         uses: dsanders11/json-schema-validate-action@v1.4.0
