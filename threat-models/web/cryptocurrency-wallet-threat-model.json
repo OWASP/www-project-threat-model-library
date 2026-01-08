@@ -305,7 +305,7 @@
             "object": "comp-exchange-backend"
         },
         "destination":  {
-            "type": "component",
+            "type": "data_store",
             "object": "store-mongodb"
         },
         "description": "Backend writes/reads operational data to MongoDB.",
@@ -320,7 +320,7 @@
             "object": "comp-exchange-backend"
         },
         "destination":  {
-            "type": "component",
+            "type": "data_store",
             "object": "store-mysql-config"
         },
         "description": "Backend writes/reads user & config data.",
