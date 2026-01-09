@@ -347,11 +347,11 @@
         "title": "Blockchain Module to Network",
         "source":  {
             "type": "component",
-            "object": "comp-blockchain-integration"
+            "object": "comp-wallet-daemon"
         },
         "destination": {
-            "type": "trust-zone",
-            "object": "tz-blockchain-network"
+            "type": "component",
+            "object": "comp-blockchain-integration"
         },
         "description": "Blockchain integration module interacts with public blockchain network.",
         "has_sensitive_data": false,
