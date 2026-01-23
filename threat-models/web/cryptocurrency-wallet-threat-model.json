@@ -384,14 +384,48 @@
     ],
   
     "threats": [
-      {
-        "symbolic_name": "unauthenticated-wallet-to-server-connection",
-        "title": "No authentication for wallet-to-SPV server connection",
-        "description": "The wallet daemon connects to the SPV server over TCP+SSL without authentication, allowing a man-in-the-middle or rogue SPV server to feed false blockchain data.",
-        "threat_persona": "tp-external-attacker",
-        "event": "Network spoofing / MITM",
-        "sources": ["adversary", "failure"]
-      }
+        {
+            "symbolic_name": "wallet-file-theft",
+            "title": "Wallet file exfiltration on compromised device",
+            "description": "Malware or a local attacker steals the wallet file from the user device and recovers private keys.",
+            "components_affected": [
+              "comp-wallet-daemon",
+              "store-wallet-file"
+            ],
+            "threat_persona": "tp-external-attacker",
+            "event": "Compromise of the user device or filesystem access to the wallet file.",
+            "sources": [
+              "adversary"
+            ]
+          },
+          {
+            "symbolic_name": "api-key-theft-misuse",
+            "title": "Exchange API key stolen and abused",
+            "description": "An attacker steals trading bot API keys (e.g., via MITM or log leakage) and issues unauthorized trades.",
+            "components_affected": [
+              "comp-trading-bot",
+              "comp-exchange-api"
+            ],
+            "threat_persona": "tp-external-attacker",
+            "event": "Stolen API key used to authenticate to the exchange API.",
+            "sources": [
+              "adversary"
+            ]
+          },
+          {
+            "symbolic_name": "electrumx-data-tampering",
+            "title": "Malicious or spoofed ElectrumX feeds false blockchain data",
+            "description": "A rogue or spoofed ElectrumX server provides incorrect balances/headers, leading the wallet to display or act on false state.",
+            "components_affected": [
+              "comp-wallet-daemon",
+              "comp-electrumx"
+            ],
+            "threat_persona": "tp-external-attacker",
+            "event": "Wallet connects to an untrusted or MITM ElectrumX server that returns tampered data.",
+            "sources": [
+              "adversary"
+            ]
+          }
     ],
   
     "controls": [
