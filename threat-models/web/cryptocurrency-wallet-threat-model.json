@@ -428,12 +428,12 @@
           }
     ],
   
-    "controls": [
+"controls": [
       {
         "symbolic_name": "encrypt-wallet-file-at-rest",
         "title": "encrypt wallet file at rest",
         "description": "Ensure the local wallet file is encrypted to protect against unauthorized access if device is compromised.",
-        "threats": ["store-wallet-file"],
+        "threats": ["wallet-file-theft"],
         "status": "under_review",
         "priority": "high"
       },
@@ -441,7 +441,7 @@
         "symbolic_name": "use-read-only-api-key-for-trading-bot",
         "title": "Use read-only API key for trading bot",
         "description": "Restrict API key used by trading bot to read-only permissions to minimize risk of unauthorized operations.",
-        "threats": ["comp-trading-bot", "comp-exchange-api"],
+        "threats": ["api-key-theft-misuse"],
         "status": "under_review",
         "priority": "high"
       },
@@ -449,7 +449,7 @@
         "symbolic_name": "add-authentication-and-host-header-validation-for-exchange-api-and-backend",
         "title": "Add authentication and host-header validation for exchange API and backend",
         "description": "Require proper authentication, validate host headers, and enforce TLS to prevent unauthorized or spoofed requests.",
-        "threats": ["comp-exchange-api", "comp-exchange-backend", "df-trading-bot-to-exchange-api", "df-website-to-backend"],
+        "threats": ["api-key-theft-misuse", "electrumx-data-tampering"],
         "status": "under_review",
         "priority": "high"
       }
