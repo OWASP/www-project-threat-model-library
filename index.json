@@ -14,6 +14,13 @@
       "category": "infrastructure",
       "tags": ["secrets-management"],
       "description": "Enterprise secrets management and cryptographic services for applications and operators."
+    },
+        {
+      "symbolic_name": "cryptocurrency-wallet-threat-model",
+      "path": "threat-models/web/cryptocurrency-wallet-threat-model.json",
+      "category": "web",
+      "tags": ["blockchain"],
+      "description": "A data flow diagram of a cryptocurrency wallet submitted by Jonathan Marcil to the OWASP Threat Model Cookbook."
     }
   ]
 }
