@@ -16,6 +16,13 @@
       "description": "Enterprise secrets management and cryptographic services for applications and operators."
     },
     {
+      "symbolic_name": "devarmor-jira-integration",
+      "path": "threat-models/third-party-integrations/devarmor-jira-integration.json",
+      "category": "third-party-integrations",
+      "tags": ["secrets-management"],
+      "description": "Integration of the Forge app with the Devarmor backend, used to create and store Design Reviews"
+    },
+    {
       "symbolic_name": "cryptocurrency-wallet-threat-model",
       "path": "threat-models/web/cryptocurrency-wallet-threat-model.json",
       "category": "web-applications",
