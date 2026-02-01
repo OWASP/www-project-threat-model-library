@@ -21,6 +21,13 @@
       "category": "web-applications",
       "tags": ["browser-isolation", "privacy", "container-security", "ephemeral-sessions"],
       "description": "Disposable browser isolation platform using container-based session isolation for privacy and security."
+    },
+    {
+      "symbolic_name": "cryptocurrency-wallet-threat-model",
+      "path": "threat-models/web/cryptocurrency-wallet-threat-model.json",
+      "category": "web-applications",
+      "tags": ["blockchain"],
+      "description": "A data flow diagram of a cryptocurrency wallet submitted by Jonathan Marcil to the OWASP Threat Model Cookbook."
     }
   ]
 }
