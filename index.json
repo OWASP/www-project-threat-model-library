@@ -16,6 +16,13 @@
       "description": "Enterprise secrets management and cryptographic services for applications and operators."
     },
     {
+      "symbolic_name": "ephemeral-browser-isolation-threat-model",
+      "path": "threat-models/web-applications/ephemeral-browser-isolation-threat-model.json",
+      "category": "web-applications",
+      "tags": ["browser-isolation", "privacy", "container-security", "ephemeral-sessions"],
+      "description": "Disposable browser isolation platform using container-based session isolation for privacy and security."
+    },
+    {
       "symbolic_name": "cryptocurrency-wallet-threat-model",
       "path": "threat-models/web/cryptocurrency-wallet-threat-model.json",
       "category": "web-applications",
