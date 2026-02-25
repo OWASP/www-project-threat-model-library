@@ -229,6 +229,36 @@
             "encrypted": true
         },
         {
+            "symbolic_name": "jira-cloud-ui-calls",
+            "title": "Calls",
+            "description": "Jira Cloud UI REST calls to Jira APIs.",
+            "source": {
+                "type": "component",
+                "object": "jira-cloud-ui"
+            },
+            "destination": {
+                "type": "component",
+                "object": "jira-rest-api"
+            },
+            "has_sensitive_data": true,
+            "encrypted": true
+        },
+        {
+            "symbolic_name": "jira-user-installs-forge",
+            "title": "Installs or uses app",
+            "description": "Developer installs or uses Forge App custom UI and logic.",
+            "source": {
+                "type": "actor",
+                "object": "jira-developer"
+            },
+            "destination": {
+                "type": "component",
+                "object": "forge-app"
+            },
+            "has_sensitive_data": true,
+            "encrypted": true
+        },
+        {
             "symbolic_name": "jira-events-trigger-remote-handler",
             "title": "Jira events trigger remote handler",
             "description": "Issue lifecycle events raised by Jira call into the Forge remote handler.",
