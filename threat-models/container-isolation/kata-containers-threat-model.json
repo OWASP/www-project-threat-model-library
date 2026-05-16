@@ -1,0 +1,602 @@
+{
+  "$schema": "https://github.com/OWASP/www-project-threat-model-library/blob/v1.0.2/threat-model.schema.json",
+  "version": "1.0",
+  "scope": {
+    "title": "Kata Containers — Hardware Virtualisation Isolation Layer",
+    "description": "Kata Containers provides a second layer of isolation on top of traditional container isolation by running each pod inside a lightweight virtual machine. This scope covers the attack surface of the hardware virtualisation interface — specifically the virtio device backends, VMM processes, and ACPI subsystem — that separates the untrusted container workload inside the VM from the host infrastructure. The threat model evaluates whether a malicious container workload or its user can escape the VM boundary, tamper with the host, obtain information from the host or other VMs, or cause denial of service through the defined attack surfaces.",
+    "business_criticality": "high",
+    "data_sensitivity": ["op", "ip"],
+    "exposure": "internal",
+    "tier": "business_critical"
+  },
+  "description": "Kata Containers prevents an untrusted container workload or user of that container workload from gaining control of, obtaining information from, or tampering with host infrastructure. This threat model analyses the attack surface of each virtio device interface (virtio-blk, virtio-scsi, virtio-fs, virtio-net, virtio-vsock), device passthrough (VFIO), and dynamic resource management (ACPI/hotplug) across four supported VMMs: QEMU, Firecracker, Cloud Hypervisor and Dragonball. Source: kata-containers/kata-containers, Apache 2.0 license (https://github.com/kata-containers/kata-containers/blob/main/docs/threat-model/threat-model.md). Boundary diagram: https://github.com/kata-containers/kata-containers/blob/main/docs/threat-model/threat-model-boundaries.svg. Tags: container-isolation, virtualisation, kata-containers, cncf, virtio, kubernetes, confidential-computing. Contributors: [your name here]. Note: Repudiation is explicitly out of scope — the source document does not address logging, auditing, or non-repudiation mechanisms.",
+  "frozen": false,
+  "reviewed_at": "2026-05-16",
+  "repo_link": "https://github.com/kata-containers/kata-containers",
+  "release_docs_link": "https://github.com/kata-containers/kata-containers/blob/main/docs/threat-model/threat-model.md",
+  "diagrams": [
+    {
+      "title": "Kata Containers Threat Model Boundaries",
+      "description": "Trust boundary diagram showing the isolation boundaries between the container workload, guest VM kernel, VMM process (host userspace), host kernel, and host hardware layers in a Kata Containers deployment.",
+      "link": "https://raw.githubusercontent.com/kata-containers/kata-containers/main/docs/threat-model/threat-model-boundaries.svg",
+      "type": "svg",
+      "source": "<!-- Source SVG available at https://raw.githubusercontent.com/kata-containers/kata-containers/main/docs/threat-model/threat-model-boundaries.svg (kata-containers/kata-containers, Apache 2.0) -->"
+    }
+  ],
+  "trust_zones": [
+    {
+      "symbolic_name": "guest-vm",
+      "title": "Guest VM / Container Workload",
+      "description": "The untrusted zone inside the Kata lightweight VM, containing the guest Linux kernel, container workloads, and any malicious processes. This zone is controlled by the container workload or its user and is explicitly not trusted."
+    },
+    {
+      "symbolic_name": "host-userspace",
+      "title": "Host Userspace",
+      "description": "The host userspace zone containing VMM processes (QEMU, Firecracker, Cloud Hypervisor, Dragonball), the virtiofsd daemon, and the CRI runtime (containerd/cri-o). Processes here run with ring3 privileges on the host."
+    },
+    {
+      "symbolic_name": "host-kernel",
+      "title": "Host Kernel",
+      "description": "The privileged host kernel zone containing KVM, vhost kernel backends (vhost-net, vhost_vsock), and kernel modules. All VMs on the same host share this kernel. Compromise grants full control of the host."
+    },
+    {
+      "symbolic_name": "host-hardware",
+      "title": "Host Hardware",
+      "description": "Physical hardware devices passed through to the VM via VFIO, including NICs, GPUs, and other PCI devices. Compromise can enable DMA attacks against host physical memory."
+    }
+  ],
+  "trust_boundaries": [
+    {
+      "trust_zone_a": "guest-vm",
+      "trust_zone_b": "host-userspace",
+      "access_control_methods": ["none"],
+      "authentication_methods": ["none"]
+    },
+    {
+      "trust_zone_a": "guest-vm",
+      "trust_zone_b": "host-kernel",
+      "access_control_methods": ["none"],
+      "authentication_methods": ["none"]
+    },
+    {
+      "trust_zone_a": "host-userspace",
+      "trust_zone_b": "host-kernel",
+      "access_control_methods": ["mac"],
+      "authentication_methods": ["none"]
+    },
+    {
+      "trust_zone_a": "host-userspace",
+      "trust_zone_b": "host-hardware",
+      "access_control_methods": ["dac"],
+      "authentication_methods": ["none"]
+    }
+  ],
+  "actors": [
+    {
+      "symbolic_name": "container-workload",
+      "title": "Container Workload",
+      "description": "The containerised application or process running inside the Kata VM guest. In the threat model, this may be a malicious or compromised workload attempting to escape the VM boundary.",
+      "type": "system",
+      "permissions": "Access to guest kernel, virtio device frontends, and network interfaces within the guest VM.",
+      "trust_zone": "guest-vm"
+    },
+    {
+      "symbolic_name": "container-user",
+      "title": "Container User",
+      "description": "A human user operating the container workload, potentially malicious, who may attempt to exploit the Kata isolation layer from within the guest.",
+      "type": "user",
+      "permissions": "Shell access inside the container; ability to run processes and escalate within the guest VM.",
+      "trust_zone": "guest-vm"
+    },
+    {
+      "symbolic_name": "cri-runtime",
+      "title": "CRI Runtime (containerd / cri-o)",
+      "description": "The trusted container runtime interface implementation that launches and manages Kata VM sandboxes on behalf of Kubernetes. Treated as trusted orchestration infrastructure.",
+      "type": "system",
+      "permissions": "Creates Kata sandboxes, configures virtio devices, manages pod lifecycle.",
+      "trust_zone": "host-userspace"
+    }
+  ],
+  "components": [
+    {
+      "symbolic_name": "vmm-hypervisor",
+      "title": "Virtual Machine Monitor / Hypervisor (KVM + VMM)",
+      "description": "The Virtual Machine Monitor process (QEMU, Firecracker, Cloud Hypervisor, or Dragonball) running in host userspace, backed by the KVM kernel module. Responsible for CPU/memory virtualisation and device emulation. All VMs share the same host kernel via KVM.",
+      "trust_zone": "host-userspace",
+      "repo_link": "https://github.com/kata-containers/kata-containers"
+    },
+    {
+      "symbolic_name": "virtio-blk-scsi",
+      "title": "virtio-blk / virtio-scsi Storage Backend",
+      "description": "The storage backend for block device access, implemented within the VMM process (ring3 userspace) by default for QEMU, Firecracker and Cloud Hypervisor. Provides container rootfs and volume access to the guest. vhost-based backends for QEMU are available but not recommended due to higher kernel exposure.",
+      "trust_zone": "host-userspace",
+      "repo_link": "https://github.com/kata-containers/kata-containers"
+    },
+    {
+      "symbolic_name": "virtiofsd",
+      "title": "virtiofsd (vhost-user Filesystem Daemon)",
+      "description": "The vhost-user daemon implementing the virtio-fs filesystem backend. Runs in host userspace as root, switches into a new filesystem namespace on startup to prevent escapes, and sandboxes itself with seccomp(2). Handles guest filesystem requests and mmap-based file sharing. DAX is experimental and disabled by default.",
+      "trust_zone": "host-userspace",
+      "repo_link": "https://gitlab.com/virtio-fs/virtiofsd"
+    },
+    {
+      "symbolic_name": "virtio-net-backend",
+      "title": "virtio-net Backend",
+      "description": "The network backend for guest networking. QEMU defaults to vhost-net (host kernel module) for performance, currently under reevaluation. Firecracker, Cloud Hypervisor, and Dragonball use an in-VMM backend (host userspace). vhost-user-net support is being added for Cloud Hypervisor.",
+      "trust_zone": "host-kernel",
+      "repo_link": "https://github.com/kata-containers/kata-containers"
+    },
+    {
+      "symbolic_name": "virtio-vsock-backend",
+      "title": "virtio-vsock Backend (Control Channel)",
+      "description": "The vsock backend used for guest agent communication and STDIO retrieval. QEMU uses vhost_vsock running inside the host kernel. Dragonball, Firecracker and Cloud Hypervisor use a unix-domain-socket in host userspace, reducing kernel attack surface.",
+      "trust_zone": "host-kernel",
+      "repo_link": "https://github.com/kata-containers/kata-containers"
+    },
+    {
+      "symbolic_name": "vfio-device-passthrough",
+      "title": "VFIO Device Passthrough",
+      "description": "The VFIO subsystem enabling direct device assignment (e.g. NIC, GPU) to the guest VM. Supported in QEMU and Cloud Hypervisor; not available in Firecracker. Grants the guest DMA access to physical device memory. Exposure to the host is limited to gaps in device pass-through handling.",
+      "trust_zone": "host-kernel",
+      "repo_link": "https://github.com/kata-containers/kata-containers"
+    },
+    {
+      "symbolic_name": "acpi-hotplug",
+      "title": "ACPI / Hotplug Subsystem",
+      "description": "The ACPI subsystem used for dynamic CPU, memory, and device hotplug. Available in QEMU and Cloud Hypervisor; not available in Firecracker. Dragonball uses an upcall mechanism instead. Required when containers are resized or added to a pod.",
+      "trust_zone": "host-userspace",
+      "repo_link": "https://github.com/kata-containers/kata-containers"
+    }
+  ],
+  "data_stores": [
+    {
+      "symbolic_name": "host-filesystem",
+      "title": "Host Filesystem (virtio-fs Shared Directory)",
+      "description": "The host filesystem directory tree shared with the guest via virtiofsd. Contains container rootfs, volumes, secrets and configmaps passed into the guest.",
+      "type": "object",
+      "trust_zone": "host-userspace"
+    },
+    {
+      "symbolic_name": "host-physical-memory",
+      "title": "Host Physical Memory",
+      "description": "Physical host memory accessible via DMA through VFIO device passthrough. Contains host kernel data structures, secrets from the host and other VMs, and sensitive process memory.",
+      "type": "object",
+      "trust_zone": "host-hardware"
+    }
+  ],
+  "data_sets": [
+    {
+      "symbolic_name": "container-volumes",
+      "title": "Container Volumes and Root Filesystem",
+      "description": "Container rootfs, bind-mounted volumes, secrets and configmaps passed into the guest VM via virtio-blk/scsi or virtio-fs.",
+      "placements": [
+        {
+          "data_store": "host-filesystem",
+          "encrypted": false
+        }
+      ],
+      "data_sensitivity": ["op", "cred"]
+    },
+    {
+      "symbolic_name": "host-memory-contents",
+      "title": "Host Physical Memory Contents",
+      "description": "Host physical memory contents including kernel data structures, credentials, cryptographic material, and data belonging to other running VMs on the same host. Accessible by a compromised device via DMA.",
+      "placements": [
+        {
+          "data_store": "host-physical-memory",
+          "encrypted": false
+        }
+      ],
+      "data_sensitivity": ["op", "cred", "ip"]
+    }
+  ],
+  "data_flows": [
+    {
+      "symbolic_name": "workload-to-virtio-blk",
+      "title": "Container Workload to virtio-blk/scsi Storage Backend",
+      "description": "Block I/O requests from the container workload in the guest VM to the virtio-blk/scsi backend in host userspace. Used for container rootfs and volume access.",
+      "source": {
+        "type": "actor",
+        "object": "container-workload"
+      },
+      "destination": {
+        "type": "component",
+        "object": "virtio-blk-scsi"
+      },
+      "has_sensitive_data": true,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "workload-to-virtiofsd",
+      "title": "Container Workload to virtiofsd Filesystem Backend",
+      "description": "Filesystem requests from the container workload in the guest VM to the virtiofsd vhost-user daemon on the host. Used for filesystem-shared volumes, secrets, and configmaps.",
+      "source": {
+        "type": "actor",
+        "object": "container-workload"
+      },
+      "destination": {
+        "type": "component",
+        "object": "virtiofsd"
+      },
+      "has_sensitive_data": true,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "workload-to-virtio-net",
+      "title": "Container Workload to virtio-net Network Backend",
+      "description": "Network traffic from the container workload in the guest VM to the virtio-net backend (vhost-net kernel module for QEMU, in-VMM backend for Firecracker/Cloud Hypervisor/Dragonball).",
+      "source": {
+        "type": "actor",
+        "object": "container-workload"
+      },
+      "destination": {
+        "type": "component",
+        "object": "virtio-net-backend"
+      },
+      "has_sensitive_data": true,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "workload-to-vsock",
+      "title": "Container Workload to virtio-vsock Control Channel",
+      "description": "Control messages and STDIO from the guest agent to the host VMM over virtio-vsock. QEMU uses vhost_vsock (host kernel); Firecracker, Cloud Hypervisor, and Dragonball use a unix-domain-socket in host userspace.",
+      "source": {
+        "type": "actor",
+        "object": "container-workload"
+      },
+      "destination": {
+        "type": "component",
+        "object": "virtio-vsock-backend"
+      },
+      "has_sensitive_data": false,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "vfio-dma-to-host-memory",
+      "title": "VFIO Device DMA to Host Physical Memory",
+      "description": "Direct Memory Access (DMA) operations by a VFIO passthrough device, potentially reaching host physical memory outside the allocated guest memory region when IOMMU protection is absent or misconfigured.",
+      "source": {
+        "type": "component",
+        "object": "vfio-device-passthrough"
+      },
+      "destination": {
+        "type": "data_store",
+        "object": "host-physical-memory"
+      },
+      "has_sensitive_data": true,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "cri-to-vmm",
+      "title": "CRI Runtime to VMM Hypervisor",
+      "description": "Pod and container lifecycle management calls from the CRI runtime to the VMM, including sandbox creation, virtio device configuration, and teardown.",
+      "source": {
+        "type": "actor",
+        "object": "cri-runtime"
+      },
+      "destination": {
+        "type": "component",
+        "object": "vmm-hypervisor"
+      },
+      "has_sensitive_data": true,
+      "encrypted": false
+    }
+  ],
+  "assumptions": [
+    {
+      "description": "The host kernel, KVM module, and VMM binaries are trusted and correctly installed. The threat model focuses on attacks originating from within the guest VM.",
+      "validity": "confirmed"
+    },
+    {
+      "description": "The CRI runtime (containerd/cri-o) and Kubernetes orchestration layer are trusted. Threats from a compromised orchestrator are out of scope.",
+      "validity": "confirmed"
+    },
+    {
+      "description": "IOMMU is available and configured on the host when VFIO device passthrough is used, providing DMA remapping protection. Without IOMMU, VFIO DMA attacks are significantly more severe.",
+      "validity": "unconfirmed"
+    },
+    {
+      "description": "Repudiation is explicitly out of scope for this threat model. The source document (kata-containers/kata-containers threat-model.md) does not address logging, auditing, or non-repudiation mechanisms, and no claims are made about audit trail completeness.",
+      "validity": "confirmed"
+    }
+  ],
+  "threat_personas": [
+    {
+      "symbolic_name": "malicious-workload",
+      "title": "Malicious Container Workload",
+      "description": "An automated malicious container workload running inside the Kata VM, capable of executing kernel exploits, fuzzing virtio device interfaces, and exploiting vulnerabilities in VMM or device backends to escape the VM boundary or obtain information from the host.",
+      "is_person": false,
+      "skill_level": "expert_engineer",
+      "access_level": "user",
+      "malicious_intent": true,
+      "applicability_to_org": "moderate"
+    },
+    {
+      "symbolic_name": "malicious-user",
+      "title": "Malicious Container User",
+      "description": "A human user with shell access inside the container workload who attempts to escalate privileges, exploit the host, or extract information from the host or adjacent VMs by leveraging the Kata virtualisation interface.",
+      "is_person": true,
+      "skill_level": "engineer",
+      "access_level": "user",
+      "malicious_intent": true,
+      "applicability_to_org": "moderate"
+    }
+  ],
+  "threats": [
+    {
+      "symbolic_name": "vmm-kernel-vuln-exploit",
+      "title": "Host Kernel or KVM Hypervisor Vulnerability Exploitation",
+      "description": "Since all VMs share the same host kernel in KVM-based virtualisation, a vulnerability in the host kernel or KVM hypervisor exploited from within the VM could allow an attacker to affect the entire system, compromise other VMs, or take down the host. Flaws in KVM/QEMU leveraging the host kernel for operation can have widespread impacts.",
+      "components_affected": ["vmm-hypervisor"],
+      "threat_persona": "malicious-workload",
+      "event": "elevation of privilege via host kernel or hypervisor vulnerability",
+      "sources": ["adversary"],
+      "weaknesses": [
+        {"cwe_id": 119, "cwe_title": "Improper Restriction of Operations within the Bounds of a Memory Buffer"},
+        {"cwe_id": 264, "cwe_title": "Permissions, Privileges, and Access Controls"}
+      ]
+    },
+    {
+      "symbolic_name": "vmm-improper-isolation",
+      "title": "Improper VM Isolation Allowing Inter-VM Interference",
+      "description": "If the virtualisation environment is not correctly configured, processes in one VM may impact other VMs through improper isolation of network traffic, shared file systems, or other inter-VM communication channels. A malicious or flawed guest OS could engage in activities that disrupt the host or other guests.",
+      "components_affected": ["vmm-hypervisor"],
+      "threat_persona": "malicious-workload",
+      "event": "tampering with host or other VMs via misconfigured isolation",
+      "sources": ["adversary", "human_error"],
+      "weaknesses": [
+        {"cwe_id": 653, "cwe_title": "Improper Isolation or Compartmentalization"}
+      ]
+    },
+    {
+      "symbolic_name": "virtio-blk-scsi-attack",
+      "title": "virtio-blk / virtio-scsi Backend Exploit from Guest",
+      "description": "The virtio-blk and virtio-scsi backends run within the VMM process (ring3 userspace) by default. A malicious container workload could craft malformed virtio ring descriptors or block requests to exploit vulnerabilities in the VMM storage backend, potentially gaining host userspace access. vhost-based back-ends for QEMU are available but not recommended due to the higher kernel-space exposure they introduce.",
+      "components_affected": ["virtio-blk-scsi"],
+      "threat_persona": "malicious-workload",
+      "event": "elevation of privilege via crafted virtio ring descriptor exploiting the VMM storage backend",
+      "sources": ["adversary"],
+      "weaknesses": [
+        {"cwe_id": 119, "cwe_title": "Improper Restriction of Operations within the Bounds of a Memory Buffer"},
+        {"cwe_id": 20, "cwe_title": "Improper Input Validation"}
+      ]
+    },
+    {
+      "symbolic_name": "virtiofs-file-escape",
+      "title": "virtiofsd File Escape via Symlink or Filesystem Object",
+      "description": "The virtiofsd daemon processes guest filesystem requests and opens files on behalf of the guest. A malicious workload could craft symlinks or filesystem objects that trick virtiofsd into accessing files outside the shared directory tree, leading to host filesystem exposure or tampering. DAX support (where the guest accesses the host page cache directly) amplifies this risk and is disabled by default.",
+      "components_affected": ["virtiofsd"],
+      "threat_persona": "malicious-workload",
+      "event": "file escape to host filesystem via crafted symlink or filesystem object",
+      "sources": ["adversary"],
+      "weaknesses": [
+        {"cwe_id": 22, "cwe_title": "Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"},
+        {"cwe_id": 61, "cwe_title": "UNIX Symbolic Link (Symlink) Following"}
+      ]
+    },
+    {
+      "symbolic_name": "virtiofs-seccomp-bypass",
+      "title": "virtiofsd seccomp Sandbox Bypass",
+      "description": "virtiofsd sandboxes itself with seccomp(2) to prevent ptrace(2) and other attack vectors after gaining control of the process. A zero-day seccomp filter bypass or misconfiguration could allow an attacker who has compromised virtiofsd to break out of the daemon sandbox and interact with the host at root privilege.",
+      "components_affected": ["virtiofsd"],
+      "threat_persona": "malicious-workload",
+      "event": "elevation of privilege via seccomp filter bypass on virtiofsd",
+      "sources": ["adversary"],
+      "weaknesses": [
+        {"cwe_id": 264, "cwe_title": "Permissions, Privileges, and Access Controls"},
+        {"cwe_id": 693, "cwe_title": "Protection Mechanism Failure"}
+      ]
+    },
+    {
+      "symbolic_name": "vhost-kernel-exploit",
+      "title": "vhost Kernel Backend Exploitation",
+      "description": "vhost-based device backends (vhost-net for QEMU virtio-net, vhost_vsock for QEMU vsock) run within the host kernel space. An exploit targeting a vhost kernel module directly grants kernel-level privileges with no additional userspace boundary to cross, representing a higher-risk attack surface than VMM-embedded or vhost-user backends.",
+      "components_affected": ["virtio-net-backend", "virtio-vsock-backend"],
+      "threat_persona": "malicious-workload",
+      "event": "elevation of privilege via vulnerability in vhost kernel module",
+      "sources": ["adversary"],
+      "weaknesses": [
+        {"cwe_id": 119, "cwe_title": "Improper Restriction of Operations within the Bounds of a Memory Buffer"},
+        {"cwe_id": 787, "cwe_title": "Out-of-bounds Write"}
+      ]
+    },
+    {
+      "symbolic_name": "vfio-dma-attack",
+      "title": "VFIO DMA Attack Accessing Host Physical Memory",
+      "description": "When a device is passed through to a VM via VFIO, it has direct access to host physical memory via DMA. A compromised VM could use its assigned device to read or write memory outside of its allocated space, potentially accessing credentials, secrets, or data from the host kernel or other VMs, or corrupting host state.",
+      "components_affected": ["vfio-device-passthrough"],
+      "threat_persona": "malicious-workload",
+      "event": "information disclosure via DMA read of host physical memory outside allocated guest region",
+      "sources": ["adversary"],
+      "weaknesses": [
+        {"cwe_id": 284, "cwe_title": "Improper Access Control"},
+        {"cwe_id": 200, "cwe_title": "Exposure of Sensitive Information to an Unauthorized Actor"}
+      ]
+    },
+    {
+      "symbolic_name": "vfio-device-isolation-failure",
+      "title": "VFIO Device Isolation Failure Causing Inter-VM Interference",
+      "description": "If a VM can affect the operation of a physically passed-through device in a way that impacts other VMs or the host system, it could lead to security breaches, system instability, or denial of service. Improper configuration of VFIO group or user permissions can expose the system to this risk.",
+      "components_affected": ["vfio-device-passthrough"],
+      "threat_persona": "malicious-workload",
+      "event": "tampering via VFIO device isolation failure affecting host or other VMs",
+      "sources": ["adversary", "human_error"],
+      "weaknesses": [
+        {"cwe_id": 653, "cwe_title": "Improper Isolation or Compartmentalization"},
+        {"cwe_id": 732, "cwe_title": "Incorrect Permission Assignment for Critical Resource"}
+      ]
+    },
+    {
+      "symbolic_name": "vfio-privilege-escalation",
+      "title": "VFIO Device Passthrough Privilege Escalation via Side-Channel",
+      "description": "If a VM with VFIO access is compromised, it could use device capabilities or side-channel techniques to gain higher privileges. Side-channel attacks allow an attacker VM to infer sensitive information from a shared physical device's behaviour or through shared cache, even without direct memory access.",
+      "components_affected": ["vfio-device-passthrough"],
+      "threat_persona": "malicious-workload",
+      "event": "information disclosure or privilege escalation via VFIO device capabilities or shared cache side-channel",
+      "sources": ["adversary"],
+      "weaknesses": [
+        {"cwe_id": 264, "cwe_title": "Permissions, Privileges, and Access Controls"},
+        {"cwe_id": 203, "cwe_title": "Observable Discrepancy"}
+      ]
+    },
+    {
+      "symbolic_name": "acpi-vm-escape",
+      "title": "ACPI-Based VM Escape via Hypervisor or Firmware Vulnerability",
+      "description": "Vulnerabilities in the hypervisor's handling of ACPI requests, or exploitation of ACPI firmware in the virtualised environment, could be used to achieve a VM escape where malicious code in the VM breaks out to the host system or other VMs. Firmware-based attacks can be persistent and difficult to detect. A compromised VM might also alter ACPI settings on the host, affecting all co-hosted VMs.",
+      "components_affected": ["acpi-hotplug", "vmm-hypervisor"],
+      "threat_persona": "malicious-workload",
+      "event": "vm escape via ACPI vulnerability in hypervisor firmware or ACPI handling",
+      "sources": ["adversary"],
+      "weaknesses": [
+        {"cwe_id": 264, "cwe_title": "Permissions, Privileges, and Access Controls"},
+        {"cwe_id": 119, "cwe_title": "Improper Restriction of Operations within the Bounds of a Memory Buffer"}
+      ]
+    },
+    {
+      "symbolic_name": "acpi-resource-starvation",
+      "title": "ACPI Power Management Manipulation for Resource Starvation",
+      "description": "ACPI functionality could be exploited to manipulate power management features, causing denial of service through resource starvation. For example, an attacker could force a VM into a low-power state, degrading its performance or availability, or alter ACPI settings on the host to affect all VMs on that host.",
+      "components_affected": ["acpi-hotplug"],
+      "threat_persona": "malicious-workload",
+      "event": "denial of service via ACPI power management manipulation degrading host or VM performance",
+      "sources": ["adversary"],
+      "weaknesses": [
+        {"cwe_id": 400, "cwe_title": "Uncontrolled Resource Consumption"}
+      ]
+    },
+    {
+      "symbolic_name": "vm-resource-exhaustion",
+      "title": "VM Resource Exhaustion Denial of Service",
+      "description": "A VM could consume excessive shared resources such as CPU, memory, or I/O bandwidth in KVM/QEMU or other VMM setups, leading to resource starvation for other VMs or the host. This could be due to misconfiguration, a runaway process, or a deliberate denial of service attack from a compromised VM.",
+      "components_affected": ["vmm-hypervisor"],
+      "threat_persona": "malicious-workload",
+      "event": "denial of service via resource exhaustion affecting other VMs or the host",
+      "sources": ["adversary", "failure"],
+      "weaknesses": [
+        {"cwe_id": 400, "cwe_title": "Uncontrolled Resource Consumption"},
+        {"cwe_id": 770, "cwe_title": "Allocation of Resources Without Limits or Throttling"}
+      ]
+    }
+  ],
+  "controls": [
+    {
+      "symbolic_name": "virtiofsd-namespace-isolation",
+      "title": "virtiofsd Filesystem Namespace Isolation on Startup",
+      "description": "Upon startup, virtiofsd switches into a new filesystem namespace with the shared directory tree as its root. This prevents filesystem escapes due to symlinks and other filesystem objects that might lead to files outside the shared directory.",
+      "threats": ["virtiofs-file-escape"],
+      "status": "active",
+      "priority": "critical"
+    },
+    {
+      "symbolic_name": "virtiofsd-seccomp-sandbox",
+      "title": "virtiofsd seccomp Sandboxing",
+      "description": "virtiofsd sandboxes itself using seccomp(2) to prevent ptrace(2) and other attack vectors that could allow an attacker to compromise the system after gaining control of the virtiofsd process.",
+      "threats": ["virtiofs-seccomp-bypass", "virtiofs-file-escape"],
+      "status": "active",
+      "priority": "critical"
+    },
+    {
+      "symbolic_name": "virtio-blk-scsi-userspace-backend",
+      "title": "virtio-blk/scsi Backend Confined to Ring3 Userspace by Default",
+      "description": "The default configuration places the virtio-blk and virtio-scsi backends within the VMM process in ring3 userspace, not in kernel space via vhost. This limits the blast radius of a backend exploit to the VMM process rather than the host kernel. vhost-based backends for QEMU are available but not recommended.",
+      "threats": ["virtio-blk-scsi-attack"],
+      "status": "active",
+      "priority": "high"
+    },
+    {
+      "symbolic_name": "vhost-user-preference",
+      "title": "Evaluate Preference of vhost-user over vhost-kernel for virtio-net",
+      "description": "The virtio-net configuration for QEMU defaults to vhost-net (kernel space) for performance, but this default is being reevaluated. Preferring vhost-user backends (userspace) over vhost-kernel reduces the host kernel attack surface. Cloud Hypervisor is adding vhost-user-net support.",
+      "threats": ["vhost-kernel-exploit"],
+      "status": "under_review",
+      "priority": "high"
+    },
+    {
+      "symbolic_name": "dax-disabled-by-default",
+      "title": "DAX Disabled by Default for virtio-fs",
+      "description": "DAX (Direct Access) for virtio-fs, which allows the guest to directly access the host page cache, is experimental and not enabled by default. Disabling DAX reduces the risk of direct host memory exposure via the filesystem sharing path.",
+      "threats": ["virtiofs-file-escape"],
+      "status": "active",
+      "priority": "medium"
+    },
+    {
+      "symbolic_name": "vfio-group-user-permissions",
+      "title": "VFIO Group and User Permission Configuration",
+      "description": "Correct configuration of VFIO group and user permissions is required to prevent improper device isolation. Human errors in configuring VFIO, such as incorrect group or user permissions, expose the system to device isolation failure and privilege escalation risks.",
+      "threats": ["vfio-device-isolation-failure", "vfio-privilege-escalation"],
+      "status": "active",
+      "priority": "high"
+    },
+    {
+      "symbolic_name": "vsock-unix-socket-non-qemu",
+      "title": "Non-QEMU VMMs Use Unix Domain Socket for vsock",
+      "description": "Dragonball, Firecracker and Cloud Hypervisor back vsock with a unix-domain-socket in host userspace rather than the vhost_vsock kernel module used by QEMU. This keeps the vsock control channel in userspace and reduces the host kernel attack surface.",
+      "threats": ["vhost-kernel-exploit"],
+      "status": "active",
+      "priority": "medium"
+    }
+  ],
+  "risks": [
+    {
+      "symbolic_name": "vm-escape-risk",
+      "title": "VM Escape: Container Workload Gains Host Kernel Control",
+      "description": "A malicious container workload exploits a vulnerability in the VMM, vhost kernel backend, VFIO subsystem, or ACPI handling to break out of the VM boundary and gain control of the host kernel or host userspace, compromising all workloads on the node.",
+      "threats": [
+        "vmm-kernel-vuln-exploit",
+        "vhost-kernel-exploit",
+        "virtiofs-seccomp-bypass",
+        "acpi-vm-escape",
+        "virtio-blk-scsi-attack"
+      ],
+      "likelihood": "unlikely",
+      "impact": "severe",
+      "impact_description": "Full compromise of the host kernel grants attacker control over all VMs on the node, access to all secrets and data in host memory, and a potential pivot to broader cluster infrastructure.",
+      "score": 10,
+      "level": "high"
+    },
+    {
+      "symbolic_name": "host-info-disclosure-risk",
+      "title": "Host Memory or Filesystem Information Disclosure",
+      "description": "A malicious container workload uses VFIO DMA attacks, side-channel attacks via shared cache, or file escape via virtiofsd to read sensitive data from host memory or the host filesystem belonging to other VMs or the host itself.",
+      "threats": [
+        "vfio-dma-attack",
+        "vfio-privilege-escalation",
+        "virtiofs-file-escape"
+      ],
+      "likelihood": "unlikely",
+      "impact": "major",
+      "impact_description": "Exposure of secrets, credentials, or data from other tenant VMs on the same host, violating multi-tenancy isolation guarantees and potentially enabling further lateral movement.",
+      "score": 8,
+      "level": "medium"
+    },
+    {
+      "symbolic_name": "inter-vm-tampering-risk",
+      "title": "Inter-VM Tampering via Isolation Failure",
+      "description": "Misconfiguration or exploitation of the virtualisation layer allows a malicious VM to tamper with other VMs or host configuration through improper isolation of network traffic, shared filesystems, VFIO device isolation failure, or ACPI host setting manipulation.",
+      "threats": [
+        "vmm-improper-isolation",
+        "vfio-device-isolation-failure",
+        "acpi-resource-starvation"
+      ],
+      "likelihood": "possible",
+      "impact": "moderate",
+      "impact_description": "Disruption or corruption of other tenants' workloads, degrading service availability and potentially violating workload integrity guarantees.",
+      "score": 9,
+      "level": "medium"
+    },
+    {
+      "symbolic_name": "dos-resource-exhaustion-risk",
+      "title": "Denial of Service via Resource Exhaustion",
+      "description": "A malicious or runaway container workload consumes excessive CPU, memory, I/O bandwidth, or uses ACPI power management manipulation to starve other VMs on the same host, causing performance degradation or temporary outage.",
+      "threats": [
+        "vm-resource-exhaustion",
+        "acpi-resource-starvation"
+      ],
+      "likelihood": "possible",
+      "impact": "minor",
+      "impact_description": "Degraded performance or temporary outage for co-hosted workloads; recoverable without data loss.",
+      "score": 6,
+      "level": "low"
+    }
+  ]
+}
