@@ -71,33 +71,27 @@
       "authentication_methods": ["none"]
     }
   ],
-  "actors": [
+  "actors": [],
+  "components": [
     {
       "symbolic_name": "container-workload",
       "title": "Container Workload",
       "description": "The containerised application or process running inside the Kata VM guest. In the threat model, this may be a malicious or compromised workload attempting to escape the VM boundary.",
-      "type": "system",
-      "permissions": "Access to guest kernel, virtio device frontends, and network interfaces within the guest VM.",
       "trust_zone": "workload"
     },
     {
       "symbolic_name": "container-user",
       "title": "Container User",
       "description": "A human user operating the container workload, potentially malicious, who may attempt to exploit the Kata isolation layer from within the guest.",
-      "type": "user",
-      "permissions": "Shell access inside the container; ability to run processes and escalate within the guest VM.",
       "trust_zone": "workload"
     },
     {
       "symbolic_name": "cri-runtime",
       "title": "CRI Runtime (containerd / cri-o)",
       "description": "The trusted container runtime interface implementation that launches and manages Kata VM sandboxes on behalf of Kubernetes. Treated as trusted orchestration infrastructure.",
-      "type": "system",
-      "permissions": "Creates Kata sandboxes, configures virtio devices, manages pod lifecycle.",
-      "trust_zone": "host-userspace"
-    }
-  ],
-  "components": [
+      "trust_zone": "host-userspace",
+      "repo_link": "https://github.com/kata-containers/kata-containers"
+    },
     {
       "symbolic_name": "vmm-hypervisor",
       "title": "Virtual Machine Monitor / Hypervisor (KVM + VMM)",
@@ -196,7 +190,7 @@
       "title": "Container Workload to virtio-blk/scsi Storage Backend",
       "description": "Block I/O requests from the container workload in the guest VM to the virtio-blk/scsi backend in host userspace. Used for container rootfs and volume access.",
       "source": {
-        "type": "actor",
+        "type": "component",
         "object": "container-workload"
       },
       "destination": {
@@ -211,7 +205,7 @@
       "title": "Container Workload to virtiofsd Filesystem Backend",
       "description": "Filesystem requests from the container workload in the guest VM to the virtiofsd vhost-user daemon on the host. Used for filesystem-shared volumes, secrets, and configmaps.",
       "source": {
-        "type": "actor",
+        "type": "component",
         "object": "container-workload"
       },
       "destination": {
@@ -226,7 +220,7 @@
       "title": "Container Workload to virtio-net Network Backend",
       "description": "Network traffic from the container workload in the guest VM to the virtio-net backend (vhost-net kernel module for QEMU, in-VMM backend for Firecracker/Cloud Hypervisor/Dragonball).",
       "source": {
-        "type": "actor",
+        "type": "component",
         "object": "container-workload"
       },
       "destination": {
@@ -241,7 +235,7 @@
       "title": "Container Workload to virtio-vsock Control Channel",
       "description": "Control messages and STDIO from the guest agent to the host VMM over virtio-vsock. QEMU uses vhost_vsock (host kernel); Firecracker, Cloud Hypervisor, and Dragonball use a unix-domain-socket in host userspace.",
       "source": {
-        "type": "actor",
+        "type": "component",
         "object": "container-workload"
       },
       "destination": {
@@ -271,7 +265,7 @@
       "title": "CRI Runtime to VMM Hypervisor",
       "description": "Pod and container lifecycle management calls from the CRI runtime to the VMM, including sandbox creation, virtio device configuration, and teardown.",
       "source": {
-        "type": "actor",
+        "type": "component",
         "object": "cri-runtime"
       },
       "destination": {
