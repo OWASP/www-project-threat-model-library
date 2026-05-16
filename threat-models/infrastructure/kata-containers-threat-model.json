@@ -472,6 +472,58 @@
         {"cwe_id": 400, "cwe_title": "Uncontrolled Resource Consumption"},
         {"cwe_id": 770, "cwe_title": "Allocation of Resources Without Limits or Throttling"}
       ]
+    },
+    {
+      "symbolic_name": "malicious-guest-os",
+      "title": "Malicious or Flawed Guest Operating System Disrupting Host or Other Guests",
+      "description": "A guest operating system that is maliciously designed or has serious flaws could engage in activities that disrupt the normal operation of the host or other guests. This might include aggressive network activity or interactions with the virtualisation stack that lead to instability.",
+      "components_affected": ["vmm-hypervisor"],
+      "threat_persona": "malicious-workload",
+      "event": "disruption of host or other guests via malicious or flawed guest kernel interactions with the virtualisation stack",
+      "sources": ["adversary", "failure"],
+      "weaknesses": [
+        {"cwe_id": 693, "cwe_title": "Protection Mechanism Failure"},
+        {"cwe_id": 400, "cwe_title": "Uncontrolled Resource Consumption"}
+      ]
+    },
+    {
+      "symbolic_name": "vfio-firmware-vuln",
+      "title": "VFIO Passthrough Device Firmware Vulnerability",
+      "description": "Devices attached via VFIO rely on their firmware, which can have vulnerabilities. A compromised device firmware could be exploited to gain unauthorized access to the host or to disrupt the system. Such firmware-level compromises can be persistent and difficult to detect or remediate.",
+      "components_affected": ["vfio-device-passthrough"],
+      "threat_persona": "malicious-workload",
+      "event": "elevation of privilege or persistent compromise via vulnerability in VFIO passthrough device firmware",
+      "sources": ["adversary", "events_beyond_org_control"],
+      "weaknesses": [
+        {"cwe_id": 1277, "cwe_title": "Firmware Not Updateable"},
+        {"cwe_id": 664, "cwe_title": "Improper Control of a Resource Through its Lifetime"}
+      ]
+    },
+    {
+      "symbolic_name": "vfio-software-vuln",
+      "title": "Vulnerability in VFIO Kernel Modules, Drivers, or Management Tools",
+      "description": "Like any software, the components of VFIO — including the kernel modules, device drivers, and management tools — can have vulnerabilities that might be exploited by an attacker to compromise the security of the system and gain control of the host.",
+      "components_affected": ["vfio-device-passthrough"],
+      "threat_persona": "malicious-workload",
+      "event": "elevation of privilege via software vulnerability in VFIO kernel modules, device drivers, or management tooling",
+      "sources": ["adversary"],
+      "weaknesses": [
+        {"cwe_id": 119, "cwe_title": "Improper Restriction of Operations within the Bounds of a Memory Buffer"},
+        {"cwe_id": 264, "cwe_title": "Permissions, Privileges, and Access Controls"}
+      ]
+    },
+    {
+      "symbolic_name": "acpi-supply-chain",
+      "title": "Supply Chain Compromise of ACPI Firmware",
+      "description": "ACPI firmware used in virtualised environments could be compromised during the supply chain process, leading to persistent vulnerabilities that affect all VMs running on the hardware. Such attacks are difficult to detect and could not only compromise the host system but all VMs running on it.",
+      "components_affected": ["acpi-hotplug"],
+      "threat_persona": "malicious-workload",
+      "event": "persistent compromise of host and all VMs via supply-chain-compromised ACPI firmware",
+      "sources": ["adversary", "events_beyond_org_control"],
+      "weaknesses": [
+        {"cwe_id": 494, "cwe_title": "Download of Code Without Integrity Check"},
+        {"cwe_id": 1328, "cwe_title": "Security Version Number Mutable to Older Versions"}
+      ]
     }
   ],
   "controls": [
