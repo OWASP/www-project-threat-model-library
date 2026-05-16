@@ -363,14 +363,18 @@
           "cwe_title": "Improper Restriction of Operations within the Bounds of a Memory Buffer"
         },
         {
-          "cwe_id": 264,
-          "cwe_title": "Permissions, Privileges, and Access Controls"
+          "cwe_id": 269,
+          "cwe_title": "Improper Privilege Management"
         }
       ],
       "attack_mechanisms": [
         {
           "capec_id": 100,
           "capec_title": "Overflow Buffers"
+        },
+        {
+          "capec_id": 480,
+          "capec_title": "Escaping Virtualization"
         }
       ]
     },
@@ -395,8 +399,8 @@
       ],
       "attack_mechanisms": [
         {
-          "capec_id": 1,
-          "capec_title": "Accessing Functionality Not Properly Constrained by ACLs"
+          "capec_id": 124,
+          "capec_title": "Shared Resource Manipulation"
         }
       ]
     },
@@ -428,8 +432,8 @@
           "capec_title": "Overflow Buffers"
         },
         {
-          "capec_id": 28,
-          "capec_title": "Fuzzing"
+          "capec_id": 153,
+          "capec_title": "Input Data Manipulation"
         }
       ]
     },
@@ -457,8 +461,8 @@
       ],
       "attack_mechanisms": [
         {
-          "capec_id": 204,
-          "capec_title": "Lifting Sensitive Data Embedded in Cache"
+          "capec_id": 261,
+          "capec_title": "Fuzzing for garnering other adjacent user/sensitive data"
         }
       ]
     },
@@ -509,8 +513,8 @@
       ],
       "weaknesses": [
         {
-          "cwe_id": 264,
-          "cwe_title": "Permissions, Privileges, and Access Controls"
+          "cwe_id": 284,
+          "cwe_title": "Improper Access Control"
         },
         {
           "cwe_id": 693,
@@ -519,8 +523,8 @@
       ],
       "attack_mechanisms": [
         {
-          "capec_id": 1,
-          "capec_title": "Accessing Functionality Not Properly Constrained by ACLs"
+          "capec_id": 554,
+          "capec_title": "Functionality Bypass"
         }
       ]
     },
@@ -579,8 +583,8 @@
       ],
       "attack_mechanisms": [
         {
-          "capec_id": 28,
-          "capec_title": "Fuzzing"
+          "capec_id": 153,
+          "capec_title": "Input Data Manipulation"
         },
         {
           "capec_id": 130,
@@ -614,10 +618,6 @@
         {
           "capec_id": 100,
           "capec_title": "Overflow Buffers"
-        },
-        {
-          "capec_id": 204,
-          "capec_title": "Lifting Sensitive Data Embedded in Cache"
         }
       ]
     },
@@ -645,8 +645,8 @@
       ],
       "attack_mechanisms": [
         {
-          "capec_id": 1,
-          "capec_title": "Accessing Functionality Not Properly Constrained by ACLs"
+          "capec_id": 679,
+          "capec_title": "Exploitation of Improperly Configured or Implemented Memory Protections"
         }
       ]
     },
@@ -675,8 +675,8 @@
       ],
       "attack_mechanisms": [
         {
-          "capec_id": 1,
-          "capec_title": "Accessing Functionality Not Properly Constrained by ACLs"
+          "capec_id": 679,
+          "capec_title": "Exploitation of Improperly Configured or Implemented Memory Protections"
         }
       ]
     },
@@ -705,8 +705,8 @@
       ],
       "attack_mechanisms": [
         {
-          "capec_id": 1,
-          "capec_title": "Accessing Functionality Not Properly Constrained by ACLs"
+          "capec_id": 124,
+          "capec_title": "Shared Resource Manipulation"
         }
       ]
     },
@@ -764,8 +764,8 @@
       ],
       "attack_mechanisms": [
         {
-          "capec_id": 1,
-          "capec_title": "Accessing Functionality Not Properly Constrained by ACLs"
+          "capec_id": 180,
+          "capec_title": "Exploiting Incorrectly Configured Access Control Security Levels"
         }
       ]
     },
@@ -793,8 +793,8 @@
       ],
       "attack_mechanisms": [
         {
-          "capec_id": 1,
-          "capec_title": "Accessing Functionality Not Properly Constrained by ACLs"
+          "capec_id": 233,
+          "capec_title": "Privilege Escalation"
         }
       ]
     },
@@ -822,8 +822,8 @@
       ],
       "attack_mechanisms": [
         {
-          "capec_id": 204,
-          "capec_title": "Lifting Sensitive Data Embedded in Cache"
+          "capec_id": 124,
+          "capec_title": "Shared Resource Manipulation"
         }
       ]
     },
@@ -842,22 +842,18 @@
       ],
       "weaknesses": [
         {
-          "cwe_id": 264,
-          "cwe_title": "Permissions, Privileges, and Access Controls"
+          "cwe_id": 693,
+          "cwe_title": "Protection Mechanism Failure"
         },
         {
-          "cwe_id": 119,
-          "cwe_title": "Improper Restriction of Operations within the Bounds of a Memory Buffer"
+          "cwe_id": 284,
+          "cwe_title": "Improper Access Control"
         }
       ],
       "attack_mechanisms": [
         {
-          "capec_id": 1,
-          "capec_title": "Accessing Functionality Not Properly Constrained by ACLs"
-        },
-        {
-          "capec_id": 100,
-          "capec_title": "Overflow Buffers"
+          "capec_id": 480,
+          "capec_title": "Escaping Virtualization"
         }
       ]
     },
@@ -885,6 +881,10 @@
         }
       ],
       "attack_mechanisms": [
+        {
+          "capec_id": 153,
+          "capec_title": "Input Data Manipulation"
+        },
         {
           "capec_id": 100,
           "capec_title": "Overflow Buffers"
@@ -916,12 +916,8 @@
       ],
       "attack_mechanisms": [
         {
-          "capec_id": 186,
-          "capec_title": "Malicious Software Update"
-        },
-        {
-          "capec_id": 438,
-          "capec_title": "Modification During Manufacture"
+          "capec_id": 638,
+          "capec_title": "Altered Component Firmware"
         }
       ]
     },
@@ -974,8 +970,8 @@
       ],
       "attack_mechanisms": [
         {
-          "capec_id": 1,
-          "capec_title": "Accessing Functionality Not Properly Constrained by ACLs"
+          "capec_id": 176,
+          "capec_title": "Configuration/Environment Manipulation"
         }
       ]
     },
@@ -1034,8 +1030,8 @@
       ],
       "attack_mechanisms": [
         {
-          "capec_id": 1,
-          "capec_title": "Accessing Functionality Not Properly Constrained by ACLs"
+          "capec_id": 212,
+          "capec_title": "Functionality Misuse"
         }
       ]
     },
@@ -1053,8 +1049,8 @@
       ],
       "weaknesses": [
         {
-          "cwe_id": 203,
-          "cwe_title": "Observable Discrepancy"
+          "cwe_id": 1303,
+          "cwe_title": "Non-Transparent Sharing of Microarchitectural Resources"
         },
         {
           "cwe_id": 200,
@@ -1063,8 +1059,8 @@
       ],
       "attack_mechanisms": [
         {
-          "capec_id": 204,
-          "capec_title": "Lifting Sensitive Data Embedded in Cache"
+          "capec_id": 663,
+          "capec_title": "Exploitation of Transient Instruction Execution"
         }
       ]
     },
@@ -1093,8 +1089,8 @@
       ],
       "attack_mechanisms": [
         {
-          "capec_id": 438,
-          "capec_title": "Modification During Manufacture"
+          "capec_id": 682,
+          "capec_title": "Exploitation of Firmware or ROM Code with Unpatchable Vulnerabilities"
         }
       ]
     },
@@ -1116,8 +1112,8 @@
           "cwe_title": "Improper Restriction of Operations within the Bounds of a Memory Buffer"
         },
         {
-          "cwe_id": 264,
-          "cwe_title": "Permissions, Privileges, and Access Controls"
+          "cwe_id": 269,
+          "cwe_title": "Improper Privilege Management"
         }
       ],
       "attack_mechanisms": [
@@ -1126,8 +1122,8 @@
           "capec_title": "Overflow Buffers"
         },
         {
-          "capec_id": 1,
-          "capec_title": "Accessing Functionality Not Properly Constrained by ACLs"
+          "capec_id": 233,
+          "capec_title": "Privilege Escalation"
         }
       ]
     },
