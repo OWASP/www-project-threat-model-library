@@ -71,18 +71,20 @@
       "authentication_methods": ["none"]
     }
   ],
-  "actors": [],
+  "actors": [
+    {
+      "symbolic_name": "container-user",
+      "title": "Container User",
+      "description": "A human user operating the container workload, potentially malicious, who may attempt to exploit the Kata isolation layer from within the guest.",
+      "type": "user",
+      "trust_zone": "workload"
+    }
+  ],
   "components": [
     {
       "symbolic_name": "container-workload",
       "title": "Container Workload",
       "description": "The containerised application or process running inside the Kata VM guest. In the threat model, this may be a malicious or compromised workload attempting to escape the VM boundary.",
-      "trust_zone": "workload"
-    },
-    {
-      "symbolic_name": "container-user",
-      "title": "Container User",
-      "description": "A human user operating the container workload, potentially malicious, who may attempt to exploit the Kata isolation layer from within the guest.",
       "trust_zone": "workload"
     },
     {
