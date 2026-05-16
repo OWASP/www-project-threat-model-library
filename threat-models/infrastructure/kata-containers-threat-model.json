@@ -17,7 +17,7 @@
   "diagrams": [
     {
       "title": "Kata Containers Threat Model Boundaries",
-      "description": "Trust boundary diagram showing the isolation boundaries between the container workload, guest VM kernel, VMM process (host userspace), host kernel, and host hardware layers in a Kata Containers deployment.",
+      "description": "Trust boundary diagram (boundaries b0–b3) showing: b0 = container workload, b1 = guest userspace (Kata Agent), b2 = full guest VM scope (guest kernel + VMM), b3 = host userspace (kata-runtime, CRI impl, kubelet, virtiofsd). Host kernel zone (vsock vring, vhost-net vring, tap) sits below the explicit userspace/kernel dividing line.",
       "link": "https://raw.githubusercontent.com/kata-containers/kata-containers/main/docs/threat-model/threat-model-boundaries.svg",
       "type": "svg",
       "source": "<!-- Source SVG available at https://raw.githubusercontent.com/kata-containers/kata-containers/main/docs/threat-model/threat-model-boundaries.svg (kata-containers/kata-containers, Apache 2.0) -->"
@@ -25,35 +25,41 @@
   ],
   "trust_zones": [
     {
-      "symbolic_name": "guest-vm",
-      "title": "Guest VM / Container Workload",
-      "description": "The untrusted zone inside the Kata lightweight VM, containing the guest Linux kernel, container workloads, and any malicious processes. This zone is controlled by the container workload or its user and is explicitly not trusted."
+      "symbolic_name": "workload",
+      "title": "Container Workload (b0)",
+      "description": "Innermost untrusted boundary (b0 in the diagram). Contains the container workload process, its image, and volumes. Controlled entirely by the tenant and explicitly not trusted by the host."
+    },
+    {
+      "symbolic_name": "guest-userspace",
+      "title": "Guest Userspace (b1)",
+      "description": "Guest userspace zone (b1 in the diagram) containing the Kata Agent and the workload boundary (b0). Runs inside the lightweight VM's guest Linux kernel. Untrusted from the host's perspective."
     },
     {
       "symbolic_name": "host-userspace",
-      "title": "Host Userspace",
-      "description": "The host userspace zone containing VMM processes (QEMU, Firecracker, Cloud Hypervisor, Dragonball), the virtiofsd daemon, and the CRI runtime (containerd/cri-o). Processes here run with ring3 privileges on the host."
+      "title": "Host Userspace (b3)",
+      "description": "Host userspace zone (b3 in the diagram) containing kubelet, CRI impl (containerd/cri-o), kata-runtime, virtiofsd, and the VMM process (QEMU, Firecracker, Cloud Hypervisor, or Dragonball). The VMM bridges this zone and the guest VM boundary. Processes here run at ring3 privilege on the host."
     },
     {
       "symbolic_name": "host-kernel",
       "title": "Host Kernel",
-      "description": "The privileged host kernel zone containing KVM, vhost kernel backends (vhost-net, vhost_vsock), and kernel modules. All VMs on the same host share this kernel. Compromise grants full control of the host."
-    },
-    {
-      "symbolic_name": "host-hardware",
-      "title": "Host Hardware",
-      "description": "Physical hardware devices passed through to the VM via VFIO, including NICs, GPUs, and other PCI devices. Compromise can enable DMA attacks against host physical memory."
+      "description": "Host kernel zone (below the explicit userspace/kernel dividing line in the diagram) containing KVM, vhost kernel backends (vhost-net vring, vsock vring), the tap device, and VFIO kernel modules. All VMs on the same host share this kernel. Compromise grants full control of the host."
     }
   ],
   "trust_boundaries": [
     {
-      "trust_zone_a": "guest-vm",
+      "trust_zone_a": "workload",
+      "trust_zone_b": "guest-userspace",
+      "access_control_methods": ["none"],
+      "authentication_methods": ["none"]
+    },
+    {
+      "trust_zone_a": "guest-userspace",
       "trust_zone_b": "host-userspace",
       "access_control_methods": ["none"],
       "authentication_methods": ["none"]
     },
     {
-      "trust_zone_a": "guest-vm",
+      "trust_zone_a": "guest-userspace",
       "trust_zone_b": "host-kernel",
       "access_control_methods": ["none"],
       "authentication_methods": ["none"]
@@ -62,12 +68,6 @@
       "trust_zone_a": "host-userspace",
       "trust_zone_b": "host-kernel",
       "access_control_methods": ["mac"],
-      "authentication_methods": ["none"]
-    },
-    {
-      "trust_zone_a": "host-userspace",
-      "trust_zone_b": "host-hardware",
-      "access_control_methods": ["dac"],
       "authentication_methods": ["none"]
     }
   ],
@@ -78,7 +78,7 @@
       "description": "The containerised application or process running inside the Kata VM guest. In the threat model, this may be a malicious or compromised workload attempting to escape the VM boundary.",
       "type": "system",
       "permissions": "Access to guest kernel, virtio device frontends, and network interfaces within the guest VM.",
-      "trust_zone": "guest-vm"
+      "trust_zone": "workload"
     },
     {
       "symbolic_name": "container-user",
@@ -86,7 +86,7 @@
       "description": "A human user operating the container workload, potentially malicious, who may attempt to exploit the Kata isolation layer from within the guest.",
       "type": "user",
       "permissions": "Shell access inside the container; ability to run processes and escalate within the guest VM.",
-      "trust_zone": "guest-vm"
+      "trust_zone": "workload"
     },
     {
       "symbolic_name": "cri-runtime",
@@ -136,7 +136,7 @@
     {
       "symbolic_name": "vfio-device-passthrough",
       "title": "VFIO Device Passthrough",
-      "description": "The VFIO subsystem enabling direct device assignment (e.g. NIC, GPU) to the guest VM. Supported in QEMU and Cloud Hypervisor; not available in Firecracker. Grants the guest DMA access to physical device memory. Exposure to the host is limited to gaps in device pass-through handling.",
+      "description": "The VFIO kernel subsystem enabling direct device assignment (e.g. NIC, GPU) to the guest VM. Supported in QEMU and Cloud Hypervisor; not available in Firecracker. The VFIO kernel module manages IOMMU groups and grants the guest DMA access to physical device memory. Exposure to the host is limited to gaps in device pass-through handling.",
       "trust_zone": "host-kernel",
       "repo_link": "https://github.com/kata-containers/kata-containers"
     },
@@ -161,7 +161,7 @@
       "title": "Host Physical Memory",
       "description": "Physical host memory accessible via DMA through VFIO device passthrough. Contains host kernel data structures, secrets from the host and other VMs, and sensitive process memory.",
       "type": "object",
-      "trust_zone": "host-hardware"
+      "trust_zone": "host-kernel"
     }
   ],
   "data_sets": [
