@@ -41,6 +41,7 @@ Welcome to the first, open-sourced, structured, peer-reviewed threat modeling da
    - **OWASP Threat Dragon** (open-source)
    - **OWASP pytm** (open-source)
    - **Microsoft Threat Modeling Tool** (free, proprietary)
+   - **OWASP Precogly** (open-source; supports full interoperability with Project Threat Model Library JSON schema)
 
    You can use any tool you're comfortable with as long as the output can be converted into the JSON format once the schema is published.
 
