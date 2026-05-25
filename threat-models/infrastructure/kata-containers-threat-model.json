@@ -24,6 +24,12 @@
       "link": "https://raw.githubusercontent.com/kata-containers/kata-containers/main/docs/threat-model/threat-model-boundaries.svg",
       "type": "svg",
       "source": "<!-- Source SVG available at https://raw.githubusercontent.com/kata-containers/kata-containers/main/docs/threat-model/threat-model-boundaries.svg (kata-containers/kata-containers, Apache 2.0) -->"
+    },
+    {
+      "title": "Kata Containers Data Flow Diagram",
+      "description": "Mermaid diagram mirroring the data_flows array in this threat model. Edge labels use data flow symbolic names.",
+      "type": "mermaid",
+      "source": "flowchart LR\n    user[\"Container User\\ncontainer-user\"]\n\n    subgraph workload[\"workload: Container Workload (b0)\"]\n        container_workload[\"Container Workload\\ncontainer-workload\"]\n    end\n\n    subgraph guest_userspace[\"guest-userspace: Guest Userspace (b1)\"]\n        kata_agent[\"Kata Agent\\nkata-agent\"]\n    end\n\n    subgraph host_userspace[\"host-userspace: Host Userspace (b3)\"]\n        cri_runtime[\"CRI Runtime\\ncri-runtime\"]\n        vmm_hypervisor[\"VMM / Hypervisor\\nvmm-hypervisor\"]\n        virtio_blk_scsi[\"virtio-blk/scsi\\nvirtio-blk-scsi\"]\n        virtiofsd[\"virtiofsd\\nvirtiofsd\"]\n        host_filesystem[(\"Host Filesystem\\nhost-filesystem\")]\n        acpi_hotplug[\"ACPI / Hotplug\\nacpi-hotplug\"]\n    end\n\n    subgraph host_kernel[\"host-kernel: Host Kernel\"]\n        virtio_net_backend[\"virtio-net Backend\\nvirtio-net-backend\"]\n        virtio_vsock_backend[\"virtio-vsock Backend\\nvirtio-vsock-backend\"]\n        vfio_device_passthrough[\"VFIO Device Passthrough\\nvfio-device-passthrough\"]\n        host_physical_memory[(\"Host Physical Memory\\nhost-physical-memory\")]\n    end\n\n    user -->|user-to-workload| container_workload\n    container_workload -->|workload-to-virtio-blk| virtio_blk_scsi\n    container_workload -->|workload-to-virtiofsd| virtiofsd\n    container_workload -->|workload-to-virtio-net| virtio_net_backend\n    kata_agent -->|agent-to-vsock| virtio_vsock_backend\n    vfio_device_passthrough -->|vfio-dma-to-host-memory| host_physical_memory\n    cri_runtime -->|cri-to-vmm| vmm_hypervisor\n    vmm_hypervisor -->|vmm-to-acpi-hotplug| acpi_hotplug\n    virtiofsd -->|virtiofsd-to-host-filesystem| host_filesystem"
     }
   ],
   "trust_zones": [
@@ -105,6 +111,13 @@
       "title": "Container Workload",
       "description": "The containerised application or process running inside the Kata VM guest. In the threat model, this may be a malicious or compromised workload attempting to escape the VM boundary.",
       "trust_zone": "workload"
+    },
+    {
+      "symbolic_name": "kata-agent",
+      "title": "Kata Agent",
+      "description": "The trusted agent process running in guest userspace (b1) that manages container lifecycle inside the VM on behalf of the host runtime. Receives commands from the CRI runtime via the VMM over virtio-vsock, and manages the container workload (b0) inside the guest.",
+      "trust_zone": "guest-userspace",
+      "repo_link": "https://github.com/kata-containers/kata-containers"
     },
     {
       "symbolic_name": "cri-runtime",
@@ -259,12 +272,12 @@
       "encrypted": false
     },
     {
-      "symbolic_name": "workload-to-vsock",
-      "title": "Container Workload to virtio-vsock Control Channel",
-      "description": "Control messages and STDIO from the guest agent to the host VMM over virtio-vsock. QEMU uses vhost_vsock (host kernel); Firecracker, Cloud Hypervisor, and Dragonball use a unix-domain-socket in host userspace.",
+      "symbolic_name": "agent-to-vsock",
+      "title": "Kata Agent to virtio-vsock Control Channel",
+      "description": "Control messages and STDIO from the Kata Agent in guest userspace to the host VMM over virtio-vsock. QEMU uses vhost_vsock (host kernel); Firecracker, Cloud Hypervisor, and Dragonball use a unix-domain-socket in host userspace.",
       "source": {
         "type": "component",
-        "object": "container-workload"
+        "object": "kata-agent"
       },
       "destination": {
         "type": "component",
@@ -299,6 +312,51 @@
       "destination": {
         "type": "component",
         "object": "vmm-hypervisor"
+      },
+      "has_sensitive_data": true,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "vmm-to-acpi-hotplug",
+      "title": "VMM Hypervisor to ACPI Hotplug Subsystem",
+      "description": "Dynamic CPU, memory, and device hotplug signalling from the VMM to the ACPI hotplug subsystem when containers are resized or added to a Kata pod.",
+      "source": {
+        "type": "component",
+        "object": "vmm-hypervisor"
+      },
+      "destination": {
+        "type": "component",
+        "object": "acpi-hotplug"
+      },
+      "has_sensitive_data": false,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "user-to-workload",
+      "title": "Container User to Container Workload",
+      "description": "Direct interaction from the container user (e.g. shell access, exec, or in-process interaction) with the container workload process inside the Kata VM guest.",
+      "source": {
+        "type": "actor",
+        "object": "container-user"
+      },
+      "destination": {
+        "type": "component",
+        "object": "container-workload"
+      },
+      "has_sensitive_data": false,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "virtiofsd-to-host-filesystem",
+      "title": "virtiofsd to Host Filesystem",
+      "description": "File read and write operations performed by virtiofsd on the host filesystem on behalf of guest requests. virtiofsd opens and serves files from the shared directory tree, which contains container rootfs, volumes, secrets, and configmaps.",
+      "source": {
+        "type": "component",
+        "object": "virtiofsd"
+      },
+      "destination": {
+        "type": "data_store",
+        "object": "host-filesystem"
       },
       "has_sensitive_data": true,
       "encrypted": false
