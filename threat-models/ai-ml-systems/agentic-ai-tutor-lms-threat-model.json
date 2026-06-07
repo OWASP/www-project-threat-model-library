@@ -1,0 +1,1344 @@
+{
+  "$schema": "https://github.com/OWASP/www-project-threat-model-library/blob/v1.0.2/threat-model.schema.json",
+  "version": "1.0",
+  "scope": {
+    "title": "Agentic AI Tutor and LMS Integration",
+    "description": "A reference education system where an AI tutor interacts with students and educators, retrieves course content, reads selected student records, stores tutoring memory, invokes governed tools, produces recommendations, and routes consequential LMS actions through human review.",
+    "business_criticality": "high",
+    "data_sensitivity": [
+      "pii",
+      "cred",
+      "biz",
+      "op"
+    ],
+    "exposure": "external",
+    "tier": "business_critical"
+  },
+  "description": "Threat model for an agentic education tutor integrated with a learning management system, retrieval store, tool broker, human review workflow, and tamper-evident evidence collection.",
+  "frozen": false,
+  "diagrams": [
+    {
+      "title": "Reference architecture",
+      "type": "plantuml",
+      "source": "@startuml\nactor Student\nactor Educator\nactor \"LMS Administrator\" as Admin\ncloud \"Third Party Model Provider\" as Provider\nrectangle \"LMS Web Portal\" as LMS\nrectangle \"Tutor Orchestrator\" as Tutor\nrectangle \"Policy Enforcement Gateway\" as Policy\nrectangle \"Retrieval Service\" as Retrieval\nrectangle \"MCP Tool Broker\" as Broker\nrectangle \"Human Review Console\" as Review\ndatabase \"Student Records\" as Records\ndatabase \"Gradebook\" as Gradebook\ndatabase \"Vector Memory Store\" as Memory\ndatabase \"Audit and Evidence Store\" as Audit\nStudent --> LMS : HTTPS + SSO\nEducator --> LMS : HTTPS + SSO\nAdmin --> LMS : HTTPS + SSO\nLMS --> Tutor : session context\nTutor --> Policy : action request\nPolicy --> Retrieval : approved retrieval\nRetrieval --> Memory : read/write with gate\nPolicy --> Broker : scoped tool call\nBroker --> Gradebook : approved grade action\nPolicy --> Review : high impact approval\nTutor --> Provider : minimized model request\nPolicy --> Audit : receipt and decision\nReview --> Audit : approval record\nRecords --> Tutor : selected student context\n@enduml"
+    }
+  ],
+  "trust_zones": [
+    {
+      "symbolic_name": "public",
+      "title": "Public User Zone",
+      "description": "Student and educator browsers, home networks, and unmanaged client devices."
+    },
+    {
+      "symbolic_name": "institution-zone",
+      "title": "Institution Application Zone",
+      "description": "Institution-controlled LMS web portal, identity provider integration, and course administration services."
+    },
+    {
+      "symbolic_name": "agent-runtime-zone",
+      "title": "Agent Runtime Zone",
+      "description": "Tutor orchestration service, policy enforcement gateway, retrieval service, and MCP tool broker."
+    },
+    {
+      "symbolic_name": "education-data-zone",
+      "title": "Education Data Zone",
+      "description": "Student records, gradebook, course corpus, tutoring history, and vector memory stores."
+    },
+    {
+      "symbolic_name": "third-party-zone",
+      "title": "Third Party Service Zone",
+      "description": "External model provider and optional third-party education tools."
+    },
+    {
+      "symbolic_name": "operations-zone",
+      "title": "Security Operations Zone",
+      "description": "Audit store, evidence collector, monitoring pipeline, and incident review workspace."
+    }
+  ],
+  "trust_boundaries": [
+    {
+      "trust_zone_a": "public",
+      "trust_zone_b": "institution-zone",
+      "access_control_methods": [
+        "rbac"
+      ],
+      "authentication_methods": [
+        "sso"
+      ],
+      "access_token_expires": true,
+      "has_refresh_token": true,
+      "can_user_logout": true
+    },
+    {
+      "trust_zone_a": "institution-zone",
+      "trust_zone_b": "agent-runtime-zone",
+      "access_control_methods": [
+        "rbac",
+        "abac"
+      ],
+      "authentication_methods": [
+        "token"
+      ],
+      "access_token_expires": true,
+      "can_system_logout": true
+    },
+    {
+      "trust_zone_a": "agent-runtime-zone",
+      "trust_zone_b": "education-data-zone",
+      "access_control_methods": [
+        "rbac",
+        "abac"
+      ],
+      "authentication_methods": [
+        "token"
+      ],
+      "access_token_expires": true,
+      "can_system_logout": true
+    },
+    {
+      "trust_zone_a": "agent-runtime-zone",
+      "trust_zone_b": "third-party-zone",
+      "access_control_methods": [
+        "acl"
+      ],
+      "authentication_methods": [
+        "token"
+      ],
+      "access_token_expires": true,
+      "can_system_logout": true
+    },
+    {
+      "trust_zone_a": "agent-runtime-zone",
+      "trust_zone_b": "operations-zone",
+      "access_control_methods": [
+        "rbac"
+      ],
+      "authentication_methods": [
+        "public_key",
+        "token"
+      ],
+      "access_token_expires": true
+    }
+  ],
+  "actors": [
+    {
+      "symbolic_name": "student",
+      "title": "Student",
+      "description": "Learner interacting with the tutor through the LMS.",
+      "type": "user",
+      "permissions": "Ask course questions, submit assignments, view permitted feedback, and view own records.",
+      "trust_zone": "public"
+    },
+    {
+      "symbolic_name": "educator",
+      "title": "Educator",
+      "description": "Instructor or teaching staff using the system to support instruction and review learner progress.",
+      "type": "power_user",
+      "permissions": "Review class activity, approve consequential recommendations, and manage course content.",
+      "trust_zone": "public"
+    },
+    {
+      "symbolic_name": "lms-admin",
+      "title": "LMS Administrator",
+      "description": "Administrator responsible for LMS configuration, access policy, integrations, and audit access.",
+      "type": "administrator",
+      "permissions": "Manage LMS integrations, role mappings, and operational settings.",
+      "trust_zone": "public"
+    },
+    {
+      "symbolic_name": "security-operator",
+      "title": "Security Operator",
+      "description": "Security or compliance operator reviewing evidence, incidents, and system posture.",
+      "type": "administrator",
+      "permissions": "Review security events, evidence bundles, and incident replay records.",
+      "trust_zone": "operations-zone"
+    },
+    {
+      "symbolic_name": "model-provider",
+      "title": "External Model Provider",
+      "description": "Third-party service receiving minimized requests and returning model responses.",
+      "type": "third_party",
+      "permissions": "Process minimized requests under contractual and technical controls.",
+      "trust_zone": "third-party-zone"
+    },
+    {
+      "symbolic_name": "external-education-tool",
+      "title": "External Education Tool",
+      "description": "Optional third-party course, assessment, or notification tool invoked through the tool broker.",
+      "type": "third_party",
+      "permissions": "Return scoped results to the broker under a declared contract.",
+      "trust_zone": "third-party-zone"
+    }
+  ],
+  "components": [
+    {
+      "symbolic_name": "lms-web-portal",
+      "title": "LMS Web Portal",
+      "description": "Primary user interface for course activity, tutor access, assignments, grades, and educator review.",
+      "trust_zone": "institution-zone"
+    },
+    {
+      "symbolic_name": "identity-provider",
+      "title": "Identity Provider",
+      "description": "Institution authentication and role source for students, educators, administrators, and operators.",
+      "trust_zone": "institution-zone"
+    },
+    {
+      "symbolic_name": "tutor-orchestrator",
+      "title": "Tutor Orchestrator",
+      "description": "Coordinates tutoring requests, retrieval, model calls, tool invocation, memory updates, and response generation.",
+      "trust_zone": "agent-runtime-zone"
+    },
+    {
+      "symbolic_name": "policy-enforcement-gateway",
+      "title": "Policy Enforcement Gateway",
+      "description": "Evaluates requested actions against user role, course scope, data classification, tool policy, memory policy, and approval rules.",
+      "trust_zone": "agent-runtime-zone"
+    },
+    {
+      "symbolic_name": "retrieval-service",
+      "title": "Retrieval Service",
+      "description": "Fetches course content and approved context from indexed sources and records retrieval provenance.",
+      "trust_zone": "agent-runtime-zone"
+    },
+    {
+      "symbolic_name": "mcp-tool-broker",
+      "title": "MCP Tool Broker",
+      "description": "Presents scoped tools to the tutor runtime and validates tool input and output contracts.",
+      "trust_zone": "agent-runtime-zone"
+    },
+    {
+      "symbolic_name": "gradebook-adapter",
+      "title": "Gradebook Adapter",
+      "description": "Interface for reading grade context and routing grade-change requests through mandatory approval.",
+      "trust_zone": "agent-runtime-zone"
+    },
+    {
+      "symbolic_name": "human-review-console",
+      "title": "Human Review Console",
+      "description": "Allows educators or authorized reviewers to approve, reject, or annotate high-impact recommendations and actions.",
+      "trust_zone": "institution-zone"
+    },
+    {
+      "symbolic_name": "evidence-collector",
+      "title": "Evidence Collector",
+      "description": "Collects receipts, policy decisions, hashes, approval records, and replay bundles for security review.",
+      "trust_zone": "operations-zone"
+    },
+    {
+      "symbolic_name": "monitoring-service",
+      "title": "Monitoring Service",
+      "description": "Detects suspicious sessions, repeated denials, privacy redactions, memory write anomalies, and resource spikes.",
+      "trust_zone": "operations-zone"
+    }
+  ],
+  "data_stores": [
+    {
+      "symbolic_name": "student-records-db",
+      "title": "Student Records Database",
+      "description": "Stores student identity attributes, enrollment records, accommodations, attendance, and advising context.",
+      "type": "sql",
+      "vendor": "Institution",
+      "product": "Student Information System",
+      "trust_zone": "education-data-zone"
+    },
+    {
+      "symbolic_name": "gradebook-db",
+      "title": "Gradebook Database",
+      "description": "Stores assessment scores, assignment states, feedback, and grade-change history.",
+      "type": "sql",
+      "vendor": "Institution",
+      "product": "LMS Gradebook",
+      "trust_zone": "education-data-zone"
+    },
+    {
+      "symbolic_name": "course-content-store",
+      "title": "Course Content Store",
+      "description": "Stores course pages, uploaded documents, assignment descriptions, rubrics, and discussion content.",
+      "type": "document",
+      "vendor": "Institution",
+      "product": "LMS Content Store",
+      "trust_zone": "education-data-zone"
+    },
+    {
+      "symbolic_name": "vector-memory-store",
+      "title": "Vector Memory Store",
+      "description": "Stores embeddings, retrieval chunks, session summaries, and approved tutoring memory.",
+      "type": "document",
+      "vendor": "Institution",
+      "product": "Vector Database",
+      "trust_zone": "education-data-zone"
+    },
+    {
+      "symbolic_name": "policy-registry",
+      "title": "Policy Registry",
+      "description": "Stores tool policies, memory policies, approval rules, prompt templates, and data minimization rules.",
+      "type": "document",
+      "vendor": "Institution",
+      "product": "Policy Repository",
+      "trust_zone": "agent-runtime-zone"
+    },
+    {
+      "symbolic_name": "secrets-vault",
+      "title": "Secrets Vault",
+      "description": "Stores provider credentials, signing keys, tool credentials, and integration tokens.",
+      "type": "key_value",
+      "vendor": "Institution",
+      "product": "Secrets Vault",
+      "trust_zone": "agent-runtime-zone"
+    },
+    {
+      "symbolic_name": "audit-log-store",
+      "title": "Audit Log Store",
+      "description": "Append-only store for sessions, tool calls, retrieval events, memory writes, approval records, and security decisions.",
+      "type": "object",
+      "vendor": "Institution",
+      "product": "Immutable Log Store",
+      "trust_zone": "operations-zone"
+    },
+    {
+      "symbolic_name": "evidence-artifact-store",
+      "title": "Evidence Artifact Store",
+      "description": "Stores release evidence, policy hashes, test results, redaction reports, and replay bundles.",
+      "type": "object",
+      "vendor": "Institution",
+      "product": "Evidence Repository",
+      "trust_zone": "operations-zone"
+    }
+  ],
+  "data_sets": [
+    {
+      "symbolic_name": "student-profile-data",
+      "title": "Student Profile Data",
+      "description": "Identity, enrollment, role, course membership, and support metadata used for tutoring context.",
+      "placements": [
+        {
+          "data_store": "student-records-db",
+          "encrypted": true
+        }
+      ],
+      "data_sensitivity": [
+        "pii"
+      ],
+      "access_control_methods": [
+        "rbac",
+        "abac"
+      ],
+      "record_count": 50000
+    },
+    {
+      "symbolic_name": "grades-and-assessments",
+      "title": "Grades and Assessments",
+      "description": "Assignment scores, rubric results, feedback, grade changes, and assessment recommendations.",
+      "placements": [
+        {
+          "data_store": "gradebook-db",
+          "encrypted": true
+        }
+      ],
+      "data_sensitivity": [
+        "pii",
+        "biz"
+      ],
+      "access_control_methods": [
+        "rbac",
+        "abac"
+      ],
+      "record_count": 250000
+    },
+    {
+      "symbolic_name": "course-content-corpus",
+      "title": "Course Content Corpus",
+      "description": "Course pages, assignments, rubrics, instructor materials, discussion excerpts, and imported learning resources.",
+      "placements": [
+        {
+          "data_store": "course-content-store",
+          "encrypted": true
+        },
+        {
+          "data_store": "vector-memory-store",
+          "encrypted": true
+        }
+      ],
+      "data_sensitivity": [
+        "biz"
+      ],
+      "access_control_methods": [
+        "rbac"
+      ],
+      "record_count": 100000
+    },
+    {
+      "symbolic_name": "tutoring-session-history",
+      "title": "Tutoring Session History",
+      "description": "Conversation turns, selected retrieval references, response summaries, and interaction state.",
+      "placements": [
+        {
+          "data_store": "vector-memory-store",
+          "encrypted": true
+        }
+      ],
+      "data_sensitivity": [
+        "pii",
+        "biz"
+      ],
+      "access_control_methods": [
+        "rbac",
+        "abac"
+      ],
+      "record_count": 1000000
+    },
+    {
+      "symbolic_name": "tool-authorization-policies",
+      "title": "Tool Authorization Policies",
+      "description": "Rules that bind tool use to user role, course scope, action type, data classification, and approval state.",
+      "placements": [
+        {
+          "data_store": "policy-registry",
+          "encrypted": true
+        }
+      ],
+      "data_sensitivity": [
+        "op"
+      ],
+      "access_control_methods": [
+        "rbac"
+      ],
+      "record_count": 500
+    },
+    {
+      "symbolic_name": "provider-and-tool-credentials",
+      "title": "Provider and Tool Credentials",
+      "description": "Credentials for model provider access, LMS API access, and signed tool calls.",
+      "placements": [
+        {
+          "data_store": "secrets-vault",
+          "encrypted": true
+        }
+      ],
+      "data_sensitivity": [
+        "cred"
+      ],
+      "access_control_methods": [
+        "rbac"
+      ],
+      "record_count": 100
+    },
+    {
+      "symbolic_name": "audit-and-evidence-records",
+      "title": "Audit and Evidence Records",
+      "description": "Policy decisions, tool receipts, approval records, replay bundles, hashes, and test results.",
+      "placements": [
+        {
+          "data_store": "audit-log-store",
+          "encrypted": true
+        },
+        {
+          "data_store": "evidence-artifact-store",
+          "encrypted": true
+        }
+      ],
+      "data_sensitivity": [
+        "op",
+        "pii"
+      ],
+      "access_control_methods": [
+        "rbac"
+      ],
+      "record_count": 5000000
+    }
+  ],
+  "data_flows": [
+    {
+      "symbolic_name": "student-to-lms-session",
+      "title": "Student LMS Session",
+      "description": "Student accesses the LMS web portal over HTTPS using SSO. Carries student identity, course membership, tutor requests, and session state.",
+      "source": {
+        "type": "actor",
+        "object": "student"
+      },
+      "destination": {
+        "type": "component",
+        "object": "lms-web-portal"
+      },
+      "has_sensitive_data": true,
+      "encrypted": true
+    },
+    {
+      "symbolic_name": "educator-to-review-console",
+      "title": "Educator Review Session",
+      "description": "Educator reviews high-impact recommendations and approvals over HTTPS using SSO and course-scoped authorization.",
+      "source": {
+        "type": "actor",
+        "object": "educator"
+      },
+      "destination": {
+        "type": "component",
+        "object": "human-review-console"
+      },
+      "has_sensitive_data": true,
+      "encrypted": true
+    },
+    {
+      "symbolic_name": "lms-to-tutor-request",
+      "title": "LMS Tutor Request",
+      "description": "The LMS forwards user request, user role, course identifier, and permitted context to the tutor orchestrator over authenticated service-to-service HTTPS.",
+      "source": {
+        "type": "component",
+        "object": "lms-web-portal"
+      },
+      "destination": {
+        "type": "component",
+        "object": "tutor-orchestrator"
+      },
+      "has_sensitive_data": true,
+      "encrypted": true
+    },
+    {
+      "symbolic_name": "tutor-to-policy-decision",
+      "title": "Tutor Policy Decision Request",
+      "description": "Tutor requests approval to retrieve data, write memory, call a tool, or produce a high-impact recommendation. The request includes user, course, action type, data classification, and policy version.",
+      "source": {
+        "type": "component",
+        "object": "tutor-orchestrator"
+      },
+      "destination": {
+        "type": "component",
+        "object": "policy-enforcement-gateway"
+      },
+      "has_sensitive_data": true,
+      "encrypted": true
+    },
+    {
+      "symbolic_name": "policy-to-retrieval",
+      "title": "Approved Retrieval Request",
+      "description": "Policy gateway allows retrieval of course-scoped content and requires provenance capture for returned chunks.",
+      "source": {
+        "type": "component",
+        "object": "policy-enforcement-gateway"
+      },
+      "destination": {
+        "type": "component",
+        "object": "retrieval-service"
+      },
+      "has_sensitive_data": true,
+      "encrypted": true
+    },
+    {
+      "symbolic_name": "retrieval-to-vector-store",
+      "title": "Vector Store Read and Write",
+      "description": "Retrieval service reads approved chunks and writes approved memory entries to the vector memory store. Writes require source classification, TTL, and quarantine decision.",
+      "source": {
+        "type": "component",
+        "object": "retrieval-service"
+      },
+      "destination": {
+        "type": "data-store",
+        "object": "vector-memory-store"
+      },
+      "has_sensitive_data": true,
+      "encrypted": true
+    },
+    {
+      "symbolic_name": "policy-to-tool-broker",
+      "title": "Scoped Tool Invocation",
+      "description": "Policy gateway sends a scoped, schema-bound tool call to the MCP tool broker with tenant, course, role, and action restrictions.",
+      "source": {
+        "type": "component",
+        "object": "policy-enforcement-gateway"
+      },
+      "destination": {
+        "type": "component",
+        "object": "mcp-tool-broker"
+      },
+      "has_sensitive_data": true,
+      "encrypted": true
+    },
+    {
+      "symbolic_name": "tool-broker-to-gradebook",
+      "title": "Gradebook Tool Call",
+      "description": "MCP tool broker calls the gradebook adapter. Read operations are course scoped. Write operations require human approval and evidence receipt.",
+      "source": {
+        "type": "component",
+        "object": "mcp-tool-broker"
+      },
+      "destination": {
+        "type": "component",
+        "object": "gradebook-adapter"
+      },
+      "has_sensitive_data": true,
+      "encrypted": true
+    },
+    {
+      "symbolic_name": "gradebook-adapter-to-gradebook-db",
+      "title": "Gradebook Data Access",
+      "description": "Gradebook adapter reads grade context and submits approved changes to the gradebook database with immutable change reason.",
+      "source": {
+        "type": "component",
+        "object": "gradebook-adapter"
+      },
+      "destination": {
+        "type": "data-store",
+        "object": "gradebook-db"
+      },
+      "has_sensitive_data": true,
+      "encrypted": true
+    },
+    {
+      "symbolic_name": "tutor-to-model-provider",
+      "title": "Minimized Provider Request",
+      "description": "Tutor sends minimized request context to the external model provider. PII and grade context are redacted unless required and permitted.",
+      "source": {
+        "type": "component",
+        "object": "tutor-orchestrator"
+      },
+      "destination": {
+        "type": "actor",
+        "object": "model-provider"
+      },
+      "has_sensitive_data": true,
+      "encrypted": true
+    },
+    {
+      "symbolic_name": "policy-to-human-review",
+      "title": "Human Review Escalation",
+      "description": "High-impact recommendation or write action is routed to a human reviewer with proposed action, evidence, source references, and risk reason.",
+      "source": {
+        "type": "component",
+        "object": "policy-enforcement-gateway"
+      },
+      "destination": {
+        "type": "component",
+        "object": "human-review-console"
+      },
+      "has_sensitive_data": true,
+      "encrypted": true
+    },
+    {
+      "symbolic_name": "evidence-collection-flow",
+      "title": "Evidence Collection",
+      "description": "Policy gateway, tutor orchestrator, review console, and tool broker emit receipts, hashes, decisions, and replay references to the evidence collector and audit store.",
+      "source": {
+        "type": "component",
+        "object": "policy-enforcement-gateway"
+      },
+      "destination": {
+        "type": "component",
+        "object": "evidence-collector"
+      },
+      "has_sensitive_data": true,
+      "encrypted": true
+    },
+    {
+      "symbolic_name": "evidence-to-audit-store",
+      "title": "Audit Storage",
+      "description": "Evidence collector writes tamper-evident records, replay bundles, and test artifacts to immutable audit and evidence stores.",
+      "source": {
+        "type": "component",
+        "object": "evidence-collector"
+      },
+      "destination": {
+        "type": "data-store",
+        "object": "audit-log-store"
+      },
+      "has_sensitive_data": true,
+      "encrypted": true
+    }
+  ],
+  "assumptions": [
+    {
+      "description": "The LMS can distinguish student, educator, administrator, and security operator roles through an authoritative identity provider.",
+      "topics": [
+        "identity-provider",
+        "lms-web-portal"
+      ],
+      "validity": "unconfirmed"
+    },
+    {
+      "description": "Grade changes, enrollment changes, assessment-level recommendations, and bulk notifications are considered high-impact education actions.",
+      "topics": [
+        "gradebook-adapter",
+        "human-review-console"
+      ],
+      "validity": "confirmed"
+    },
+    {
+      "description": "Course content, discussion posts, assignments, file uploads, and external learning resources are treated as untrusted until source and review state are established.",
+      "topics": [
+        "course-content-store",
+        "retrieval-service"
+      ],
+      "validity": "confirmed"
+    }
+  ],
+  "threat_personas": [
+    {
+      "symbolic_name": "adversarial-student",
+      "title": "Adversarial Student",
+      "description": "A student attempting to alter tutor behavior, access another student's data, or influence grading workflows.",
+      "is_person": true,
+      "skill_level": "engineer",
+      "access_level": "user",
+      "malicious_intent": true,
+      "applicability_to_org": "high"
+    },
+    {
+      "symbolic_name": "compromised-educator",
+      "title": "Compromised Educator Account",
+      "description": "An educator account controlled by an attacker or misused by an insider.",
+      "is_person": true,
+      "skill_level": "insider",
+      "access_level": "user",
+      "malicious_intent": true,
+      "applicability_to_org": "moderate"
+    },
+    {
+      "symbolic_name": "content-poisoner",
+      "title": "Content Poisoner",
+      "description": "A person or system that introduces adversarial instructions or false policy into course materials, discussion content, or imported documents.",
+      "is_person": false,
+      "skill_level": "engineer",
+      "access_level": "user",
+      "malicious_intent": true,
+      "applicability_to_org": "high"
+    },
+    {
+      "symbolic_name": "malicious-tool-provider",
+      "title": "Malicious or Compromised Tool Provider",
+      "description": "A third-party tool returning unsafe, misleading, or instruction-like output through an integration.",
+      "is_person": false,
+      "skill_level": "expert_engineer",
+      "access_level": "admin",
+      "malicious_intent": true,
+      "applicability_to_org": "moderate"
+    },
+    {
+      "symbolic_name": "negligent-administrator",
+      "title": "Negligent Administrator",
+      "description": "An administrator who misconfigures access, retention, approval rules, or tool permissions.",
+      "is_person": true,
+      "skill_level": "insider",
+      "access_level": "admin",
+      "malicious_intent": false,
+      "applicability_to_org": "moderate"
+    }
+  ],
+  "threats": [
+    {
+      "symbolic_name": "prompt-injection-course-content",
+      "title": "Prompt injection through course content",
+      "description": "Adversarial instructions embedded in assignments, forum posts, files, or imported learning resources can cause the tutor to ignore policy, disclose information, or invoke tools.",
+      "components_affected": [
+        "tutor-orchestrator",
+        "retrieval-service",
+        "policy-enforcement-gateway"
+      ],
+      "threat_persona": "content-poisoner",
+      "event": "Tutor retrieves untrusted course content and processes it as instruction rather than data.",
+      "sources": [
+        "adversary"
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 20,
+          "cwe_title": "Improper Input Validation"
+        },
+        {
+          "cwe_id": 116,
+          "cwe_title": "Improper Encoding or Escaping of Output"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "rag-corpus-poisoning",
+      "title": "Retrieval corpus poisoning",
+      "description": "A poisoned course document or imported source can corrupt retrieval results and lead to false policy guidance, unsafe recommendations, or persistent misinformation.",
+      "components_affected": [
+        "retrieval-service",
+        "tutor-orchestrator"
+      ],
+      "threat_persona": "content-poisoner",
+      "event": "Unreviewed content is indexed and selected as authoritative retrieval context.",
+      "sources": [
+        "adversary",
+        "human_error"
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 345,
+          "cwe_title": "Insufficient Verification of Data Authenticity"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "gradebook-action-hijack",
+      "title": "Gradebook action hijack",
+      "description": "A user prompt, retrieved content, or tool response can attempt to trigger a grade read or write beyond the user's authority.",
+      "components_affected": [
+        "tutor-orchestrator",
+        "policy-enforcement-gateway",
+        "gradebook-adapter"
+      ],
+      "threat_persona": "adversarial-student",
+      "event": "The tutor attempts to read or change grades without sufficient authorization and human approval.",
+      "sources": [
+        "adversary"
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 862,
+          "cwe_title": "Missing Authorization"
+        },
+        {
+          "cwe_id": 863,
+          "cwe_title": "Incorrect Authorization"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "excessive-tool-permission",
+      "title": "Excessive tool permission",
+      "description": "The tutor runtime can be granted broader LMS, file, notification, or administrative access than the current task requires.",
+      "components_affected": [
+        "policy-enforcement-gateway",
+        "mcp-tool-broker",
+        "gradebook-adapter"
+      ],
+      "threat_persona": "negligent-administrator",
+      "event": "A tool is configured with broad capabilities or weak scoping and is reachable from ordinary tutor sessions.",
+      "sources": [
+        "human_error"
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 266,
+          "cwe_title": "Incorrect Privilege Assignment"
+        },
+        {
+          "cwe_id": 269,
+          "cwe_title": "Improper Privilege Management"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "memory-poisoning-session",
+      "title": "Persistent tutoring memory poisoning",
+      "description": "A session or document can attempt to write durable instructions, false student preferences, or unsafe policy into memory that affects later sessions.",
+      "components_affected": [
+        "tutor-orchestrator",
+        "retrieval-service"
+      ],
+      "threat_persona": "adversarial-student",
+      "event": "A memory write occurs without source trust, TTL, risk scoring, and policy approval.",
+      "sources": [
+        "adversary"
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 345,
+          "cwe_title": "Insufficient Verification of Data Authenticity"
+        },
+        {
+          "cwe_id": 922,
+          "cwe_title": "Insecure Storage of Sensitive Information"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "student-pii-disclosure",
+      "title": "Student PII disclosure",
+      "description": "Student identity, grades, support notes, accommodations, or session history can be disclosed to unauthorized users, providers, logs, or other tenants.",
+      "components_affected": [
+        "tutor-orchestrator",
+        "retrieval-service",
+        "evidence-collector",
+        "mcp-tool-broker"
+      ],
+      "threat_persona": "adversarial-student",
+      "event": "Sensitive student data is retrieved or transmitted without purpose limitation, redaction, or recipient authorization.",
+      "sources": [
+        "adversary",
+        "human_error"
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 200,
+          "cwe_title": "Exposure of Sensitive Information to an Unauthorized Actor"
+        },
+        {
+          "cwe_id": 201,
+          "cwe_title": "Insertion of Sensitive Information Into Sent Data"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "unsafe-mcp-tool-output",
+      "title": "Unsafe MCP tool output",
+      "description": "A tool can return malicious instructions, false authority claims, unexpected links, or payloads that are treated as trusted context by the tutor runtime.",
+      "components_affected": [
+        "mcp-tool-broker",
+        "tutor-orchestrator",
+        "policy-enforcement-gateway"
+      ],
+      "threat_persona": "malicious-tool-provider",
+      "event": "Tool output crosses into model context without schema validation, provenance, and instruction isolation.",
+      "sources": [
+        "adversary"
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 20,
+          "cwe_title": "Improper Input Validation"
+        },
+        {
+          "cwe_id": 345,
+          "cwe_title": "Insufficient Verification of Data Authenticity"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "audit-log-tampering",
+      "title": "Audit log tampering",
+      "description": "An attacker or administrator can modify or delete session, tool, memory, approval, or evidence records to hide unsafe action paths.",
+      "components_affected": [
+        "evidence-collector",
+        "monitoring-service"
+      ],
+      "threat_persona": "compromised-educator",
+      "event": "Audit records are written without append-only integrity or independent verification.",
+      "sources": [
+        "adversary",
+        "human_error"
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 778,
+          "cwe_title": "Insufficient Logging"
+        },
+        {
+          "cwe_id": 345,
+          "cwe_title": "Insufficient Verification of Data Authenticity"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "human-approval-bypass",
+      "title": "Human approval bypass",
+      "description": "A high-impact recommendation or action can be executed without a valid human approval record or with approval detached from the actual action.",
+      "components_affected": [
+        "policy-enforcement-gateway",
+        "human-review-console",
+        "gradebook-adapter"
+      ],
+      "threat_persona": "compromised-educator",
+      "event": "A consequential action proceeds without a bound approval token, reviewer identity, action hash, and expiry.",
+      "sources": [
+        "adversary",
+        "human_error"
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 863,
+          "cwe_title": "Incorrect Authorization"
+        },
+        {
+          "cwe_id": 287,
+          "cwe_title": "Improper Authentication"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "cross-tenant-context-leakage",
+      "title": "Cross-tenant context leakage",
+      "description": "The tutor can retrieve or retain context from another course, student group, instructor, or tenant due to weak scoping or memory isolation.",
+      "components_affected": [
+        "tutor-orchestrator",
+        "retrieval-service",
+        "policy-enforcement-gateway"
+      ],
+      "threat_persona": "adversarial-student",
+      "event": "Context lookup, memory lookup, or tool call is not bound to current tenant, course, user, and role.",
+      "sources": [
+        "adversary",
+        "human_error"
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 284,
+          "cwe_title": "Improper Access Control"
+        },
+        {
+          "cwe_id": 200,
+          "cwe_title": "Exposure of Sensitive Information to an Unauthorized Actor"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "runaway-agent-loop-resource-abuse",
+      "title": "Runaway agent loop and resource abuse",
+      "description": "Ambiguous requests, poisoned tool responses, or poor stopping rules can cause repeated retrieval, model calls, tool calls, notifications, or retries.",
+      "components_affected": [
+        "tutor-orchestrator",
+        "retrieval-service",
+        "mcp-tool-broker",
+        "monitoring-service"
+      ],
+      "threat_persona": "adversarial-student",
+      "event": "A session exceeds configured step, cost, token, or tool-call limits without escalation.",
+      "sources": [
+        "adversary",
+        "failure"
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 400,
+          "cwe_title": "Uncontrolled Resource Consumption"
+        },
+        {
+          "cwe_id": 770,
+          "cwe_title": "Allocation of Resources Without Limits or Throttling"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "provider-data-overexposure",
+      "title": "Provider data overexposure",
+      "description": "The system can send unnecessary student records, grades, or institutional context to a third-party model provider.",
+      "components_affected": [
+        "tutor-orchestrator",
+        "policy-enforcement-gateway"
+      ],
+      "threat_persona": "negligent-administrator",
+      "event": "Provider request construction lacks data minimization, redaction, and purpose limitation.",
+      "sources": [
+        "human_error"
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 201,
+          "cwe_title": "Insertion of Sensitive Information Into Sent Data"
+        },
+        {
+          "cwe_id": 359,
+          "cwe_title": "Exposure of Private Personal Information to an Unauthorized Actor"
+        }
+      ]
+    }
+  ],
+  "controls": [
+    {
+      "symbolic_name": "untrusted-content-isolation",
+      "title": "Isolate untrusted content from instructions",
+      "description": "Treat retrieved course content, uploads, forum text, and tool output as data. Delimit, label, and filter untrusted content before it reaches the tutor runtime.",
+      "threats": [
+        "prompt-injection-course-content",
+        "unsafe-mcp-tool-output"
+      ],
+      "trust_boundary": {
+        "trust_zone_a": "education-data-zone",
+        "trust_zone_b": "agent-runtime-zone"
+      },
+      "status": "suggested",
+      "priority": "critical"
+    },
+    {
+      "symbolic_name": "retrieval-provenance-and-quarantine",
+      "title": "Retrieval provenance and quarantine",
+      "description": "Record source, trust state, reviewer state, and content hash for retrieval chunks. Quarantine new or suspicious sources before authoritative use.",
+      "threats": [
+        "rag-corpus-poisoning",
+        "prompt-injection-course-content"
+      ],
+      "trust_boundary": {
+        "trust_zone_a": "education-data-zone",
+        "trust_zone_b": "agent-runtime-zone"
+      },
+      "status": "suggested",
+      "priority": "critical"
+    },
+    {
+      "symbolic_name": "gradebook-two-person-approval",
+      "title": "Two-person approval for gradebook writes",
+      "description": "Require educator approval bound to action hash, student, course, grade field, reason, expiry, and reviewer identity before grade changes are executed.",
+      "threats": [
+        "gradebook-action-hijack",
+        "human-approval-bypass"
+      ],
+      "trust_boundary": {
+        "trust_zone_a": "agent-runtime-zone",
+        "trust_zone_b": "education-data-zone"
+      },
+      "status": "suggested",
+      "priority": "critical"
+    },
+    {
+      "symbolic_name": "tool-allowlist-and-scope-binding",
+      "title": "Tool allowlist and scope binding",
+      "description": "Allow only declared tools. Bind every tool call to user, tenant, course, role, action type, policy version, and permitted data classes.",
+      "threats": [
+        "excessive-tool-permission",
+        "gradebook-action-hijack",
+        "cross-tenant-context-leakage"
+      ],
+      "trust_boundary": {
+        "trust_zone_a": "agent-runtime-zone",
+        "trust_zone_b": "education-data-zone"
+      },
+      "status": "suggested",
+      "priority": "critical"
+    },
+    {
+      "symbolic_name": "memory-write-gates",
+      "title": "Memory write gates",
+      "description": "Require source trust, purpose, TTL, risk score, and policy decision before writing persistent tutoring memory. Quarantine instruction-like memory requests.",
+      "threats": [
+        "memory-poisoning-session",
+        "cross-tenant-context-leakage"
+      ],
+      "trust_boundary": {
+        "trust_zone_a": "agent-runtime-zone",
+        "trust_zone_b": "education-data-zone"
+      },
+      "status": "suggested",
+      "priority": "critical"
+    },
+    {
+      "symbolic_name": "pii-redaction-and-purpose-limiting",
+      "title": "PII redaction and purpose limitation",
+      "description": "Redact or tokenize unnecessary student data before provider requests, logs, tool calls, and evidence export. Enforce purpose-specific access decisions.",
+      "threats": [
+        "student-pii-disclosure",
+        "provider-data-overexposure"
+      ],
+      "trust_boundary": {
+        "trust_zone_a": "agent-runtime-zone",
+        "trust_zone_b": "third-party-zone"
+      },
+      "status": "suggested",
+      "priority": "critical"
+    },
+    {
+      "symbolic_name": "mcp-tool-contract-validation",
+      "title": "MCP tool contract validation",
+      "description": "Validate tool input and output against declared schemas. Label tool output as untrusted data and prevent it from granting permissions or issuing new instructions.",
+      "threats": [
+        "unsafe-mcp-tool-output",
+        "excessive-tool-permission"
+      ],
+      "trust_boundary": {
+        "trust_zone_a": "agent-runtime-zone",
+        "trust_zone_b": "third-party-zone"
+      },
+      "status": "suggested",
+      "priority": "high"
+    },
+    {
+      "symbolic_name": "immutable-audit-chain",
+      "title": "Immutable audit chain",
+      "description": "Write session events, retrieval decisions, tool calls, memory writes, denials, and approvals to append-only or hash-chained storage.",
+      "threats": [
+        "audit-log-tampering",
+        "human-approval-bypass"
+      ],
+      "trust_boundary": {
+        "trust_zone_a": "agent-runtime-zone",
+        "trust_zone_b": "operations-zone"
+      },
+      "status": "suggested",
+      "priority": "critical"
+    },
+    {
+      "symbolic_name": "evidence-artifact-hashing",
+      "title": "Evidence artifact hashing",
+      "description": "Hash prompts, policy versions, tool manifests, approval records, test results, and replay bundles. Store hashes separately from mutable artifacts.",
+      "threats": [
+        "audit-log-tampering"
+      ],
+      "trust_boundary": {
+        "trust_zone_a": "agent-runtime-zone",
+        "trust_zone_b": "operations-zone"
+      },
+      "status": "suggested",
+      "priority": "high"
+    },
+    {
+      "symbolic_name": "human-review-failsafe",
+      "title": "Human review failsafe",
+      "description": "Default to denial or escalation for high-impact education actions when approval state, reviewer authority, action hash, or policy version is missing.",
+      "threats": [
+        "human-approval-bypass",
+        "gradebook-action-hijack"
+      ],
+      "trust_boundary": {
+        "trust_zone_a": "institution-zone",
+        "trust_zone_b": "agent-runtime-zone"
+      },
+      "status": "suggested",
+      "priority": "critical"
+    },
+    {
+      "symbolic_name": "tenant-context-boundaries",
+      "title": "Tenant and course context boundaries",
+      "description": "Bind retrieval, memory, and tool access to tenant, course, learner, and role. Reject cross-course and cross-tenant context unless explicitly approved.",
+      "threats": [
+        "cross-tenant-context-leakage",
+        "student-pii-disclosure"
+      ],
+      "trust_boundary": {
+        "trust_zone_a": "agent-runtime-zone",
+        "trust_zone_b": "education-data-zone"
+      },
+      "status": "suggested",
+      "priority": "critical"
+    },
+    {
+      "symbolic_name": "budget-and-loop-limits",
+      "title": "Budget and loop limits",
+      "description": "Enforce per-session limits for model calls, tool calls, retrieval attempts, retries, and notification volume. Escalate abnormal loops.",
+      "threats": [
+        "runaway-agent-loop-resource-abuse"
+      ],
+      "trust_boundary": {
+        "trust_zone_a": "public",
+        "trust_zone_b": "agent-runtime-zone"
+      },
+      "status": "suggested",
+      "priority": "high"
+    },
+    {
+      "symbolic_name": "provider-data-minimization",
+      "title": "Provider data minimization",
+      "description": "Construct provider requests from minimal task context. Strip student identifiers, grade data, and institutional metadata unless required and approved.",
+      "threats": [
+        "provider-data-overexposure",
+        "student-pii-disclosure"
+      ],
+      "trust_boundary": {
+        "trust_zone_a": "agent-runtime-zone",
+        "trust_zone_b": "third-party-zone"
+      },
+      "status": "suggested",
+      "priority": "critical"
+    },
+    {
+      "symbolic_name": "incident-replay-bundles",
+      "title": "Incident replay bundles",
+      "description": "Capture request, retrieval provenance, tool decisions, policy version, memory writes, approvals, outputs, and hashes so investigators can replay action paths.",
+      "threats": [
+        "audit-log-tampering",
+        "prompt-injection-course-content",
+        "gradebook-action-hijack",
+        "memory-poisoning-session"
+      ],
+      "trust_boundary": {
+        "trust_zone_a": "agent-runtime-zone",
+        "trust_zone_b": "operations-zone"
+      },
+      "status": "suggested",
+      "priority": "high"
+    }
+  ],
+  "risks": [
+    {
+      "symbolic_name": "unauthorized-education-record-change",
+      "title": "Unauthorized education record change",
+      "description": "A successful action hijack or approval bypass could change grades or educational records without legitimate authorization.",
+      "threats": [
+        "gradebook-action-hijack",
+        "human-approval-bypass",
+        "excessive-tool-permission"
+      ],
+      "likelihood": "possible",
+      "impact": "severe",
+      "impact_description": "Incorrect academic records, institutional liability, student harm, and loss of trust.",
+      "score": 15,
+      "level": "high"
+    },
+    {
+      "symbolic_name": "privacy-regulatory-exposure",
+      "title": "Student privacy and regulatory exposure",
+      "description": "Sensitive student data may be disclosed to unauthorized users, logs, tools, or providers.",
+      "threats": [
+        "student-pii-disclosure",
+        "provider-data-overexposure",
+        "cross-tenant-context-leakage"
+      ],
+      "likelihood": "possible",
+      "impact": "severe",
+      "impact_description": "Exposure of regulated student data and confidential institutional data.",
+      "score": 15,
+      "level": "high"
+    },
+    {
+      "symbolic_name": "persistent-behavior-corruption",
+      "title": "Persistent tutor behavior corruption",
+      "description": "Poisoned content or memory can persistently change future tutoring behavior and policy interpretation.",
+      "threats": [
+        "rag-corpus-poisoning",
+        "memory-poisoning-session",
+        "prompt-injection-course-content"
+      ],
+      "likelihood": "likely",
+      "impact": "major",
+      "impact_description": "Unsafe, misleading, or unauthorized recommendations across multiple sessions.",
+      "score": 16,
+      "level": "very_high"
+    },
+    {
+      "symbolic_name": "unverifiable-incident-response",
+      "title": "Unverifiable incident response",
+      "description": "Weak evidence integrity can prevent investigators from reconstructing a harmful or suspicious action path.",
+      "threats": [
+        "audit-log-tampering",
+        "unsafe-mcp-tool-output",
+        "human-approval-bypass"
+      ],
+      "likelihood": "possible",
+      "impact": "major",
+      "impact_description": "Delayed response, incomplete root-cause analysis, and inability to prove control operation.",
+      "score": 12,
+      "level": "high"
+    },
+    {
+      "symbolic_name": "service-disruption-and-cost-spike",
+      "title": "Service disruption and cost spike",
+      "description": "Runaway loops and excessive tool calls can degrade service availability and create unplanned operational cost.",
+      "threats": [
+        "runaway-agent-loop-resource-abuse"
+      ],
+      "likelihood": "possible",
+      "impact": "moderate",
+      "impact_description": "Poor availability, degraded student support, and cost escalation.",
+      "score": 9,
+      "level": "high"
+    }
+  ],
+  "extensions": {
+    "musaab.info/aisvs/control-crosswalk": {
+      "summary": "Education-sector control mapping for agentic LMS and tutor systems.",
+      "primary_aisvs_families": [
+        "C02 Input Validation",
+        "C05 Access Control and Identity",
+        "C08 Memory, Embeddings and Vector Database Security",
+        "C09 Autonomous Orchestration and Agentic Action Security",
+        "C10 Model Context Protocol Security",
+        "C12 Privacy Protection and Personal Data Management",
+        "C13 Monitoring, Logging and Anomaly Detection",
+        "C14 Human Oversight and Trust"
+      ],
+      "confirmed_requirement_reference": "v1.0-C9.4.3: tamper-evident audit logs through append-only, WORM, hash chaining, or equivalent integrity guarantees."
+    },
+    "musaab.info/education/evidence-profile": {
+      "minimum_evidence": [
+        "trust-zone and data-flow register",
+        "retrieval provenance record",
+        "memory write decision",
+        "tool execution receipt",
+        "human approval record",
+        "provider minimization log",
+        "tamper-evident audit proof",
+        "incident replay bundle"
+      ]
+    }
+  }
+}
