@@ -15,13 +15,13 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Check index
-        uses: dsanders11/json-schema-validate-action@v2.0.0
+        uses: dsanders11/json-schema-validate-action@v2.1.0
         with:
           schema: ./index.schema.json
           files: ./index.json
 
       - name: Check threat models
-        uses: dsanders11/json-schema-validate-action@v2.0.0
+        uses: dsanders11/json-schema-validate-action@v2.1.0
         with:
           schema: ./threat-model.schema.json
           files: |
