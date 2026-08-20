@@ -378,6 +378,11 @@
     {
       "description": "Repudiation is explicitly out of scope for this threat model. The source document (kata-containers/kata-containers threat-model.md) does not address logging, auditing, or non-repudiation mechanisms, and no claims are made about audit trail completeness.",
       "validity": "confirmed"
+    },
+    {
+      "description": "The virtio-vsock control channel between the VMM/CRI runtime and the Kata Agent is not directly reachable by the container workload process, due to standard Linux cgroup/namespace isolation. The upstream Kata Containers threat model and architecture documentation do not explicitly confirm or describe this isolation property for the vsock channel specifically.",
+      "topics": ["isolation"],
+      "validity": "unconfirmed"
     }
   ],
   "threat_personas": [
@@ -439,7 +444,7 @@
     {
       "symbolic_name": "vmm-improper-isolation",
       "title": "Improper VM Isolation Allowing Inter-VM Interference",
-      "description": "If the virtualisation environment is not correctly configured, processes in one VM may impact other VMs through improper isolation of network traffic, shared file systems, or other inter-VM communication channels. A malicious or flawed guest OS could engage in activities that disrupt the host or other guests.",
+      "description": "All VMs on a given host share the same host kernel (see the host-kernel trust zone), and the guest-userspace-to-host-kernel trust boundary in this model has no access control or authentication methods defined. If the VMM's network, filesystem-sharing, or other inter-VM communication configuration is not correctly hardened, a workload in one VM could exploit this shared-kernel, uncontrolled-boundary combination to affect other VMs on the same host. A malicious or flawed guest OS could engage in activities that disrupt the host or other guests.",
       "components_affected": [
         "vmm-hypervisor"
       ],
@@ -1066,7 +1071,7 @@
     {
       "symbolic_name": "malicious-guest-os",
       "title": "Malicious or Flawed Guest Operating System Disrupting Host or Other Guests",
-      "description": "A guest operating system that is maliciously designed or has serious flaws could engage in activities that disrupt the normal operation of the host or other guests. This might include aggressive network activity or interactions with the virtualisation stack that lead to instability.",
+      "description": "A guest operating system that is maliciously designed or has serious flaws could engage in activities that disrupt the normal operation of the host or other guests. For QEMU specifically, the virtio-net backend defaults to vhost-net, a host kernel module (see virtio-net-backend); aggressive or malformed network activity from such a guest reaches host kernel code directly rather than being contained in host userspace, unlike the in-VMM backends used by Firecracker, Cloud Hypervisor, and Dragonball.",
       "components_affected": [
         "vmm-hypervisor"
       ],
@@ -1263,13 +1268,16 @@
     {
       "symbolic_name": "virtio-backend-security-updates",
       "title": "Patch QEMU and Host Kernel virtio Backends",
-      "description": "Maintain QEMU, VMM packages, and host kernels at security-supported versions so known virtio and vhost vulnerabilities are patched quickly. This directly addresses publicly disclosed issues such as CVE-2023-5158, CVE-2023-6693, and CVE-2024-8612.",
+      "description": "Maintain QEMU, VMM packages, host kernels, and virtiofsd at security-supported versions so known virtio, vhost, and virtiofs vulnerabilities are patched quickly. This directly addresses publicly disclosed issues such as CVE-2023-5158, CVE-2023-6693, and CVE-2024-8612.",
       "threats": [
         "virtio-storage-completion-info-leak",
         "virtio-vring-descriptor-dos",
         "virtio-net-qemu-buffer-info-leak",
         "virtio-blk-scsi-attack",
-        "vhost-kernel-exploit"
+        "vhost-kernel-exploit",
+        "vmm-kernel-vuln-exploit",
+        "virtiofs-file-escape",
+        "virtiofs-seccomp-bypass"
       ],
       "status": "active",
       "priority": "critical"
@@ -1294,7 +1302,7 @@
         "vfio-improper-management"
       ],
       "status": "active",
-      "priority": "high"
+      "priority": "critical"
     },
     {
       "symbolic_name": "vfio-iommu-group-enforcement",
@@ -1348,7 +1356,8 @@
       "title": "Host CPU Speculation Mitigations",
       "description": "Apply CPU microcode, kernel, and VMM mitigations for Spectre, Meltdown, and related speculative execution vulnerabilities; consider SMT isolation or disabling for workloads with strict multi-tenant confidentiality needs.",
       "threats": [
-        "cross-vm-speculative-side-channel"
+        "cross-vm-speculative-side-channel",
+        "vfio-inter-vm-side-channel"
       ],
       "status": "active",
       "priority": "high"
@@ -1362,6 +1371,48 @@
         "virtio-vring-descriptor-dos"
       ],
       "status": "active",
+      "priority": "medium"
+    },
+    {
+      "symbolic_name": "vfio-software-firmware-patching",
+      "title": "Patch VFIO Kernel Modules, Drivers, and Passthrough Device Firmware",
+      "description": "Maintain VFIO kernel modules, device drivers, and management tooling at security-supported versions, and apply vendor firmware updates for passthrough devices, so known vulnerabilities in the VFIO stack or device firmware are patched quickly.",
+      "threats": [
+        "vfio-software-vuln",
+        "vfio-firmware-vuln"
+      ],
+      "status": "suggested",
+      "priority": "critical"
+    },
+    {
+      "symbolic_name": "vmm-inter-vm-isolation-hardening",
+      "title": "Harden VMM Configuration for Inter-VM Isolation",
+      "description": "Configure the VMM (QEMU, Firecracker, Cloud Hypervisor, Dragonball) to enforce strict isolation of network traffic, shared file systems, and other inter-VM communication channels, and validate configuration against known misconfiguration patterns before deployment.",
+      "threats": [
+        "vmm-improper-isolation",
+        "malicious-guest-os"
+      ],
+      "status": "suggested",
+      "priority": "high"
+    },
+    {
+      "symbolic_name": "vm-resource-quotas",
+      "title": "Enforce Per-VM CPU, Memory, and I/O Resource Limits",
+      "description": "Apply cgroup-based CPU, memory, and I/O bandwidth quotas to each Kata VM/VMM process so a single runaway or malicious workload cannot starve co-hosted VMs or the host of shared resources.",
+      "threats": [
+        "vm-resource-exhaustion"
+      ],
+      "status": "suggested",
+      "priority": "high"
+    },
+    {
+      "symbolic_name": "vfio-device-behavior-isolation",
+      "title": "Avoid Shared VFIO Passthrough Device Assignment Across Mutually Distrusting VMs",
+      "description": "Where confidentiality requirements are strict, avoid assigning devices from the same physical function, IOMMU group, or shared power/thermal domain to VMs that must not observe each other's behavior, since device response timing or shared resource contention can leak information independent of CPU-level side channels.",
+      "threats": [
+        "vfio-inter-vm-side-channel"
+      ],
+      "status": "suggested",
       "priority": "medium"
     }
   ],
@@ -1425,7 +1476,7 @@
       "impact": "minor",
       "impact_description": "Degraded performance or temporary outage for co-hosted workloads; recoverable without data loss.",
       "score": 6,
-      "level": "low"
+      "level": "medium"
     }
   ]
 }
