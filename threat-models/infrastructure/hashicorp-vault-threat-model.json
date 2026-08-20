@@ -804,8 +804,8 @@
             ],
             "attack_mechanisms": [
                 {
-                    "capec_id": 210,
-                    "capec_title": "Abuse Existing Functionality"
+                    "capec_id": 176,
+                    "capec_title": "Configuration/Environment Manipulation"
                 }
             ],
             "weaknesses": [
@@ -931,7 +931,7 @@
             "attack_mechanisms": [
                 {
                     "capec_id": 212,
-                    "capec_title": "Abuse existing Functionality"
+                    "capec_title": "Functionality Misuse"
                 }
             ],
             "weaknesses": [
