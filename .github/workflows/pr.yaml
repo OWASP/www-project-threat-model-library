@@ -28,4 +28,6 @@ jobs:
             ./threat-models/web-applications/*.json
             ./threat-models/infrastructure/*.json
             ./threat-models/ai-ml-systems/*.json
+            ./threat-models/third-party-integrations/*.json
+            ./threat-models/web/*.json
           all-errors: true
