@@ -35,6 +35,13 @@
       "category": "web-applications",
       "tags": ["blockchain"],
       "description": "A data flow diagram of a cryptocurrency wallet submitted by Jonathan Marcil to the OWASP Threat Model Cookbook."
+    },
+    {
+      "symbolic_name": "kata-containers-threat-model",
+      "path": "threat-models/infrastructure/kata-containers-threat-model.json",
+      "category": "infrastructure",
+      "tags": ["container-isolation", "virtualisation", "kata-containers", "cncf", "virtio", "kubernetes"],
+      "description": "Hardware virtualisation isolation layer for Kata Containers, covering virtio device backends, VFIO device passthrough, and ACPI/hotplug across QEMU, Firecracker, Cloud Hypervisor, and Dragonball."
     }
   ]
 }
