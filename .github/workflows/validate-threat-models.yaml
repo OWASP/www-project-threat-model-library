@@ -1,0 +1,63 @@
+name: Threat model quality check (informational)
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'threat-models/**/*.json'
+      - 'scripts/validate_threat_model.py'
+      - 'scripts/capec-names.json'
+
+permissions:
+  contents: read
+
+concurrency:
+  cancel-in-progress: true
+  group: ${{ github.repository }}-${{ github.workflow }}-${{ github.ref }}
+
+# This workflow is informational only. It never fails the build and is not
+# a required check -- findings are surfaced in the job summary for
+# reviewers to read, not enforced. It complements (does not replace) the
+# schema validation in pr.yaml, which does fail on real schema violations.
+jobs:
+  validate:
+    name: Validate changed threat models
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout all files
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Run validator on changed threat model files
+        run: |
+          {
+            echo "## Threat model quality check"
+            echo
+            echo "_Informational only — nothing here blocks this PR. See_ \`.claude/skills/threat-model-review/SKILL.md\` _for the full review checklist this is one layer of._"
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          changed=$(git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.sha }}" -- 'threat-models/*/*.json')
+
+          if [ -z "$changed" ]; then
+            echo "No \`threat-models/**/*.json\` files changed in this PR." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            echo "### \`$file\`" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            python3 scripts/validate_threat_model.py "$file" >> "$GITHUB_STEP_SUMMARY" 2>&1 || true
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            echo >> "$GITHUB_STEP_SUMMARY"
+          done <<< "$changed"
+
+          exit 0

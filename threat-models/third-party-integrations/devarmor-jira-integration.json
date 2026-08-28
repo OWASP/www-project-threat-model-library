@@ -450,8 +450,8 @@
                     "capec_title": "Input Data Manipulation"
                 },
                 {
-                    "capec_id": 125,
-                    "capec_title": "Flooding Information Channel"
+                    "capec_id": 231,
+                    "capec_title": "Oversized Serialized Data Payloads"
                 }
             ],
             "weaknesses": [
@@ -477,8 +477,8 @@
             ],
             "attack_mechanisms": [
                 {
-                    "capec_id": 117,
-                    "capec_title": "Man-in-the-Middle Attack"
+                    "capec_id": 94,
+                    "capec_title": "Adversary in the Middle (AiTM)"
                 },
                 {
                     "capec_id": 555,
@@ -502,18 +502,14 @@
             "attack_mechanisms": [
                 {
                     "capec_id": 488,
-                    "capec_title": "HTTP Flooding"
-                },
-                {
-                    "capec_id": 147,
-                    "capec_title": "Resource Depletion via Flooding"
+                    "capec_title": "HTTP Flood"
                 }
             ]
         },
         {
             "symbolic_name": "token-memory-exfiltration",
             "title": "Temporary tokens exfiltrated from process memory",
-            "description": "An attacker that compromises the FastAPI runtime or custom authorizer extracts Atlassian access tokens from memory or debugging interfaces before they are rotated.",
+            "description": "An attacker that compromises the FastAPI runtime or custom authorizer extracts Atlassian access tokens from memory or debugging interfaces before they are rotated. No CAPEC entry precisely covers live process-memory credential scraping; CAPEC-545 is tagged as the closest available approximate match (its own definition includes 'memory' among target system resources), not a confirmed exact classification.",
             "components_affected": [
                 "api-gateway-authorizer",
                 "fastapi-service",
@@ -526,8 +522,8 @@
             ],
             "attack_mechanisms": [
                 {
-                    "capec_id": 640,
-                    "capec_title": "Memory Inspection"
+                    "capec_id": 545,
+                    "capec_title": "Pull Data from System Resources"
                 }
             ]
         }
