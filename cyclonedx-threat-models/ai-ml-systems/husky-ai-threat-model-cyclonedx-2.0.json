@@ -1213,7 +1213,7 @@
       "description": "Regularly scan third-party dependencies for vulnerabilities and malicious packages, fix any critical or high vulnerabilities",
       "status": "recommended",
       "appliesTo": [
-        "boundary:experimental-zone--prod-zone"
+        "boundary:prod-zone--experimental-zone"
       ]
     },
     {
