@@ -1,0 +1,2605 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/OWASP/www-project-threat-model-library/blob/main/cyclonedx/cyclonedx-threat-model-2.0.schema.json",
+  "$comment": "Source schema for the OWASP Threat Model Library CycloneDX 2.0 profile. The CycloneDX models it references come from the specification fork pinned in build-schema.sh; run that script to regenerate the bundled schema. Do not edit the bundled file by hand.",
+  "type": "object",
+  "title": "OWASP Threat Model Library CycloneDX 2.0 Schema",
+  "description": "A CycloneDX 2.0 profile for OWASP Threat Model Library documents. It is CycloneDX 2.0 plus rules that require every element threat-model.schema.json requires, so any valid document converts back to the library format without loss. See cyclonedx/README.md and scripts/cyclonedx_convert.py.",
+  "required": [
+    "specFormat",
+    "specVersion",
+    "metadata",
+    "blueprints"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "$comment": {
+      "type": "string"
+    },
+    "specFormat": {
+      "type": "string",
+      "title": "Specification Format",
+      "description": "Specifies the format. This value shall be CycloneDX.",
+      "const": "CycloneDX"
+    },
+    "specVersion": {
+      "type": "string",
+      "title": "Specification Version",
+      "description": "The version of the CycloneDX specification the threat model conforms to.",
+      "const": "2.0"
+    },
+    "serialNumber": {
+      "type": "string",
+      "title": "BOM Serial Number",
+      "description": "Unique identifier for this threat-model BOM.",
+      "pattern": "^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "version": {
+      "type": "integer",
+      "title": "BOM Version",
+      "description": "Revision number for this threat-model BOM.",
+      "minimum": 1,
+      "default": 1
+    },
+    "metadata": {
+      "allOf": [
+        {
+          "$ref": "model/cyclonedx-metadata-2.0.schema.json#/$defs/metadata"
+        },
+        {
+          "required": [
+            "tools"
+          ],
+          "properties": {
+            "tools": {
+              "required": [
+                "components"
+              ],
+              "properties": {
+                "components": {
+                  "minItems": 1
+                }
+              }
+            }
+          }
+        }
+      ],
+      "description": "Threat-model metadata. At least one tool component is required."
+    },
+    "components": {
+      "$ref": "model/cyclonedx-component-2.0.schema.json#/$defs/components"
+    },
+    "dependencies": {
+      "$ref": "model/cyclonedx-dependency-2.0.schema.json#/$defs/dependencies"
+    },
+    "compositions": {
+      "$ref": "model/cyclonedx-composition-2.0.schema.json#/$defs/compositions"
+    },
+    "vulnerabilities": {
+      "$ref": "model/cyclonedx-vulnerability-2.0.schema.json#/$defs/vulnerabilities"
+    },
+    "threats": {
+      "allOf": [
+        {
+          "$ref": "model/cyclonedx-threat-2.0.schema.json#/$defs/threats"
+        },
+        {
+          "type": "object",
+          "required": [
+            "threats",
+            "scenarios"
+          ],
+          "properties": {
+            "threats": {
+              "items": {
+                "$ref": "#/$defs/threat"
+              }
+            },
+            "scenarios": {
+              "items": {
+                "$ref": "#/$defs/scenario"
+              }
+            },
+            "attackPatterns": {
+              "items": {
+                "$ref": "#/$defs/attackPattern"
+              }
+            },
+            "attackPaths": {
+              "items": {
+                "$ref": "#/$defs/attackPath"
+              }
+            }
+          }
+        }
+      ],
+      "description": "Threats, one scenario per threat (holding its persona and event), and the CAPEC attack patterns they use."
+    },
+    "risks": {
+      "allOf": [
+        {
+          "$ref": "model/cyclonedx-risk-2.0.schema.json#/$defs/risks"
+        },
+        {
+          "type": "object",
+          "required": [
+            "risks"
+          ],
+          "properties": {
+            "risks": {
+              "items": {
+                "$ref": "#/$defs/risk"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "controls": {
+      "allOf": [
+        {
+          "$ref": "model/cyclonedx-control-2.0.schema.json#/$defs/controls"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/control"
+          }
+        }
+      ]
+    },
+    "annotations": {
+      "$ref": "model/cyclonedx-annotation-2.0.schema.json#/$defs/annotations"
+    },
+    "formulation": {
+      "$ref": "model/cyclonedx-formulation-2.0.schema.json#/$defs/formulation"
+    },
+    "declarations": {
+      "$ref": "model/cyclonedx-declaration-2.0.schema.json#/$defs/declarations"
+    },
+    "definitions": {
+      "$ref": "model/cyclonedx-definition-2.0.schema.json#/$defs/definitions"
+    },
+    "blueprints": {
+      "allOf": [
+        {
+          "$ref": "model/cyclonedx-blueprint-2.0.schema.json#/$defs/blueprints"
+        },
+        {
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "$ref": "#/$defs/blueprint"
+          }
+        }
+      ],
+      "description": "Exactly one blueprint, holding the threat model's architecture and data flows."
+    },
+    "profiles": {
+      "allOf": [
+        {
+          "$ref": "model/cyclonedx-profile-2.0.schema.json#/$defs/profiles"
+        },
+        {
+          "type": "object",
+          "required": [
+            "threatProfiles"
+          ],
+          "properties": {
+            "threatProfiles": {
+              "items": {
+                "$ref": "#/$defs/threatProfile"
+              }
+            }
+          }
+        }
+      ],
+      "description": "Threat personas, as threat profiles."
+    },
+    "citations": {
+      "$ref": "model/cyclonedx-citation-2.0.schema.json#/$defs/citations"
+    },
+    "perspectives": {
+      "$ref": "model/cyclonedx-perspective-2.0.schema.json#/$defs/perspectives"
+    },
+    "properties": {
+      "allOf": [
+        {
+          "$ref": "model/cyclonedx-common-2.0.schema.json#/$defs/properties"
+        },
+        {
+          "type": "array",
+          "allOf": [
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.source-schema"
+                  }
+                }
+              },
+              "minContains": 0,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.extensions"
+                  }
+                }
+              },
+              "minContains": 0,
+              "maxContains": 1
+            }
+          ],
+          "items": {
+            "allOf": [
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.source-schema"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.extensions"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.extension"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "type": "string",
+                      "pattern": "^\\{.*\\}$"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "externalReferences": {
+      "$ref": "model/cyclonedx-common-2.0.schema.json#/$defs/externalReferences"
+    },
+    "signatures": {
+      "$ref": "model/cyclonedx-common-2.0.schema.json#/$defs/signatures"
+    }
+  },
+  "allOf": [
+    {
+      "$ref": "model/cyclonedx-common-2.0.schema.json#/$defs/extensibleProperties"
+    }
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "scope": {
+      "type": "object",
+      "required": [
+        "name",
+        "description",
+        "properties"
+      ],
+      "properties": {
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "properties": {
+          "type": "array",
+          "allOf": [
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.business-criticality"
+                  }
+                }
+              },
+              "minContains": 1,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.exposure"
+                  }
+                }
+              },
+              "minContains": 1,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.tier"
+                  }
+                }
+              },
+              "minContains": 1,
+              "maxContains": 1
+            }
+          ],
+          "items": {
+            "allOf": [
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.business-criticality"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "enum": [
+                        "minimal",
+                        "low",
+                        "moderate",
+                        "high",
+                        "maximal"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.exposure"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "enum": [
+                        "internal",
+                        "external"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.tier"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "enum": [
+                        "mission_critical",
+                        "business_critical",
+                        "important",
+                        "non_critical"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.data-sensitivity"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "enum": [
+                        "pii",
+                        "phi",
+                        "fin",
+                        "ip",
+                        "cred",
+                        "biz",
+                        "gov",
+                        "pci",
+                        "op"
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "description": "Scope of the threat model. Its classification has no CycloneDX field yet, so it is held in properties."
+    },
+    "zone": {
+      "type": "object",
+      "required": [
+        "bom-ref",
+        "name",
+        "description",
+        "type"
+      ],
+      "properties": {
+        "bom-ref": {
+          "type": "string",
+          "pattern": "^zone-[0-9a-z-]+$"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "const": "trust"
+        }
+      }
+    },
+    "boundary": {
+      "type": "object",
+      "required": [
+        "bom-ref",
+        "type",
+        "zones"
+      ],
+      "properties": {
+        "bom-ref": {
+          "type": "string",
+          "pattern": "^bnd-[0-9a-z-]+$"
+        },
+        "type": {
+          "const": "trust"
+        },
+        "zones": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^zone-[0-9a-z-]+$"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "crossingRequirements": {
+          "properties": {
+            "authentication": {
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "none",
+                      "bearer",
+                      "biometric"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "name"
+                    ],
+                    "properties": {
+                      "name": {
+                        "enum": [
+                          "password",
+                          "otp",
+                          "challenge-response",
+                          "public-key",
+                          "sso",
+                          "social"
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "authorization": {
+              "items": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "acl",
+                  "rbac",
+                  "mac",
+                  "dac",
+                  "abac"
+                ]
+              }
+            }
+          }
+        },
+        "properties": {
+          "type": "array",
+          "allOf": [
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.authentication-methods"
+                  }
+                }
+              },
+              "minContains": 0,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.access-control-methods"
+                  }
+                }
+              },
+              "minContains": 0,
+              "maxContains": 1
+            }
+          ],
+          "items": {
+            "allOf": [
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.authentication-methods"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "type": "string",
+                      "pattern": "^\\[.*\\]$"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.access-control-methods"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "type": "string",
+                      "pattern": "^\\[.*\\]$"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "actor": {
+      "type": "object",
+      "required": [
+        "bom-ref",
+        "party",
+        "description",
+        "zone",
+        "properties"
+      ],
+      "properties": {
+        "bom-ref": {
+          "type": "string",
+          "pattern": "^act-[0-9a-z-]+$"
+        },
+        "party": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "persona"
+              ],
+              "properties": {
+                "persona": {
+                  "required": [
+                    "archetype"
+                  ],
+                  "properties": {
+                    "archetype": {
+                      "enum": [
+                        "end-user",
+                        "power-user",
+                        "administrator",
+                        "developer",
+                        "third-party"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "object",
+              "required": [
+                "system"
+              ]
+            }
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "permissions": {
+          "maxItems": 1
+        },
+        "zone": {
+          "type": "string",
+          "pattern": "^zone-[0-9a-z-]+$"
+        },
+        "properties": {
+          "type": "array",
+          "allOf": [
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.title"
+                  }
+                }
+              },
+              "minContains": 1,
+              "maxContains": 1
+            }
+          ],
+          "items": {
+            "allOf": [
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.title"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "asset": {
+      "description": "A part of the system. Either an inline asset of any CycloneDX asset type (component, agent, model, tool, data, ...) with a name and description, or a reference to a BOM component such as an ML model with its model card. Every asset names its trust zone.",
+      "type": "object",
+      "required": [
+        "bom-ref",
+        "zone"
+      ],
+      "properties": {
+        "bom-ref": {
+          "type": "string",
+          "pattern": "^[a-z]+-[0-9a-z-]+$"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "zone": {
+          "type": "string",
+          "pattern": "^zone-[0-9a-z-]+$"
+        },
+        "componentRef": {
+          "type": "string",
+          "pattern": "^[a-z]+-[0-9a-z-]+$"
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "type",
+            "name",
+            "description"
+          ]
+        },
+        {
+          "required": [
+            "componentRef"
+          ]
+        }
+      ]
+    },
+    "relationship": {
+      "description": "A typed relationship between modelled elements. Any predefined CycloneDX kind is allowed. The only custom kinds are a control's mitigates and supports links to threats.",
+      "type": "object",
+      "required": [
+        "ref"
+      ],
+      "properties": {
+        "ref": {
+          "type": "string",
+          "pattern": "^[a-z]+-[0-9a-z-]+$"
+        },
+        "aggregates": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+-[0-9a-z-]+$"
+          }
+        },
+        "associates": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+-[0-9a-z-]+$"
+          }
+        },
+        "composes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+-[0-9a-z-]+$"
+          }
+        },
+        "contains": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+-[0-9a-z-]+$"
+          }
+        },
+        "dependsOn": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+-[0-9a-z-]+$"
+          }
+        },
+        "generalizes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+-[0-9a-z-]+$"
+          }
+        },
+        "realizes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+-[0-9a-z-]+$"
+          }
+        },
+        "serves": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+-[0-9a-z-]+$"
+          }
+        },
+        "custom": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "targets"
+            ],
+            "properties": {
+              "type": {
+                "enum": [
+                  "mitigates",
+                  "supports"
+                ]
+              },
+              "targets": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^threat-[0-9a-z-]+$"
+                }
+              }
+            }
+          },
+          "description": "A control's links to the threats it addresses: mitigates for direct mitigations (Tier 1 in LF AI's mappings) and, optionally, supports for supporting controls (Tier 2). Each type at most once.",
+          "allOf": [
+            {
+              "contains": {
+                "properties": {
+                  "type": {
+                    "const": "mitigates"
+                  }
+                }
+              },
+              "minContains": 0,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "properties": {
+                  "type": {
+                    "const": "supports"
+                  }
+                }
+              },
+              "minContains": 0,
+              "maxContains": 1
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "custom"
+            ]
+          },
+          "then": {
+            "properties": {
+              "ref": {
+                "type": "string",
+                "pattern": "^control-[0-9a-z-]+$"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "dataStore": {
+      "type": "object",
+      "required": [
+        "bom-ref",
+        "name",
+        "description",
+        "type",
+        "zone"
+      ],
+      "properties": {
+        "bom-ref": {
+          "type": "string",
+          "pattern": "^store-[0-9a-z-]+$"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "relational",
+            "key-value",
+            "document",
+            "object",
+            "graph",
+            "time-series"
+          ]
+        },
+        "zone": {
+          "type": "string",
+          "pattern": "^zone-[0-9a-z-]+$"
+        }
+      }
+    },
+    "dataSet": {
+      "type": "object",
+      "required": [
+        "bom-ref",
+        "name",
+        "description",
+        "placements"
+      ],
+      "properties": {
+        "bom-ref": {
+          "type": "string",
+          "pattern": "^dataset-[0-9a-z-]+$"
+        },
+        "placements": {
+          "items": {
+            "properties": {
+              "dataStore": {
+                "type": "string",
+                "pattern": "^store-[0-9a-z-]+$"
+              }
+            }
+          }
+        },
+        "dataProfiles": {
+          "items": {
+            "properties": {
+              "informationTypes": {
+                "items": {
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "pii",
+                        "phi",
+                        "financial",
+                        "intellectual-property",
+                        "credentials",
+                        "pci",
+                        "operational"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "name"
+                      ],
+                      "properties": {
+                        "name": {
+                          "enum": [
+                            "business",
+                            "government"
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "authorization": {
+          "items": {
+            "type": "string",
+            "enum": [
+              "none",
+              "acl",
+              "rbac",
+              "mac",
+              "dac",
+              "abac"
+            ]
+          }
+        },
+        "properties": {
+          "type": "array",
+          "allOf": [
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.placements"
+                  }
+                }
+              },
+              "minContains": 0,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.data-sensitivity"
+                  }
+                }
+              },
+              "minContains": 0,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.access-control-methods"
+                  }
+                }
+              },
+              "minContains": 0,
+              "maxContains": 1
+            }
+          ],
+          "items": {
+            "allOf": [
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.placements"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "type": "string",
+                      "pattern": "^\\[.*\\]$"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.data-sensitivity"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "type": "string",
+                      "pattern": "^\\[.*\\]$"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.access-control-methods"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "type": "string",
+                      "pattern": "^\\[.*\\]$"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "flow": {
+      "type": "object",
+      "required": [
+        "bom-ref",
+        "name",
+        "description",
+        "type",
+        "source",
+        "destination"
+      ],
+      "properties": {
+        "bom-ref": {
+          "type": "string",
+          "pattern": "^flow-[0-9a-z-]+$"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "type": "string",
+          "pattern": "^[a-z]+-[0-9a-z-]+$"
+        },
+        "destination": {
+          "type": "string",
+          "pattern": "^[a-z]+-[0-9a-z-]+$"
+        },
+        "properties": {
+          "type": "array",
+          "allOf": [
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.source-type"
+                  }
+                }
+              },
+              "minContains": 0,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.destination-type"
+                  }
+                }
+              },
+              "minContains": 0,
+              "maxContains": 1
+            }
+          ],
+          "items": {
+            "allOf": [
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.source-type"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.destination-type"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "description": "A flow of any CycloneDX type. Data flows are the library's data flows and must say whether they are encrypted.",
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "data"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "encrypted"
+            ]
+          }
+        }
+      ]
+    },
+    "assumption": {
+      "type": "object",
+      "required": [
+        "bom-ref",
+        "description",
+        "validity"
+      ],
+      "properties": {
+        "bom-ref": {
+          "type": "string",
+          "pattern": "^asm-[1-9][0-9]*$"
+        },
+        "validity": {
+          "enum": [
+            "verified",
+            "unverified",
+            "invalid"
+          ]
+        }
+      }
+    },
+    "visualization": {
+      "type": "object",
+      "required": [
+        "name",
+        "attachment"
+      ],
+      "properties": {
+        "attachment": {
+          "type": "object",
+          "required": [
+            "mediaType",
+            "content"
+          ],
+          "properties": {
+            "mediaType": {
+              "enum": [
+                "text/vnd.graphviz",
+                "text/vnd.mermaid",
+                "text/vnd.plantuml",
+                "image/svg+xml",
+                "application/vnd.jgraph.mxfile",
+                "image/png"
+              ]
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "required": [
+                  "mediaType"
+                ],
+                "properties": {
+                  "mediaType": {
+                    "const": "image/png"
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "encoding"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "description": "A diagram with its source embedded. Diagrams kept elsewhere, such as on Mural, must be exported and embedded; a url may sit alongside. PNG content is base64-encoded."
+    },
+    "blueprint": {
+      "type": "object",
+      "required": [
+        "bom-ref",
+        "name",
+        "modelTypes",
+        "scope",
+        "metadata",
+        "zones",
+        "boundaries",
+        "actors",
+        "assets",
+        "dataStores",
+        "dataSets",
+        "flows"
+      ],
+      "properties": {
+        "scope": {
+          "$ref": "#/$defs/scope"
+        },
+        "metadata": {
+          "type": "object",
+          "required": [
+            "ordinalVersion"
+          ],
+          "properties": {}
+        },
+        "visualizations": {
+          "items": {
+            "$ref": "#/$defs/visualization"
+          }
+        },
+        "zones": {
+          "items": {
+            "$ref": "#/$defs/zone"
+          }
+        },
+        "boundaries": {
+          "items": {
+            "$ref": "#/$defs/boundary"
+          }
+        },
+        "actors": {
+          "items": {
+            "$ref": "#/$defs/actor"
+          }
+        },
+        "assets": {
+          "items": {
+            "$ref": "#/$defs/asset"
+          }
+        },
+        "relationships": {
+          "items": {
+            "$ref": "#/$defs/relationship"
+          }
+        },
+        "dataStores": {
+          "items": {
+            "$ref": "#/$defs/dataStore"
+          }
+        },
+        "dataSets": {
+          "items": {
+            "$ref": "#/$defs/dataSet"
+          }
+        },
+        "flows": {
+          "items": {
+            "$ref": "#/$defs/flow"
+          }
+        },
+        "assumptions": {
+          "items": {
+            "$ref": "#/$defs/assumption"
+          }
+        },
+        "properties": {
+          "type": "array",
+          "allOf": [
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.reviewed-at"
+                  }
+                }
+              },
+              "minContains": 0,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.released-at"
+                  }
+                }
+              },
+              "minContains": 0,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.product-release-date"
+                  }
+                }
+              },
+              "minContains": 0,
+              "maxContains": 1
+            }
+          ],
+          "items": {
+            "allOf": [
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.reviewed-at"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "type": "string",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}(T.+)?$"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.released-at"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "type": "string",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}(T.+)?$"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.product-release-date"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "type": "string",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}(T.+)?$"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.assumption-topics"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "type": "string",
+                      "pattern": "^\\{.*\\}$"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "description": "The single blueprint holding the threat model's architecture. Everything the OWASP Threat Model Library requires is required here."
+    },
+    "threatProfile": {
+      "type": "object",
+      "required": [
+        "bom-ref",
+        "name",
+        "description",
+        "properties"
+      ],
+      "properties": {
+        "bom-ref": {
+          "type": "string",
+          "pattern": "^tp-[0-9a-z-]+$"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "skillSet": {
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "enum": [
+              "script_kid",
+              "insider",
+              "engineer",
+              "expert_engineer",
+              "oc_sponsored",
+              "state_sponsored"
+            ]
+          }
+        },
+        "properties": {
+          "type": "array",
+          "allOf": [
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.is-person"
+                  }
+                }
+              },
+              "minContains": 1,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.access-level"
+                  }
+                }
+              },
+              "minContains": 1,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.malicious-intent"
+                  }
+                }
+              },
+              "minContains": 1,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.applicability-to-org"
+                  }
+                }
+              },
+              "minContains": 0,
+              "maxContains": 1
+            }
+          ],
+          "items": {
+            "allOf": [
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.is-person"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "enum": [
+                        "true",
+                        "false"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.access-level"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "enum": [
+                        "anonymous",
+                        "user",
+                        "admin"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.malicious-intent"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "enum": [
+                        "true",
+                        "false"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.applicability-to-org"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "enum": [
+                        "minimal",
+                        "low",
+                        "moderate",
+                        "high",
+                        "maximal"
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "description": "A threat persona. Whether it is a person, its access level and its malicious intent are required; skill level and applicability to the organisation are optional."
+    },
+    "threat": {
+      "type": "object",
+      "required": [
+        "bom-ref",
+        "name",
+        "description"
+      ],
+      "properties": {
+        "bom-ref": {
+          "type": "string",
+          "pattern": "^threat-[0-9a-z-]+$"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "origin": {
+          "type": "string",
+          "enum": [
+            "adversarial",
+            "accidental",
+            "structural",
+            "environmental"
+          ]
+        },
+        "attackPatterns": {
+          "items": {
+            "type": "string",
+            "pattern": "^ap-(capec-[0-9]+(-[0-9]+)?|atlas-[0-9a-z-]+|attack-[0-9a-z-]+)$"
+          }
+        },
+        "weaknesses": {
+          "items": {
+            "required": [
+              "cweId"
+            ]
+          }
+        },
+        "affectedAssets": {
+          "type": "array",
+          "description": "The modelled elements the threat affects: assets of any type, flows, data stores, data sets or zones.",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+-[0-9a-z-]+$"
+          }
+        },
+        "mitigations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^control-[0-9a-z-]+$"
+          }
+        },
+        "properties": {
+          "type": "array",
+          "allOf": [
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.sources"
+                  }
+                }
+              },
+              "minContains": 0,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.attack-mechanisms"
+                  }
+                }
+              },
+              "minContains": 0,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.weaknesses"
+                  }
+                }
+              },
+              "minContains": 0,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.components-affected"
+                  }
+                }
+              },
+              "minContains": 0,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.ai-specific"
+                  }
+                }
+              },
+              "minContains": 0,
+              "maxContains": 1
+            }
+          ],
+          "items": {
+            "allOf": [
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.sources"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "type": "string",
+                      "pattern": "^\\[.*\\]$"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.attack-mechanisms"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "type": "string",
+                      "pattern": "^\\[.*\\]$"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.weaknesses"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "type": "string",
+                      "pattern": "^\\[.*\\]$"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.components-affected"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "type": "string",
+                      "pattern": "^\\[.*\\]$"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.ai-specific"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "enum": [
+                        "yes",
+                        "no",
+                        "partly"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.threat-layer"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "enum": [
+                        "ai",
+                        "application",
+                        "platform",
+                        "os-firmware",
+                        "data",
+                        "network",
+                        "infrastructure"
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "origin"
+          ]
+        },
+        {
+          "required": [
+            "properties"
+          ],
+          "properties": {
+            "properties": {
+              "contains": {
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.sources"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "description": "A threat. Its persona and triggering event live on the matching scenario."
+    },
+    "scenario": {
+      "type": "object",
+      "required": [
+        "bom-ref",
+        "name",
+        "event",
+        "threats",
+        "threatProfile"
+      ],
+      "properties": {
+        "bom-ref": {
+          "type": "string",
+          "pattern": "^ts-[0-9a-z-]+$"
+        },
+        "event": {
+          "type": "string",
+          "minLength": 1
+        },
+        "threats": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^threat-[0-9a-z-]+$"
+          },
+          "minItems": 1,
+          "maxItems": 1
+        },
+        "threatProfile": {
+          "type": "string",
+          "pattern": "^tp-[0-9a-z-]+$"
+        }
+      }
+    },
+    "attackPattern": {
+      "description": "An attack pattern from CAPEC (ap-capec-<id>, with a capecId), MITRE ATLAS (ap-atlas-<id>) or MITRE ATT&CK (ap-attack-<id>). ATLAS and ATT&CK patterns describe their technique in techniques, each with an id or a tactic; the exact MITRE ID, such as AML.T0051.001, goes in techniques[].id.",
+      "type": "object",
+      "required": [
+        "bom-ref",
+        "name"
+      ],
+      "oneOf": [
+        {
+          "required": [
+            "capecId"
+          ],
+          "properties": {
+            "bom-ref": {
+              "type": "string",
+              "pattern": "^ap-capec-[0-9]+(-[0-9]+)?$"
+            }
+          }
+        },
+        {
+          "not": {
+            "required": [
+              "capecId"
+            ]
+          },
+          "required": [
+            "techniques"
+          ],
+          "properties": {
+            "bom-ref": {
+              "type": "string",
+              "pattern": "^ap-atlas-[0-9a-z-]+$"
+            },
+            "techniques": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "id"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "tactic"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "not": {
+            "required": [
+              "capecId"
+            ]
+          },
+          "required": [
+            "techniques"
+          ],
+          "properties": {
+            "bom-ref": {
+              "type": "string",
+              "pattern": "^ap-attack-[0-9a-z-]+$"
+            },
+            "techniques": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "id"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "tactic"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "control": {
+      "type": "object",
+      "required": [
+        "bom-ref",
+        "name",
+        "description",
+        "status",
+        "properties"
+      ],
+      "properties": {
+        "bom-ref": {
+          "type": "string",
+          "pattern": "^control-[0-9a-z-]+$"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "implemented",
+                "recommended",
+                "proposed",
+                "approved",
+                "planned",
+                "decommissioned",
+                "rejected"
+              ]
+            },
+            {
+              "type": "object",
+              "required": [
+                "name"
+              ],
+              "properties": {
+                "name": {
+                  "enum": [
+                    "assumed"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "appliesTo": {
+          "description": "The modelled elements the control protects: assets, zones, flows, data stores, data sets or trust boundaries. Without it, the control applies to the whole system.",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+-[0-9a-z-]+$"
+          }
+        },
+        "properties": {
+          "type": "array",
+          "allOf": [
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.priority"
+                  }
+                }
+              },
+              "minContains": 1,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.threats"
+                  }
+                }
+              },
+              "minContains": 0,
+              "maxContains": 1
+            }
+          ],
+          "items": {
+            "allOf": [
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.priority"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "enum": [
+                        "none",
+                        "low",
+                        "medium",
+                        "high",
+                        "critical"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.threats"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "type": "string",
+                      "pattern": "^\\[.*\\]$"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "risk": {
+      "type": "object",
+      "required": [
+        "bom-ref",
+        "name",
+        "statement",
+        "relatedThreats",
+        "inherentRisk"
+      ],
+      "properties": {
+        "bom-ref": {
+          "type": "string",
+          "pattern": "^risk-[0-9a-z-]+$"
+        },
+        "relatedThreats": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^threat-[0-9a-z-]+$"
+          }
+        },
+        "inherentRisk": {
+          "type": "object",
+          "required": [
+            "likelihood",
+            "impact",
+            "score"
+          ],
+          "properties": {
+            "likelihood": {
+              "properties": {
+                "level": {
+                  "enum": [
+                    "very-low",
+                    "low",
+                    "medium",
+                    "high",
+                    "certain"
+                  ]
+                }
+              }
+            },
+            "impact": {
+              "type": "object",
+              "required": [
+                "level",
+                "description"
+              ],
+              "properties": {
+                "level": {
+                  "enum": [
+                    "negligible",
+                    "low",
+                    "moderate",
+                    "major",
+                    "catastrophic"
+                  ]
+                }
+              }
+            },
+            "score": {
+              "type": "object",
+              "required": [
+                "level",
+                "score",
+                "methodology"
+              ],
+              "properties": {
+                "level": {
+                  "enum": [
+                    "low",
+                    "medium",
+                    "high",
+                    "critical"
+                  ]
+                },
+                "score": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 25
+                },
+                "methodology": {
+                  "const": "qualitative-matrix"
+                }
+              }
+            }
+          }
+        },
+        "properties": {
+          "type": "array",
+          "allOf": [
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.risk-level"
+                  }
+                }
+              },
+              "minContains": 0,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "const": "org.owasp.threat-model-library.threats"
+                  }
+                }
+              },
+              "minContains": 0,
+              "maxContains": 1
+            }
+          ],
+          "items": {
+            "allOf": [
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.risk-level"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "enum": [
+                        "very_low",
+                        "low",
+                        "medium",
+                        "high",
+                        "very_high",
+                        "critical"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "org.owasp.threat-model-library.threats"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "type": "string",
+                      "pattern": "^\\[.*\\]$"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "attackPath": {
+      "description": "An attack path. Each step's source and destination are references to modelled elements; a place that is not modelled goes in the step's description instead.",
+      "properties": {
+        "steps": {
+          "items": {
+            "properties": {
+              "source": {
+                "type": "string",
+                "pattern": "^[a-z]+-[0-9a-z-]+$"
+              },
+              "destination": {
+                "type": "string",
+                "pattern": "^[a-z]+-[0-9a-z-]+$"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
