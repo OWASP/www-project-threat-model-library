@@ -7,9 +7,15 @@ Newest status first, then decisions in the order they were made.
 
 - **For discussion:** the pull request that adds this profile is opened to discuss the schema, not
   to merge it as final. Nothing here is agreed yet.
-- **Done:** one example, [Husky AI](husky-ai-threat-model-cyclonedx-2.0.json), converted from
-  [`threat-models/ai-ml-systems/husky-ai-threat-model.json`](../threat-models/ai-ml-systems/husky-ai-threat-model.json).
-  It validates against the profile and converts back to the original exactly.
+- **Done:** two examples.
+  - [Husky AI](husky-ai-threat-model-cyclonedx-2.0.json), converted from
+    [`threat-models/ai-ml-systems/husky-ai-threat-model.json`](../threat-models/ai-ml-systems/husky-ai-threat-model.json).
+    It validates against the profile and converts back to the original exactly.
+  - [LF AI & Data code assistant](lfai-code-assistant-threat-model-cyclonedx-2.0.json), built from LF AI's
+    `definition.md`, assets/controls/threats tables and the "Threat modeling - Use case: Code Assistant"
+    spreadsheet. It validates against the profile and is CycloneDX only. **Values LF AI has not recorded
+    were assumed for the example and are pending LF AI review**; each carries an annotation starting
+    "Assumed for this example, pending LF AI review".
 - **On hold:** the other library models. They will be converted once the schema is agreed.
   All six already convert without loss; CI checks this on every pull request.
 - **Open:** CycloneDX gaps raised with the CycloneDX working group (see the end of this file).
@@ -46,7 +52,8 @@ Specifically:
 
 - exactly one blueprint;
 - enums limited to the values the mapping uses;
-- `bom-ref`s in the form `<kind>:<symbolic-name>`, so references always convert back;
+- `bom-ref`s in the form `<prefix>-<symbolic-name>`, so references always convert back (see the
+  bom-ref naming entry under decision 18);
 - required library properties enforced, with their allowed values.
 
 JSON Schema cannot check that a reference resolves, or that each threat has exactly one scenario;
@@ -97,7 +104,7 @@ A CycloneDX control has no field for the threats it mitigates. Each control's th
 as a blueprint relationship from the control:
 
 ```json
-{ "ref": "control:<name>", "custom": [{ "type": "mitigates", "targets": ["threat:<name>"] }] }
+{ "ref": "control-<name>", "custom": [{ "type": "mitigates", "targets": ["threat-<name>"] }] }
 ```
 
 This keeps the link readable from the control and in native order. Each threat also lists its
@@ -160,6 +167,161 @@ prescriptive profile. The converted file replaces it.
 The coverage fixtures were used during development but are not kept in the branch, to keep it
 small while the schema is under discussion. CI runs the round-trip check on the six library
 models.
+
+### 18. The profile must also hold LF AI & Data threat models without loss
+
+The LF AI & Data Use Cases and Threat Modeling subgroup models AI systems (first use case: the
+code assistant) in CycloneDX, and plans to publish them in this library. Each LF AI element was
+tested against the profile; gaps are being worked through one at a time.
+
+- **Use cases:** already supported and optional (`definitions.useCases`, referenced from
+  `blueprint.useCases`). No change.
+- **Flows (2026-10-13):** flows may be any CycloneDX flow type (`control`, `process`, `event`, …),
+  with `sequence`, `synchronous` and `protocols`. `encrypted` is required only on `data` flows,
+  which are the library's data flows. Converting a non-data flow back to the library format stops
+  with an error, because the library format only has data flows.
+- **Relationships (2026-10-13):** every predefined CycloneDX relationship kind (`aggregates`,
+  `associates`, `composes`, `contains`, `dependsOn`, `generalizes`, `realizes`, `serves`) is
+  allowed between any modelled elements, referenced by bom-ref. LF AI uses `aggregates` for
+  zone membership and `composes` for an agentic framework's parts. The only custom kind is a
+  control's `mitigates` link. Converting back keeps component-contains-component as
+  `parent_component`; any other relationship stops with an error.
+- **Assets (2026-10-13):** an asset may be of any CycloneDX asset type (`component`, `agent`,
+  `model`, `tool`, `data`, …) with a name and description, or may reference a BOM component through
+  `componentRef` (for example an ML model with its model card). **Every asset must name its trust
+  zone**, in both forms. LF AI information assets (developer identity, session tokens, codebase
+  clone) are `data` assets, placed in their component with a `contains` relationship. Library
+  components have no type, so converting back stops with an error for any asset that isn't
+  `type: component`; LF AI documents therefore live in CycloneDX only.
+- **Where controls apply (2026-10-13):** `control.appliesTo` accepts any modelled element (assets,
+  zones, flows, data stores, data sets, trust boundaries), and several of them, so LF AI controls
+  can sit on the components they protect. A control without `appliesTo` applies to the whole system
+  (LF AI's universal controls). Converting back only accepts a single trust boundary, which is all
+  a library control can hold; anything else stops with an error. Before this change the converter
+  skipped other targets without saying so; that is fixed.
+- **Where threats sit (2026-10-13):** `threat.affectedAssets` accepts any modelled element (assets
+  of any type, flows, data stores, data sets, zones), so LF AI threats located on a flow ("between
+  the assistant plugin and the backend") or a data asset fit. Converting back accepts components
+  only, as the library's `components_affected` does; anything else stops with an error.
+- **MITRE ATLAS and ATT&CK (2026-10-13):** an attack pattern is CAPEC (`ap-capec-<id>`, with a
+  `capecId`), MITRE ATLAS (`ap-atlas-<id>`, e.g. `ap-atlas-aml-t0051-001`) or MITRE ATT&CK
+  (`ap-attack-<id>`, e.g. `ap-attack-t1195-002`). ATLAS and ATT&CK patterns have no `capecId`, keep
+  the exact MITRE ID (`AML.T0051.001`) in the fork's existing `techniques` field, each entry with
+  an `id` or a `tactic` (tactic only covers mappings such as the clinician scribe's `TA0029`).
+  Threats can reference all three. Converting back stops with an error for ATLAS and ATT&CK, as
+  library attack mechanisms are CAPEC only.
+- **Diagram formats (2026-10-13):** diagrams may also be draw.io (`application/vnd.jgraph.mxfile`)
+  or PNG (`image/png`, which must be base64-encoded). **The diagram source stays required**: a
+  diagram kept elsewhere, such as LF AI's Mural data flow diagram, must be exported and embedded; a
+  link may sit alongside it. Converting back stops with an error for draw.io and PNG, which the
+  library format does not list.
+- **Actor zone and title (2026-10-13):** no change; **every actor must name its trust zone and
+  have a title**, as library actors do. LF AI's agent actors (a `system` party of kind `agent`,
+  already accepted) lack both in their JSON, but `definition.md` gives each actor a name and a
+  location, so this is missing data for LF AI to add, not data loss.
+- **Threat persona attributes (2026-10-13):** `skillSet` and `applicability-to-org` are
+  **optional**; `is-person`, `access-level` and `malicious-intent` stay required. LF AI's attacker
+  types (External Attacker, Malicious Insider, Careless Insider, Vendor Employee, Vendor) imply the
+  three required ones but record no skill level or applicability. Library models keep both, so they
+  still round-trip; a document without them cannot convert back, and the converter says so.
+- **Scenario event (2026-10-13):** no change; **every scenario keeps a required `event`**. 24 of
+  LF AI's 51 threats (T08, T10–T29, T44–T46) have a blank Action column, but each has a threat
+  statement containing the action and a NIST SP 800-30 threat event, so LF AI fills `event` from
+  those. Missing data to add, not data loss.
+- **bom-ref naming (2026-10-13):** bom-refs follow the style of the CycloneDX examples in the fork
+  (`zone-dmz`, `df-login`, `act-customer`): lowercase, `<prefix>-<symbolic-name>`. This replaces the
+  earlier `<kind>:<name>` colon style. Prefixes: `zone`, `bnd` (trust boundary), `act` (actor),
+  `asset`, `store` (data store), `dataset`, `flow`, `asm` (assumption), `tp` (threat persona),
+  `threat`, `ts` (scenario), `ap-capec` / `ap-atlas` / `ap-attack` (attack patterns), `control`,
+  `risk`, `uc` (use case). No prefix starts another, so a reference's kind can always be read back.
+  IDs are lowercase: LF AI's `T01` becomes `threat-t01`, with "T01" kept in the threat's name if
+  wanted. Sub use cases need no ID segment, because each use case already lists its flows; LF AI's
+  `flow:1a:agent-authenticates` becomes `flow-1a-agent-authenticates`. Because zone names contain
+  hyphens, a trust boundary's zones are read from the boundary itself, not its bom-ref; a control
+  naming an undeclared zone pair keeps that pair in a property.
+- **Zone types (2026-10-13):** no change; zones stay `type: trust`. LF AI's Internal, External SaaS
+  and External Cloud zones are trust zones.
+- **NIST SP 800-30 (2026-10-13):** no new fields. LF AI's NIST threat events go in `scenario.event`
+  (one string, so a threat with two NIST events writes both into it). The NIST threat source is
+  covered by `threat.origin` (adversarial, accidental, structural, environmental) plus the threat
+  persona's `is-person` (individual or organisation), `access-level` (outsider, insider, privileged)
+  and `malicious-intent`; the exact NIST label, such as "Supplier", can go in the persona's name or
+  description. The AI-generated source, event and impact justifications become `annotations` on the
+  threat, with the AI tool as annotator. NIST adverse impacts are handled with scenario impact.
+- **Scenario impact (2026-10-13):** no schema change; use CycloneDX's native `scenario.impact`.
+  LF AI's impact text goes in `impact.description` and each NIST adverse impact in
+  `impact.categories` as a custom `{"name": "HARM TO ASSETS - Loss of intellectual property"}`.
+  CycloneDX requires an impact `level` (negligible, low, moderate, major, catastrophic), so **LF AI
+  rates each impact**. Optional, since library models have no scenario impact.
+- **Converting back refuses what it cannot hold (2026-10-13):** converting a CycloneDX document back
+  to the library format used to read only the fields the library has and ignore the rest, so use
+  cases, annotations, scenario impact, STRIDE categories, attack paths and similar CycloneDX-only
+  data were silently dropped. Now the converter rebuilds the CycloneDX document from its result and
+  stops if anything differs, naming the first field that would be lost (for example
+  `$.threats.scenarios[0].impact: missing after round trip`). Only `serialNumber` is ignored,
+  because it is derived from the content. Library models still convert back unchanged.
+- **AI framework mappings (2026-10-13):** no schema change. OWASP Top 10 for LLM Applications, IBM
+  AI Risk Atlas and Databricks DASF 2.0 mappings go on the threat as `documentation` external
+  references to the framework's page, the same pattern as CWE titles, with the comment written as
+  `<framework> <id>: <name>`, for example `OWASP LLM01:2025 Prompt Injection`,
+  `IBM AI Risk Atlas: Data poisoning`, `DASF 2.0: Data Poisoning`. `threat.categories` cannot be
+  used because CycloneDX fixes its taxonomies to STRIDE, LINDDUN, MAESTRO and MITRE-ATTACK; and
+  standards cannot be linked from a threat, only from a risk.
+- **AI-specific flag (2026-10-13):** an optional threat property
+  `org.owasp.threat-model-library.ai-specific`, at most one, valued `yes`, `no` or `partly`. LF AI
+  uses it to decide whether a threat also gets a CSA AICM control mapping. Their mixed answers
+  ("Y – some of it is agent autonomy, N – some is access control") are `partly`; the reasoning goes
+  in an annotation on the threat; unsure or blank answers get no property. Deriving the flag from
+  ATLAS, OWASP LLM or MAESTRO mappings was rejected, because it contradicts LF AI's own answers.
+- **Control tier (2026-10-13):** a control's relationship to threats may use an **optional** second
+  custom type, `supports`, alongside `mitigates`: `mitigates` is a direct mitigation (LF AI's
+  "Tier 1 – Direct Mitigations") and `supports` a supporting control ("Tier 2 – Supporting
+  Controls"). Each type at most once per control, both pointing only at threats. The tier belongs to
+  the link, not the control: 14 of the 52 NIST controls LF AI maps are Tier 1 for one threat and
+  Tier 2 for another. Nobody has to use `supports`; library models only use `mitigates`. A name
+  mentioning risk was rejected because the library does not tie controls to risks. Converting back
+  stops with an error for `supports`, as library controls have no tier.
+- **Threat layer (2026-10-13):** two kinds of layer, two places.
+  - AI system layers (clinician scribe: Model, DataOps, Agent, Deployment, Governance) use
+    CycloneDX's native MAESTRO categories in `threat.categories`: `foundation-models`,
+    `data-operations`, `agent-frameworks`, `deployment-and-infrastructure`,
+    `security-and-compliance`. No schema change.
+  - Technology layers (code assistant and chatbot: AI, Application, Platform, Network) use an
+    optional, repeatable threat property `org.owasp.threat-model-library.threat-layer`, limited to
+    LF AI's layer stack: `ai`, `application`, `platform`, `os-firmware`, `data`, `network`,
+    `infrastructure`. A multi-layer threat ("AI / platform") gets one entry per layer. Mapping these
+    to MAESTRO was rejected because four of them would merge into `deployment-and-infrastructure`
+    and `application` has no MAESTRO equivalent. The layer stack is still a work in progress at
+    LF AI, so this list is updated when they finalise it.
+- **Attack path steps (2026-10-13):** a step's `source` and `destination` must be references to
+  modelled elements (`<prefix>-<name>`), as CycloneDX defines them. LF AI's FromWhere / ToWhere
+  values map here; a place that is not modelled (such as "a pastebin or forum post") either becomes
+  an asset or actor, or goes in the step's `description`. Nothing is lost, but free text is no
+  longer accepted where CycloneDX expects a reference.
+- **Code assistant example (2026-10-13):** `lfai-code-assistant-threat-model-cyclonedx-2.0.json`
+  models LF AI's code assistant from their sources: 51 threats with scenarios, 36 flows, 3 use cases,
+  35 assets (LF AI's components plus information assets A01–A14), 78 controls (52 NIST SP 800-53,
+  linked by `mitigates`/`supports` from LF AI's tiers, satisfying NIST and CSA AICM requirements,
+  plus C01–C26), STRIDE, CAPEC, CWE, ATLAS and OWASP LLM mappings. LF AI's working text (AI-generated
+  CAPEC suggestions, mapping rationales, NIST justifications, notes) is kept verbatim as annotations.
+  **Assumed, for LF AI to review** (each marked by an annotation):
+  - scope: criticality `high`, data sensitivity intellectual property and credentials, exposure
+    `internal`, tier `business_critical`; version `0.1`;
+  - control status `recommended`; priority `high` for Tier 1 NIST controls, otherwise `medium`;
+  - `encrypted` on the 12 data flows (in-workstation `false`, network `true`);
+  - impact level on every scenario (`major` where operations are harmed, otherwise `moderate`);
+  - attacker type attributes, and the attacker type of 9 threats whose Actor is blank (from their
+    NIST threat source);
+  - trust boundaries between Internal and each external zone;
+  - the spreadsheet's and tables' "Located In" names, from an older diagram, mapped onto
+    `definition.md`'s components.
+  Not carried over: LF AI's three `actor:` entries in `components` (they duplicate the actors), and
+  7 flows the top-level use case lists but `definition.md` never defines (recorded in an annotation).
+  The second T33 becomes `threat-t33b`.
+- **Review complete (2026-10-13):** every element of the LF AI code assistant use case (spreadsheet,
+  `definition.md`, asset/control/threat tables) and of the chatbot and clinician scribe tables now
+  has a home in the schema. The only LF AI data still needing their input is data they have not
+  recorded yet: actor titles and zones, scenario events for 24 threats, and impact ratings.
 
 ## Raised with the CycloneDX working group
 

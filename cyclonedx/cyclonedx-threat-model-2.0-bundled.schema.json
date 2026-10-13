@@ -106,6 +106,11 @@
               "items": {
                 "$ref": "#/$defs/cyclonedx-threat-model-2.0/$defs/attackPattern"
               }
+            },
+            "attackPaths": {
+              "items": {
+                "$ref": "#/$defs/cyclonedx-threat-model-2.0/$defs/attackPath"
+              }
             }
           }
         }
@@ -22202,6 +22207,11 @@
                   "items": {
                     "$ref": "#/$defs/cyclonedx-threat-model-2.0/$defs/attackPattern"
                   }
+                },
+                "attackPaths": {
+                  "items": {
+                    "$ref": "#/$defs/cyclonedx-threat-model-2.0/$defs/attackPath"
+                  }
                 }
               }
             }
@@ -22610,7 +22620,7 @@
           "properties": {
             "bom-ref": {
               "type": "string",
-              "pattern": "^trust-zone:[0-9a-z-]+$"
+              "pattern": "^zone-[0-9a-z-]+$"
             },
             "description": {
               "type": "string",
@@ -22631,7 +22641,7 @@
           "properties": {
             "bom-ref": {
               "type": "string",
-              "pattern": "^trust-boundary:[0-9a-z-]+:[0-9a-z-]+$"
+              "pattern": "^bnd-[0-9a-z-]+$"
             },
             "type": {
               "const": "trust"
@@ -22640,7 +22650,7 @@
               "type": "array",
               "items": {
                 "type": "string",
-                "pattern": "^trust-zone:[0-9a-z-]+$"
+                "pattern": "^zone-[0-9a-z-]+$"
               },
               "minItems": 2,
               "maxItems": 2
@@ -22791,7 +22801,7 @@
           "properties": {
             "bom-ref": {
               "type": "string",
-              "pattern": "^actor:[0-9a-z-]+$"
+              "pattern": "^act-[0-9a-z-]+$"
             },
             "party": {
               "oneOf": [
@@ -22836,7 +22846,7 @@
             },
             "zone": {
               "type": "string",
-              "pattern": "^trust-zone:[0-9a-z-]+$"
+              "pattern": "^zone-[0-9a-z-]+$"
             },
             "properties": {
               "type": "array",
@@ -22887,21 +22897,16 @@
           }
         },
         "asset": {
+          "description": "A part of the system. Either an inline asset of any CycloneDX asset type (component, agent, model, tool, data, ...) with a name and description, or a reference to a BOM component such as an ML model with its model card. Every asset names its trust zone.",
           "type": "object",
           "required": [
             "bom-ref",
-            "type",
-            "name",
-            "description",
             "zone"
           ],
           "properties": {
             "bom-ref": {
               "type": "string",
-              "pattern": "^component:[0-9a-z-]+$"
-            },
-            "type": {
-              "const": "component"
+              "pattern": "^[a-z]+-[0-9a-z-]+$"
             },
             "description": {
               "type": "string",
@@ -22909,66 +22914,160 @@
             },
             "zone": {
               "type": "string",
-              "pattern": "^trust-zone:[0-9a-z-]+$"
+              "pattern": "^zone-[0-9a-z-]+$"
+            },
+            "componentRef": {
+              "type": "string",
+              "pattern": "^[a-z]+-[0-9a-z-]+$"
             }
-          }
-        },
-        "relationship": {
-          "description": "Either a component containing other components, or a control listing the threats it mitigates.",
+          },
           "oneOf": [
             {
-              "type": "object",
               "required": [
-                "ref",
-                "contains"
-              ],
-              "properties": {
-                "ref": {
-                  "type": "string",
-                  "pattern": "^component:[0-9a-z-]+$"
-                },
-                "contains": {
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "pattern": "^component:[0-9a-z-]+$"
-                  }
-                }
-              }
+                "type",
+                "name",
+                "description"
+              ]
             },
             {
-              "type": "object",
               "required": [
-                "ref",
-                "custom"
-              ],
-              "properties": {
-                "ref": {
-                  "type": "string",
-                  "pattern": "^control:[0-9a-z-]+$"
-                },
-                "custom": {
-                  "type": "array",
-                  "minItems": 1,
-                  "maxItems": 1,
-                  "items": {
-                    "type": "object",
-                    "required": [
-                      "type",
-                      "targets"
-                    ],
+                "componentRef"
+              ]
+            }
+          ]
+        },
+        "relationship": {
+          "description": "A typed relationship between modelled elements. Any predefined CycloneDX kind is allowed. The only custom kinds are a control's mitigates and supports links to threats.",
+          "type": "object",
+          "required": [
+            "ref"
+          ],
+          "properties": {
+            "ref": {
+              "type": "string",
+              "pattern": "^[a-z]+-[0-9a-z-]+$"
+            },
+            "aggregates": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z]+-[0-9a-z-]+$"
+              }
+            },
+            "associates": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z]+-[0-9a-z-]+$"
+              }
+            },
+            "composes": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z]+-[0-9a-z-]+$"
+              }
+            },
+            "contains": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z]+-[0-9a-z-]+$"
+              }
+            },
+            "dependsOn": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z]+-[0-9a-z-]+$"
+              }
+            },
+            "generalizes": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z]+-[0-9a-z-]+$"
+              }
+            },
+            "realizes": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z]+-[0-9a-z-]+$"
+              }
+            },
+            "serves": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z]+-[0-9a-z-]+$"
+              }
+            },
+            "custom": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 2,
+              "items": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "targets"
+                ],
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "mitigates",
+                      "supports"
+                    ]
+                  },
+                  "targets": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^threat-[0-9a-z-]+$"
+                    }
+                  }
+                }
+              },
+              "description": "A control's links to the threats it addresses: mitigates for direct mitigations (Tier 1 in LF AI's mappings) and, optionally, supports for supporting controls (Tier 2). Each type at most once.",
+              "allOf": [
+                {
+                  "contains": {
                     "properties": {
                       "type": {
                         "const": "mitigates"
-                      },
-                      "targets": {
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "pattern": "^threat:[0-9a-z-]+$"
-                        }
                       }
                     }
+                  },
+                  "minContains": 0,
+                  "maxContains": 1
+                },
+                {
+                  "contains": {
+                    "properties": {
+                      "type": {
+                        "const": "supports"
+                      }
+                    }
+                  },
+                  "minContains": 0,
+                  "maxContains": 1
+                }
+              ]
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "required": [
+                  "custom"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "ref": {
+                    "type": "string",
+                    "pattern": "^control-[0-9a-z-]+$"
                   }
                 }
               }
@@ -22987,7 +23086,7 @@
           "properties": {
             "bom-ref": {
               "type": "string",
-              "pattern": "^data-store:[0-9a-z-]+$"
+              "pattern": "^store-[0-9a-z-]+$"
             },
             "description": {
               "type": "string",
@@ -23006,7 +23105,7 @@
             },
             "zone": {
               "type": "string",
-              "pattern": "^trust-zone:[0-9a-z-]+$"
+              "pattern": "^zone-[0-9a-z-]+$"
             }
           }
         },
@@ -23021,14 +23120,14 @@
           "properties": {
             "bom-ref": {
               "type": "string",
-              "pattern": "^data-set:[0-9a-z-]+$"
+              "pattern": "^dataset-[0-9a-z-]+$"
             },
             "placements": {
               "items": {
                 "properties": {
                   "dataStore": {
                     "type": "string",
-                    "pattern": "^data-store:[0-9a-z-]+$"
+                    "pattern": "^store-[0-9a-z-]+$"
                   }
                 }
               }
@@ -23214,28 +23313,24 @@
             "description",
             "type",
             "source",
-            "destination",
-            "encrypted"
+            "destination"
           ],
           "properties": {
             "bom-ref": {
               "type": "string",
-              "pattern": "^data-flow:[0-9a-z-]+$"
+              "pattern": "^flow-[0-9a-z-]+$"
             },
             "description": {
               "type": "string",
               "minLength": 1
             },
-            "type": {
-              "const": "data"
-            },
             "source": {
               "type": "string",
-              "pattern": "^[a-z-]+:[0-9a-z-]+$"
+              "pattern": "^[a-z]+-[0-9a-z-]+$"
             },
             "destination": {
               "type": "string",
-              "pattern": "^[a-z-]+:[0-9a-z-]+$"
+              "pattern": "^[a-z]+-[0-9a-z-]+$"
             },
             "properties": {
               "type": "array",
@@ -23320,7 +23415,27 @@
                 ]
               }
             }
-          }
+          },
+          "description": "A flow of any CycloneDX type. Data flows are the library's data flows and must say whether they are encrypted.",
+          "allOf": [
+            {
+              "if": {
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "data"
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "encrypted"
+                ]
+              }
+            }
+          ]
         },
         "assumption": {
           "type": "object",
@@ -23332,7 +23447,7 @@
           "properties": {
             "bom-ref": {
               "type": "string",
-              "pattern": "^assumption:[1-9][0-9]*$"
+              "pattern": "^asm-[1-9][0-9]*$"
             },
             "validity": {
               "enum": [
@@ -23362,12 +23477,34 @@
                     "text/vnd.graphviz",
                     "text/vnd.mermaid",
                     "text/vnd.plantuml",
-                    "image/svg+xml"
+                    "image/svg+xml",
+                    "application/vnd.jgraph.mxfile",
+                    "image/png"
                   ]
                 }
-              }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "required": [
+                      "mediaType"
+                    ],
+                    "properties": {
+                      "mediaType": {
+                        "const": "image/png"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "encoding"
+                    ]
+                  }
+                }
+              ]
             }
-          }
+          },
+          "description": "A diagram with its source embedded. Diagrams kept elsewhere, such as on Mural, must be exported and embedded; a url may sit alongside. PNG content is base64-encoded."
         },
         "blueprint": {
           "type": "object",
@@ -23598,13 +23735,12 @@
             "bom-ref",
             "name",
             "description",
-            "skillSet",
             "properties"
           ],
           "properties": {
             "bom-ref": {
               "type": "string",
-              "pattern": "^threat-persona:[0-9a-z-]+$"
+              "pattern": "^tp-[0-9a-z-]+$"
             },
             "description": {
               "type": "string",
@@ -23680,7 +23816,7 @@
                       }
                     }
                   },
-                  "minContains": 1,
+                  "minContains": 0,
                   "maxContains": 1
                 }
               ],
@@ -23793,7 +23929,8 @@
                 ]
               }
             }
-          }
+          },
+          "description": "A threat persona. Whether it is a person, its access level and its malicious intent are required; skill level and applicability to the organisation are optional."
         },
         "threat": {
           "type": "object",
@@ -23805,7 +23942,7 @@
           "properties": {
             "bom-ref": {
               "type": "string",
-              "pattern": "^threat:[0-9a-z-]+$"
+              "pattern": "^threat-[0-9a-z-]+$"
             },
             "description": {
               "type": "string",
@@ -23823,7 +23960,7 @@
             "attackPatterns": {
               "items": {
                 "type": "string",
-                "pattern": "^capec:[0-9]+(:[0-9]+)?$"
+                "pattern": "^ap-(capec-[0-9]+(-[0-9]+)?|atlas-[0-9a-z-]+|attack-[0-9a-z-]+)$"
               }
             },
             "weaknesses": {
@@ -23835,16 +23972,17 @@
             },
             "affectedAssets": {
               "type": "array",
+              "description": "The modelled elements the threat affects: assets of any type, flows, data stores, data sets or zones.",
               "items": {
                 "type": "string",
-                "pattern": "^component:[0-9a-z-]+$"
+                "pattern": "^[a-z]+-[0-9a-z-]+$"
               }
             },
             "mitigations": {
               "type": "array",
               "items": {
                 "type": "string",
-                "pattern": "^control:[0-9a-z-]+$"
+                "pattern": "^control-[0-9a-z-]+$"
               }
             },
             "properties": {
@@ -23900,6 +24038,20 @@
                     "properties": {
                       "name": {
                         "const": "org.owasp.threat-model-library.components-affected"
+                      }
+                    }
+                  },
+                  "minContains": 0,
+                  "maxContains": 1
+                },
+                {
+                  "contains": {
+                    "required": [
+                      "name"
+                    ],
+                    "properties": {
+                      "name": {
+                        "const": "org.owasp.threat-model-library.ai-specific"
                       }
                     }
                   },
@@ -24000,6 +24152,62 @@
                         }
                       }
                     }
+                  },
+                  {
+                    "if": {
+                      "required": [
+                        "name"
+                      ],
+                      "properties": {
+                        "name": {
+                          "const": "org.owasp.threat-model-library.ai-specific"
+                        }
+                      }
+                    },
+                    "then": {
+                      "required": [
+                        "value"
+                      ],
+                      "properties": {
+                        "value": {
+                          "enum": [
+                            "yes",
+                            "no",
+                            "partly"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "if": {
+                      "required": [
+                        "name"
+                      ],
+                      "properties": {
+                        "name": {
+                          "const": "org.owasp.threat-model-library.threat-layer"
+                        }
+                      }
+                    },
+                    "then": {
+                      "required": [
+                        "value"
+                      ],
+                      "properties": {
+                        "value": {
+                          "enum": [
+                            "ai",
+                            "application",
+                            "platform",
+                            "os-firmware",
+                            "data",
+                            "network",
+                            "infrastructure"
+                          ]
+                        }
+                      }
+                    }
                   }
                 ]
               }
@@ -24042,7 +24250,7 @@
           "properties": {
             "bom-ref": {
               "type": "string",
-              "pattern": "^scenario:[0-9a-z-]+$"
+              "pattern": "^ts-[0-9a-z-]+$"
             },
             "event": {
               "type": "string",
@@ -24052,30 +24260,105 @@
               "type": "array",
               "items": {
                 "type": "string",
-                "pattern": "^threat:[0-9a-z-]+$"
+                "pattern": "^threat-[0-9a-z-]+$"
               },
               "minItems": 1,
               "maxItems": 1
             },
             "threatProfile": {
               "type": "string",
-              "pattern": "^threat-persona:[0-9a-z-]+$"
+              "pattern": "^tp-[0-9a-z-]+$"
             }
           }
         },
         "attackPattern": {
+          "description": "An attack pattern from CAPEC (ap-capec-<id>, with a capecId), MITRE ATLAS (ap-atlas-<id>) or MITRE ATT&CK (ap-attack-<id>). ATLAS and ATT&CK patterns describe their technique in techniques, each with an id or a tactic; the exact MITRE ID, such as AML.T0051.001, goes in techniques[].id.",
           "type": "object",
           "required": [
             "bom-ref",
-            "capecId",
             "name"
           ],
-          "properties": {
-            "bom-ref": {
-              "type": "string",
-              "pattern": "^capec:[0-9]+(:[0-9]+)?$"
+          "oneOf": [
+            {
+              "required": [
+                "capecId"
+              ],
+              "properties": {
+                "bom-ref": {
+                  "type": "string",
+                  "pattern": "^ap-capec-[0-9]+(-[0-9]+)?$"
+                }
+              }
+            },
+            {
+              "not": {
+                "required": [
+                  "capecId"
+                ]
+              },
+              "required": [
+                "techniques"
+              ],
+              "properties": {
+                "bom-ref": {
+                  "type": "string",
+                  "pattern": "^ap-atlas-[0-9a-z-]+$"
+                },
+                "techniques": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "anyOf": [
+                      {
+                        "required": [
+                          "id"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "tactic"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "not": {
+                "required": [
+                  "capecId"
+                ]
+              },
+              "required": [
+                "techniques"
+              ],
+              "properties": {
+                "bom-ref": {
+                  "type": "string",
+                  "pattern": "^ap-attack-[0-9a-z-]+$"
+                },
+                "techniques": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "anyOf": [
+                      {
+                        "required": [
+                          "id"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "tactic"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
             }
-          }
+          ]
         },
         "control": {
           "type": "object",
@@ -24089,7 +24372,7 @@
           "properties": {
             "bom-ref": {
               "type": "string",
-              "pattern": "^control:[0-9a-z-]+$"
+              "pattern": "^control-[0-9a-z-]+$"
             },
             "description": {
               "type": "string",
@@ -24125,9 +24408,10 @@
               ]
             },
             "appliesTo": {
+              "description": "The modelled elements the control protects: assets, zones, flows, data stores, data sets or trust boundaries. Without it, the control applies to the whole system.",
               "items": {
                 "type": "string",
-                "pattern": "^trust-boundary:[0-9a-z-]+:[0-9a-z-]+$"
+                "pattern": "^[a-z]+-[0-9a-z-]+$"
               }
             },
             "properties": {
@@ -24232,13 +24516,13 @@
           "properties": {
             "bom-ref": {
               "type": "string",
-              "pattern": "^risk:[0-9a-z-]+$"
+              "pattern": "^risk-[0-9a-z-]+$"
             },
             "relatedThreats": {
               "type": "array",
               "items": {
                 "type": "string",
-                "pattern": "^threat:[0-9a-z-]+$"
+                "pattern": "^threat-[0-9a-z-]+$"
               }
             },
             "inherentRisk": {
@@ -24395,6 +24679,25 @@
                     }
                   }
                 ]
+              }
+            }
+          }
+        },
+        "attackPath": {
+          "description": "An attack path. Each step's source and destination are references to modelled elements; a place that is not modelled goes in the step's description instead.",
+          "properties": {
+            "steps": {
+              "items": {
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "pattern": "^[a-z]+-[0-9a-z-]+$"
+                  },
+                  "destination": {
+                    "type": "string",
+                    "pattern": "^[a-z]+-[0-9a-z-]+$"
+                  }
+                }
               }
             }
           }

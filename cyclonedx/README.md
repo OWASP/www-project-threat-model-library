@@ -2,7 +2,8 @@
 
 A CycloneDX 2.0 representation of OWASP Threat Model Library documents. It carries every field of
 [`threat-model.schema.json`](../threat-model.schema.json) with no data loss. This is a proposal:
-Husky AI is the only example until the schema is agreed.
+It has two examples until the schema is agreed: Husky AI, converted from the library, and LF AI & Data's code
+assistant, an AI system modelled directly in CycloneDX.
 
 | File | Purpose |
 |------|---------|
@@ -11,6 +12,7 @@ Husky AI is the only example until the schema is agreed.
 | `build-schema.sh` | Regenerates the bundled schema from the pinned CycloneDX fork. |
 | `DECISIONS.md` | Why the profile looks the way it does, and the status of the work. |
 | `husky-ai-threat-model-cyclonedx-2.0.json` | Example: [Husky AI](../threat-models/ai-ml-systems/husky-ai-threat-model.json), converted. |
+| `lfai-code-assistant-threat-model-cyclonedx-2.0.json` | Example: LF AI & Data's [code assistant](https://github.com/lfai/security-and-compliance/tree/main/subgroups/use-cases-and-threat-models/use_cases/code_assistant) use case. CycloneDX only; values LF AI has not recorded are marked as assumed. |
 | [`../scripts/cyclonedx_convert.py`](../scripts/cyclonedx_convert.py) | Converts in both directions and checks round trips. |
 
 ## Source of the CycloneDX models
@@ -31,12 +33,13 @@ The profile is CycloneDX 2.0 plus rules that require everything the library form
 - the scope's business criticality, exposure and tier;
 - a name for every actor;
 - an event and a threat profile for every threat scenario;
-- the attacker attributes on every threat profile;
+- whether each threat profile is a person, its access level and its malicious intent (skill level
+  and applicability to the organisation are optional);
 - a priority for every control, and `mitigates` relationships that point only at threats;
 - a full inherent risk rating for every risk.
 
-Enums are limited to the values the mapping uses, and `bom-ref`s follow `<kind>:<symbolic-name>`
-(for example `trust-zone:prod-zone`), so references can always be resolved back. JSON Schema can't
+Enums are limited to the values the mapping uses, and `bom-ref`s follow the CycloneDX examples: lowercase `<prefix>-<symbolic-name>`
+(for example `zone-prod-zone`), so references can always be resolved back. JSON Schema can't
 check that a reference points at an object that exists, or that each threat has exactly one
 scenario. The converter checks those.
 
@@ -72,8 +75,8 @@ on the closest owning object. "Property" in the table below means that fallback.
 | `product_release_date` | blueprint property `product-release-date` |
 | `repo_link`, `release_docs_link` | blueprint `externalReferences` of type `vcs`, `release-notes` |
 | `diagrams[]` | `visualizations[]`: `title`→`name`, `link`→`url`, `source`→`attachment.content`, `type`→`attachment.mediaType` (`text/vnd.graphviz`, `text/vnd.mermaid`, `text/vnd.plantuml`, `image/svg+xml`) |
-| `trust_zones[]` | `zones[]` of type `trust`, bom-ref `trust-zone:<name>` |
-| `trust_boundaries[]` | `boundaries[]` of type `trust`, bom-ref `trust-boundary:<a>:<b>`; methods → `crossingRequirements`; token and logout flags → `sessionManagement` |
+| `trust_zones[]` | `zones[]` of type `trust`, bom-ref `zone-<name>` |
+| `trust_boundaries[]` | `boundaries[]` of type `trust`, bom-ref `bnd-<a>-<b>`; methods → `crossingRequirements`; token and logout flags → `sessionManagement` |
 | `actors[]` | `actors[]`; `type` → `party` (persona archetype, or `system` for `system`); `title` → property `title`; `permissions` → `permissions[0]` |
 | `components[]` | `assets[]` of type `component`; `repo_link` → `vcs` external reference; `parent_component` → `relationships[].contains` |
 | `data_stores[]` | `dataStores[]`; `sql`→`relational`, `key_value`→`key-value`, `time_series`→`time-series` |
@@ -86,7 +89,7 @@ on the closest owning object. "Property" in the table below means that fallback.
 | `threats[].attack_mechanisms` | `threats.attackPatterns[]` (`capecId`, `name`), referenced by bom-ref |
 | `threats[].weaknesses` | `weaknesses[].cweId`; each title → a `documentation` external reference to the CWE definition page, title in `comment` (a CycloneDX weakness holds a `cweId` or a `name`, never both) |
 | `threats[].components_affected` | `affectedAssets` |
-| `controls[]` | `controls[]`; `trust_boundary` → `appliesTo`; `priority` → property; `threats` → a blueprint relationship `{"ref": "control:…", "custom": [{"type": "mitigates", "targets": ["threat:…"]}]}` in native order, mirrored as each threat's `mitigations` |
+| `controls[]` | `controls[]`; `trust_boundary` → `appliesTo`; `priority` → property; `threats` → a blueprint relationship `{"ref": "control-…", "custom": [{"type": "mitigates", "targets": ["threat-…"]}]}` in native order, mirrored as each threat's `mitigations` |
 | `controls[].status` | `active`→`implemented`, `suggested`→`recommended`, `under_review`→`proposed`, `scheduled`→`planned`, `retired`→`decommissioned`, `wont_do`→`rejected`, `approved`→`approved`, `assumed`→custom `assumed` |
 | `risks[]` | `risks.risks[]`; `description` → `statement`; `threats` → `relatedThreats`; likelihood, impact, `impact_description`, score and level → `inherentRisk` with methodology `qualitative-matrix` |
 | `risks[].level` | `riskScore.level`; `very_low` and `very_high` have no CycloneDX level of their own, so they are also kept in property `risk-level` |
@@ -94,3 +97,24 @@ on the closest owning object. "Property" in the table below means that fallback.
 
 CycloneDX lists must not contain duplicates. When a native list does, the CycloneDX field gets the
 de-duplicated list and the exact original goes into a property named after the native field.
+
+## Beyond the library format
+
+The profile also accepts CycloneDX elements the library format has no field for, added so that LF
+AI & Data's threat models fit without loss (decision 18 in [`DECISIONS.md`](DECISIONS.md)). All are
+optional, and a document using them is CycloneDX only: the converter refuses to convert it back.
+
+| Element | CycloneDX home |
+|---|---|
+| Use cases and sub use cases | `definitions.useCases`, referenced from `blueprint.useCases` |
+| Control, process and other flow types | `flows[].type`, with `sequence`, `synchronous`, `protocols` |
+| Agents, models, MCP servers, data assets | asset `type`, or `componentRef` to a BOM component (zone always required) |
+| Structural relationships | `relationships` (`aggregates`, `composes`, `contains`, …) |
+| Controls placed on components; supporting controls | `control.appliesTo`; custom `supports` relationship |
+| STRIDE, MAESTRO | `threat.categories` |
+| MITRE ATLAS and ATT&CK | `ap-atlas-…` / `ap-attack-…` attack patterns with `techniques` |
+| OWASP LLM Top 10, IBM AI Risk Atlas, DASF | `documentation` external references on the threat |
+| NIST SP 800-53, CSA AICM | `definitions.standards`, linked by `control.satisfies` |
+| Who, impact, NIST SP 800-30 | `scenario.actor`, `scenario.impact`, `scenario.event`; justifications as `annotations` |
+| AI-specific flag, technology layer | threat properties `ai-specific`, `threat-layer` |
+| Attack paths, review notes | `threats.attackPaths`, `annotations` |

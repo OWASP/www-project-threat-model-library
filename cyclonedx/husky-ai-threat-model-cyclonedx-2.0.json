@@ -9,7 +9,7 @@
       "components": [
         {
           "type": "application",
-          "bom-ref": "tool:owasp-threat-model-library-cyclonedx-convert",
+          "bom-ref": "tool-owasp-threat-model-library-cyclonedx-convert",
           "name": "OWASP Threat Model Library CycloneDX converter",
           "version": "1.0"
         }
@@ -18,7 +18,7 @@
   },
   "blueprints": [
     {
-      "bom-ref": "blueprint",
+      "bom-ref": "bp-threat-model",
       "name": "Husky AI",
       "modelTypes": [
         "architecture",
@@ -66,19 +66,19 @@
       ],
       "zones": [
         {
-          "bom-ref": "trust-zone:prod-zone",
+          "bom-ref": "zone-prod-zone",
           "name": "Production Trust Zone",
           "description": "Internal VPC with the production deployment of HuskyAI",
           "type": "trust"
         },
         {
-          "bom-ref": "trust-zone:experimental-zone",
+          "bom-ref": "zone-experimental-zone",
           "name": "Experimental Trust Zone",
           "description": "Internal VPC with the experimental and development deployment for HuskyAI",
           "type": "trust"
         },
         {
-          "bom-ref": "trust-zone:public",
+          "bom-ref": "zone-public",
           "name": "Public Internet",
           "description": "The public internet",
           "type": "trust"
@@ -86,11 +86,11 @@
       ],
       "boundaries": [
         {
-          "bom-ref": "trust-boundary:prod-zone:experimental-zone",
+          "bom-ref": "bnd-prod-zone-experimental-zone",
           "type": "trust",
           "zones": [
-            "trust-zone:prod-zone",
-            "trust-zone:experimental-zone"
+            "zone-prod-zone",
+            "zone-experimental-zone"
           ],
           "crossingRequirements": {
             "authentication": [
@@ -105,11 +105,11 @@
           }
         },
         {
-          "bom-ref": "trust-boundary:public:experimental-zone",
+          "bom-ref": "bnd-public-experimental-zone",
           "type": "trust",
           "zones": [
-            "trust-zone:public",
-            "trust-zone:experimental-zone"
+            "zone-public",
+            "zone-experimental-zone"
           ],
           "crossingRequirements": {
             "authentication": [
@@ -130,11 +130,11 @@
           ]
         },
         {
-          "bom-ref": "trust-boundary:public:prod-zone",
+          "bom-ref": "bnd-public-prod-zone",
           "type": "trust",
           "zones": [
-            "trust-zone:public",
-            "trust-zone:prod-zone"
+            "zone-public",
+            "zone-prod-zone"
           ],
           "crossingRequirements": {
             "authentication": [
@@ -151,7 +151,7 @@
       ],
       "actors": [
         {
-          "bom-ref": "actor:engineer",
+          "bom-ref": "act-engineer",
           "party": {
             "roles": [
               {
@@ -163,7 +163,7 @@
             }
           },
           "description": "An engineer responsible for building, training, and deploying machine learning models.",
-          "zone": "trust-zone:public",
+          "zone": "zone-public",
           "properties": [
             {
               "name": "org.owasp.threat-model-library.title",
@@ -175,7 +175,7 @@
           ]
         },
         {
-          "bom-ref": "actor:infrastructure-admin",
+          "bom-ref": "act-infrastructure-admin",
           "party": {
             "roles": [
               {
@@ -187,7 +187,7 @@
             }
           },
           "description": "Administrator responsible for securing and maintaining production infrastructure.",
-          "zone": "trust-zone:public",
+          "zone": "zone-public",
           "properties": [
             {
               "name": "org.owasp.threat-model-library.title",
@@ -199,7 +199,7 @@
           ]
         },
         {
-          "bom-ref": "actor:azure-cognitive-services",
+          "bom-ref": "act-azure-cognitive-services",
           "party": {
             "roles": [
               {
@@ -211,7 +211,7 @@
             }
           },
           "description": "External service providing resources for machine learning experimentation.",
-          "zone": "trust-zone:public",
+          "zone": "zone-public",
           "properties": [
             {
               "name": "org.owasp.threat-model-library.title",
@@ -223,7 +223,7 @@
           ]
         },
         {
-          "bom-ref": "actor:third-party-tools",
+          "bom-ref": "act-third-party-tools",
           "party": {
             "roles": [
               {
@@ -235,7 +235,7 @@
             }
           },
           "description": "External third party tools for the services",
-          "zone": "trust-zone:public",
+          "zone": "zone-public",
           "properties": [
             {
               "name": "org.owasp.threat-model-library.title",
@@ -249,11 +249,11 @@
       ],
       "assets": [
         {
-          "bom-ref": "component:web-service",
+          "bom-ref": "asset-web-service",
           "type": "component",
           "name": "Simple Python Web Server",
           "description": "Serves as simple web server",
-          "zone": "trust-zone:prod-zone",
+          "zone": "zone-prod-zone",
           "externalReferences": [
             {
               "type": "vcs",
@@ -262,11 +262,11 @@
           ]
         },
         {
-          "bom-ref": "component:api-gateway",
+          "bom-ref": "asset-api-gateway",
           "type": "component",
           "name": "API Gateway",
           "description": "Serves as the entry point for external users to interact with the production environment via HTTPS. It routes user requests to the Simple Python Web Server and ensures secure communication. The API Gateway enforces request validation and manages APIs exposed to the public while ensuring access control to internal services.",
-          "zone": "trust-zone:prod-zone",
+          "zone": "zone-prod-zone",
           "externalReferences": [
             {
               "type": "vcs",
@@ -275,11 +275,11 @@
           ]
         },
         {
-          "bom-ref": "component:bastion",
+          "bom-ref": "asset-bastion",
           "type": "component",
           "name": "Bastion Server",
           "description": "A secure access management component for administrative functions. It provides controlled SSH access for the Infrastructure Admin to internal production resources, such as the Stored Machine Learning Model and Simple Python Web Server.",
-          "zone": "trust-zone:prod-zone",
+          "zone": "zone-prod-zone",
           "externalReferences": [
             {
               "type": "vcs",
@@ -288,11 +288,11 @@
           ]
         },
         {
-          "bom-ref": "component:gather-images",
+          "bom-ref": "asset-gather-images",
           "type": "component",
           "name": "Gather Images Application - Python",
           "description": "This is a Python-based application responsible for gathering images from external sources, specifically Azure Cognitive Services, and storing them in the designated Training and Validation Images storage. ",
-          "zone": "trust-zone:experimental-zone",
+          "zone": "zone-experimental-zone",
           "externalReferences": [
             {
               "type": "vcs",
@@ -301,11 +301,11 @@
           ]
         },
         {
-          "bom-ref": "component:jupyter",
+          "bom-ref": "asset-jupyter",
           "type": "component",
           "name": "Jupyter Notebook",
           "description": "A Jupyter Notebook environment that processes the images stored in Training and Validation Images, executes code using external ML libraries, and provides a UI for engineers to interact with and manipulate data, allowing for iterative model development. It can save trained machine learning models to Machine Learning Model storage.",
-          "zone": "trust-zone:experimental-zone",
+          "zone": "zone-experimental-zone",
           "externalReferences": [
             {
               "type": "vcs",
@@ -314,11 +314,11 @@
           ]
         },
         {
-          "bom-ref": "component:deployment-service",
+          "bom-ref": "asset-deployment-service",
           "type": "component",
           "name": "Deployment Service",
           "description": "Handles the deployment of the machine learning model by packaging the model and all necessary source code and configuration stored in Source Code and Configuration. It receives the final model from Jupyter Notebook and prepares it for deployment to the production environment.",
-          "zone": "trust-zone:experimental-zone",
+          "zone": "zone-experimental-zone",
           "externalReferences": [
             {
               "type": "vcs",
@@ -329,77 +329,77 @@
       ],
       "dataStores": [
         {
-          "bom-ref": "data-store:training-images-blob",
+          "bom-ref": "store-training-images-blob",
           "name": "Training And Validation Images Storage Blob",
           "description": "Contains images used for training and validation of machine learning models.",
           "type": "object",
           "vendor": "Azure",
           "product": "Blob",
-          "zone": "trust-zone:experimental-zone"
+          "zone": "zone-experimental-zone"
         },
         {
-          "bom-ref": "data-store:api-key-storage",
+          "bom-ref": "store-api-key-storage",
           "name": "API Key Storage",
           "description": "Stores API keys for secure access to external services.",
           "type": "key-value",
           "vendor": "Azure",
           "product": "Key Vault",
-          "zone": "trust-zone:experimental-zone"
+          "zone": "zone-experimental-zone"
         },
         {
-          "bom-ref": "data-store:secret-key-storage",
+          "bom-ref": "store-secret-key-storage",
           "name": "Authorized Keys Storage",
           "description": "Contains SSH keys used for securing administrative access.",
           "type": "key-value",
           "vendor": "Azure",
           "product": "Key Vault",
-          "zone": "trust-zone:prod-zone"
+          "zone": "zone-prod-zone"
         },
         {
-          "bom-ref": "data-store:ml-models-blob",
+          "bom-ref": "store-ml-models-blob",
           "name": "Machine Learning Model Storage Blob",
           "description": "Contains storage for machine learning models in serialized format.",
           "type": "object",
           "vendor": "Azure",
           "product": "Blob",
-          "zone": "trust-zone:prod-zone"
+          "zone": "zone-prod-zone"
         },
         {
-          "bom-ref": "data-store:source-code-config-storage",
+          "bom-ref": "store-source-code-config-storage",
           "name": "Source Code And Configuration Storage",
           "description": "Stores source code and configuration files for deployment and production setup.",
           "type": "object",
           "vendor": "GitHub",
           "product": "GitHub Repositories",
-          "zone": "trust-zone:experimental-zone"
+          "zone": "zone-experimental-zone"
         },
         {
-          "bom-ref": "data-store:bastion-logs-storage",
+          "bom-ref": "store-bastion-logs-storage",
           "name": "Bastion Logs Storage",
           "description": "Contains logs related to SSH access and activity through the Bastion.",
           "type": "object",
           "vendor": "Azure",
           "product": "Azure Monitor",
-          "zone": "trust-zone:prod-zone"
+          "zone": "zone-prod-zone"
         },
         {
-          "bom-ref": "data-store:uploaded-images-redis",
+          "bom-ref": "store-uploaded-images-redis",
           "name": "Azure Cache for Redis",
           "description": "Provides an in-memory data structure store for caching and message brokering.",
           "type": "object",
           "vendor": "Azure",
           "product": "Azure Cache for Redis",
-          "zone": "trust-zone:prod-zone"
+          "zone": "zone-prod-zone"
         }
       ],
       "dataSets": [
         {
-          "bom-ref": "data-set:training-images",
+          "bom-ref": "dataset-training-images",
           "name": "Training and Validation Images",
           "description": "Contains images used for training and validation of machine learning models.",
           "placements": [
             {
-              "dataStore": "data-store:training-images-blob",
+              "dataStore": "store-training-images-blob",
               "encrypted": true
             }
           ],
@@ -419,12 +419,12 @@
           "recordCount": 100000
         },
         {
-          "bom-ref": "data-set:api-keys",
+          "bom-ref": "dataset-api-keys",
           "name": "API Keys",
           "description": "Stores API keys for secure access to external services.",
           "placements": [
             {
-              "dataStore": "data-store:api-keys-storage",
+              "dataStore": "store-api-keys-storage",
               "encrypted": true
             }
           ],
@@ -442,12 +442,12 @@
           "recordCount": 20
         },
         {
-          "bom-ref": "data-set:stored-ml-models",
+          "bom-ref": "dataset-stored-ml-models",
           "name": "Stored Machine Learning Models",
           "description": "Contains trained machine learning models in serialized format for production use.",
           "placements": [
             {
-              "dataStore": "data-store:ml-models-blob",
+              "dataStore": "store-ml-models-blob",
               "encrypted": false
             }
           ],
@@ -467,12 +467,12 @@
           "recordCount": 10
         },
         {
-          "bom-ref": "data-set:source-code-config",
+          "bom-ref": "dataset-source-code-config",
           "name": "Source Code and Configuration",
           "description": "Stores source code and configuration files for deployment and production setup.",
           "placements": [
             {
-              "dataStore": "data-store:source-code-config-storage",
+              "dataStore": "store-source-code-config-storage",
               "encrypted": true
             }
           ],
@@ -492,12 +492,12 @@
           "recordCount": 200
         },
         {
-          "bom-ref": "data-set:bastion-logs",
+          "bom-ref": "dataset-bastion-logs",
           "name": "Bastion Logs",
           "description": "Stores logs related to SSH access and activity through the Bastion.",
           "placements": [
             {
-              "dataStore": "data-store:bastion-logs-storage",
+              "dataStore": "store-bastion-logs-storage",
               "encrypted": true
             }
           ],
@@ -517,12 +517,12 @@
           "recordCount": 5000
         },
         {
-          "bom-ref": "data-set:authorized-keys",
+          "bom-ref": "dataset-authorized-keys",
           "name": "Authorized Keys",
           "description": "Contains SSH keys used for securing administrative access.",
           "placements": [
             {
-              "dataStore": "data-store:secret-keys-storage",
+              "dataStore": "store-secret-keys-storage",
               "encrypted": true
             }
           ],
@@ -540,12 +540,12 @@
           "recordCount": 100
         },
         {
-          "bom-ref": "data-set:uploaded-images",
+          "bom-ref": "dataset-uploaded-images",
           "name": "Uploaded Images",
           "description": "Contains images that users upload to understand if an image is a Husky or not.",
           "placements": [
             {
-              "dataStore": "data-store:uploaded-images-redis",
+              "dataStore": "store-uploaded-images-redis",
               "encrypted": false
             }
           ],
@@ -555,12 +555,12 @@
       ],
       "flows": [
         {
-          "bom-ref": "data-flow:azure-cognitive-gather-images",
+          "bom-ref": "flow-azure-cognitive-gather-images",
           "name": "Azure Cognitive Services to Gather Images Application",
           "description": "Transfer data from Azure Cognitive Services to Gather Images Application in Python.",
           "type": "data",
-          "source": "actor:azure-cognitive-services",
-          "destination": "component:gather-images",
+          "source": "act-azure-cognitive-services",
+          "destination": "asset-gather-images",
           "encrypted": true,
           "dataProfiles": [
             {
@@ -570,39 +570,39 @@
           ]
         },
         {
-          "bom-ref": "data-flow:third-party-tools-gather-images",
+          "bom-ref": "flow-third-party-tools-gather-images",
           "name": "Third Party Tools to Gather Images Application",
           "description": "Transfer data from Third Party tools and ML libraries to Gather Images Application in Python.",
           "type": "data",
-          "source": "actor:third-party-tools",
-          "destination": "component:gather-images",
+          "source": "act-third-party-tools",
+          "destination": "asset-gather-images",
           "encrypted": true
         },
         {
-          "bom-ref": "data-flow:third-party-tools-jupyter-notebook",
+          "bom-ref": "flow-third-party-tools-jupyter-notebook",
           "name": "Third Party Tools to Jupyter Notebook",
           "description": "Transfer data from Third Party tools and ML libraries to Jupyter Notebook.",
           "type": "data",
-          "source": "actor:third-party-tools",
-          "destination": "component:jupyter",
+          "source": "act-third-party-tools",
+          "destination": "asset-jupyter",
           "encrypted": true
         },
         {
-          "bom-ref": "data-flow:engineer-gather-images",
+          "bom-ref": "flow-engineer-gather-images",
           "name": "Engineer to Gather Images Application",
           "description": "Transfer data from Engineer to Gather Images Application in Python.",
           "type": "data",
-          "source": "actor:engineer",
-          "destination": "component:gather-images",
+          "source": "act-engineer",
+          "destination": "asset-gather-images",
           "encrypted": true
         },
         {
-          "bom-ref": "data-flow:engineer-jupyter-notebook",
+          "bom-ref": "flow-engineer-jupyter-notebook",
           "name": "Engineer to Jupyter Notebook",
           "description": "Transfer code and ML models from Engineer locally to Jupyter Notebook.",
           "type": "data",
-          "source": "actor:engineer",
-          "destination": "component:jupyter",
+          "source": "act-engineer",
+          "destination": "asset-jupyter",
           "encrypted": true,
           "dataProfiles": [
             {
@@ -612,12 +612,12 @@
           ]
         },
         {
-          "bom-ref": "data-flow:gather-images-training-images",
+          "bom-ref": "flow-gather-images-training-images",
           "name": "Gather Images to Training and Validation Images",
           "description": "Transfer images from Gather Images Application to Training and Validation Images.",
           "type": "data",
-          "source": "component:gather-images",
-          "destination": "data-store:training-images-blob",
+          "source": "asset-gather-images",
+          "destination": "store-training-images-blob",
           "encrypted": false,
           "dataProfiles": [
             {
@@ -627,12 +627,12 @@
           ]
         },
         {
-          "bom-ref": "data-flow:api-key-storage-gather-images",
+          "bom-ref": "flow-api-key-storage-gather-images",
           "name": "API Key Storage to Gather Images Application",
           "description": "API Key Storage to Gather Images Application in Python.",
           "type": "data",
-          "source": "data-store:api-key-storage",
-          "destination": "component:gather-images",
+          "source": "store-api-key-storage",
+          "destination": "asset-gather-images",
           "encrypted": false,
           "dataProfiles": [
             {
@@ -642,12 +642,12 @@
           ]
         },
         {
-          "bom-ref": "data-flow:training-images-jupyter-notebook",
+          "bom-ref": "flow-training-images-jupyter-notebook",
           "name": "Training Images to Jupyter Notebook",
           "description": "Load from Training and Validation Images to Jupyter Notebook.",
           "type": "data",
-          "source": "data-store:training-images-blob",
-          "destination": "component:jupyter",
+          "source": "store-training-images-blob",
+          "destination": "asset-jupyter",
           "encrypted": false,
           "dataProfiles": [
             {
@@ -657,21 +657,21 @@
           ]
         },
         {
-          "bom-ref": "data-flow:gather-images-jupyter-notebook",
+          "bom-ref": "flow-gather-images-jupyter-notebook",
           "name": "Gather Images Application to Jupyter Notebook",
           "description": "Transfer data from Gather Images Application to Jupyter Notebook.",
           "type": "data",
-          "source": "component:gather-images",
-          "destination": "component:jupyter",
+          "source": "asset-gather-images",
+          "destination": "asset-jupyter",
           "encrypted": false
         },
         {
-          "bom-ref": "data-flow:jupyter-notebook-ml-model",
+          "bom-ref": "flow-jupyter-notebook-ml-model",
           "name": "Jupyter Notebook to Machine Learning Model",
           "description": "Transfer final model from Jupyter Notebook to Machine Learning Model.",
           "type": "data",
-          "source": "component:jupyter",
-          "destination": "data-store:ml-models-blob",
+          "source": "asset-jupyter",
+          "destination": "store-ml-models-blob",
           "encrypted": false,
           "dataProfiles": [
             {
@@ -681,12 +681,12 @@
           ]
         },
         {
-          "bom-ref": "data-flow:ml-model-deployment-service",
+          "bom-ref": "flow-ml-model-deployment-service",
           "name": "Machine Learning Model to Deployment Service",
           "description": "Transfer from Machine Learning Model Blob to Deployment Service.",
           "type": "data",
-          "source": "data-store:ml-models-blob",
-          "destination": "component:deployment-service",
+          "source": "store-ml-models-blob",
+          "destination": "asset-deployment-service",
           "encrypted": false,
           "dataProfiles": [
             {
@@ -696,21 +696,21 @@
           ]
         },
         {
-          "bom-ref": "data-flow:source-code-deployment",
+          "bom-ref": "flow-source-code-deployment",
           "name": "Source Code and Configuration to Deployment",
           "description": "Transfer data from Source Code and Configuration to Deployment.",
           "type": "data",
-          "source": "data-store:source-code-config-storage",
-          "destination": "component:deployment-service",
+          "source": "store-source-code-config-storage",
+          "destination": "asset-deployment-service",
           "encrypted": false
         },
         {
-          "bom-ref": "data-flow:user-api-gateway",
+          "bom-ref": "flow-user-api-gateway",
           "name": "User to API Gateway",
           "description": "Transfer from User to API Gateway.",
           "type": "data",
-          "source": "actor:user",
-          "destination": "component:api-gateway",
+          "source": "act-user",
+          "destination": "asset-api-gateway",
           "encrypted": true,
           "dataProfiles": [
             {
@@ -720,39 +720,39 @@
           ]
         },
         {
-          "bom-ref": "data-flow:bastion-api-gateway",
+          "bom-ref": "flow-bastion-api-gateway",
           "name": "Bastion to API Gateway",
           "description": "Transfer data from Bastion to API Gateway.",
           "type": "data",
-          "source": "component:bastion",
-          "destination": "component:api-gateway",
+          "source": "asset-bastion",
+          "destination": "asset-api-gateway",
           "encrypted": false
         },
         {
-          "bom-ref": "data-flow:api-gateway-web-server",
+          "bom-ref": "flow-api-gateway-web-server",
           "name": "API Gateway to Simple Python Web Server",
           "description": "Transfer data from API Gateway to Simple Python Web Server.",
           "type": "data",
-          "source": "component:api-gateway",
-          "destination": "component:web-service",
+          "source": "asset-api-gateway",
+          "destination": "asset-web-service",
           "encrypted": false
         },
         {
-          "bom-ref": "data-flow:bastion-web-server",
+          "bom-ref": "flow-bastion-web-server",
           "name": "Bastion to Simple Python Web Server",
           "description": "Transfer data from Bastion to Simple Python Web Server.",
           "type": "data",
-          "source": "component:bastion",
-          "destination": "component:web-service",
+          "source": "asset-bastion",
+          "destination": "asset-web-service",
           "encrypted": false
         },
         {
-          "bom-ref": "data-flow:stored-ml-model-web-server",
+          "bom-ref": "flow-stored-ml-model-web-server",
           "name": "Stored Machine Learning Model to Simple Python Web Server",
           "description": "Transfer sensitive data from Stored Machine Learning Model to Simple Python Web Server.",
           "type": "data",
-          "source": "data-store:ml-models-blob",
-          "destination": "component:web-service",
+          "source": "store-ml-models-blob",
+          "destination": "asset-web-service",
           "encrypted": false,
           "dataProfiles": [
             {
@@ -762,12 +762,12 @@
           ]
         },
         {
-          "bom-ref": "data-flow:deployment-bastion",
+          "bom-ref": "flow-deployment-bastion",
           "name": "Deployment Service to Bastion",
           "description": "Transfer sensitive data from Deployment Service to Bastion.",
           "type": "data",
-          "source": "component:deployment-service",
-          "destination": "component:bastion",
+          "source": "asset-deployment-service",
+          "destination": "asset-bastion",
           "encrypted": true,
           "dataProfiles": [
             {
@@ -777,12 +777,12 @@
           ]
         },
         {
-          "bom-ref": "data-flow:bastion-logs-storage",
+          "bom-ref": "flow-bastion-logs-storage",
           "name": "Bastion to Bastion Logs Storage",
           "description": "Transfer sensitive data from Bastion to Bastion Logs Storage.",
           "type": "data",
-          "source": "component:bastion",
-          "destination": "data-store:bastion-logs-storage",
+          "source": "asset-bastion",
+          "destination": "store-bastion-logs-storage",
           "encrypted": false,
           "dataProfiles": [
             {
@@ -792,12 +792,12 @@
           ]
         },
         {
-          "bom-ref": "data-flow:admin-bastion",
+          "bom-ref": "flow-admin-bastion",
           "name": "Infrastructure Admin to Bastion",
           "description": "Transfer data from Infrastructure Admin to Bastion.",
           "type": "data",
-          "source": "actor:infrastructure-admin",
-          "destination": "component:bastion",
+          "source": "act-infrastructure-admin",
+          "destination": "asset-bastion",
           "encrypted": true,
           "dataProfiles": [
             {
@@ -807,12 +807,12 @@
           ]
         },
         {
-          "bom-ref": "data-flow:bastion-stored-ml-model",
+          "bom-ref": "flow-bastion-stored-ml-model",
           "name": "Bastion to Stored Machine Learning Model",
           "description": "Transfer sensitive data from Bastion to Stored Machine Learning Model.",
           "type": "data",
-          "source": "component:bastion",
-          "destination": "data-store:ml-models-blob",
+          "source": "asset-bastion",
+          "destination": "store-ml-models-blob",
           "encrypted": false,
           "dataProfiles": [
             {
@@ -822,12 +822,12 @@
           ]
         },
         {
-          "bom-ref": "data-flow:authorized-keys-bastion",
+          "bom-ref": "flow-authorized-keys-bastion",
           "name": "Authorized Keys Storage to Bastion",
           "description": "Transfer sensitive data from Authorized Keys Storage to Bastion.",
           "type": "data",
-          "source": "data-store:secret-key-storage",
-          "destination": "data-store:bastion",
+          "source": "store-secret-key-storage",
+          "destination": "store-bastion",
           "encrypted": true,
           "dataProfiles": [
             {
@@ -837,18 +837,18 @@
           ]
         },
         {
-          "bom-ref": "data-flow:third-party-tools-web-server",
+          "bom-ref": "flow-third-party-tools-web-server",
           "name": "Third Party Tools to Simple Python Web Server",
           "description": "Transfer data from Third Party tools and ML libraries to Simple Python Web Server.",
           "type": "data",
-          "source": "actor:third-party-tools",
-          "destination": "component:web-service",
+          "source": "act-third-party-tools",
+          "destination": "asset-web-service",
           "encrypted": true
         }
       ],
       "assumptions": [
         {
-          "bom-ref": "assumption:1",
+          "bom-ref": "asm-1",
           "description": "All services within the trust boundary validate tokens via Auth Service",
           "validity": "verified"
         }
@@ -871,253 +871,253 @@
       ],
       "relationships": [
         {
-          "ref": "control:sandboxing-for-image-processing",
+          "ref": "control-sandboxing-for-image-processing",
           "custom": [
             {
               "type": "mitigates",
               "targets": [
-                "threat:buffer-overflow-image-processing"
+                "threat-buffer-overflow-image-processing"
               ]
             }
           ]
         },
         {
-          "ref": "control:owasp-file-upload-guidelines",
+          "ref": "control-owasp-file-upload-guidelines",
           "custom": [
             {
               "type": "mitigates",
               "targets": [
-                "threat:buffer-overflow-image-processing"
+                "threat-buffer-overflow-image-processing"
               ]
             }
           ]
         },
         {
-          "ref": "control:validate-tls-certificate-checks",
+          "ref": "control-validate-tls-certificate-checks",
           "custom": [
             {
               "type": "mitigates",
               "targets": [
-                "threat:supply-chain-attack"
+                "threat-supply-chain-attack"
               ]
             }
           ]
         },
         {
-          "ref": "control:sca-and-patching-for-third-party-libraries",
+          "ref": "control-sca-and-patching-for-third-party-libraries",
           "custom": [
             {
               "type": "mitigates",
               "targets": [
-                "threat:supply-chain-attack"
+                "threat-supply-chain-attack"
               ]
             }
           ]
         },
         {
-          "ref": "control:access-control-for-azure-blobs",
+          "ref": "control-access-control-for-azure-blobs",
           "custom": [
             {
               "type": "mitigates",
               "targets": [
-                "threat:image-tampering",
-                "threat:model-tampering"
+                "threat-image-tampering",
+                "threat-model-tampering"
               ]
             }
           ]
         },
         {
-          "ref": "control:access-logging-for-azure-blob",
+          "ref": "control-access-logging-for-azure-blob",
           "custom": [
             {
               "type": "mitigates",
               "targets": [
-                "threat:image-tampering",
-                "threat:model-tampering"
+                "threat-image-tampering",
+                "threat-model-tampering"
               ]
             }
           ]
         },
         {
-          "ref": "control:backup-for-azure-blob-storage",
+          "ref": "control-backup-for-azure-blob-storage",
           "custom": [
             {
               "type": "mitigates",
               "targets": [
-                "threat:image-tampering",
-                "threat:model-tampering"
+                "threat-image-tampering",
+                "threat-model-tampering"
               ]
             }
           ]
         },
         {
-          "ref": "control:store-and-check-hashes",
+          "ref": "control-store-and-check-hashes",
           "custom": [
             {
               "type": "mitigates",
               "targets": [
-                "threat:image-tampering",
-                "threat:model-tampering",
-                "threat:notebook-tampering"
+                "threat-image-tampering",
+                "threat-model-tampering",
+                "threat-notebook-tampering"
               ]
             }
           ]
         },
         {
-          "ref": "control:jupyter-notebooks-access-control",
+          "ref": "control-jupyter-notebooks-access-control",
           "custom": [
             {
               "type": "mitigates",
               "targets": [
-                "threat:notebook-tampering"
+                "threat-notebook-tampering"
               ]
             }
           ]
         },
         {
-          "ref": "control:api-rate-limiting",
+          "ref": "control-api-rate-limiting",
           "custom": [
             {
               "type": "mitigates",
               "targets": [
-                "threat:perturbation-attack"
+                "threat-perturbation-attack"
               ]
             }
           ]
         },
         {
-          "ref": "control:adversarial-training",
+          "ref": "control-adversarial-training",
           "custom": [
             {
               "type": "mitigates",
               "targets": [
-                "threat:perturbation-attack"
+                "threat-perturbation-attack"
               ]
             }
           ]
         },
         {
-          "ref": "control:input-filtering",
+          "ref": "control-input-filtering",
           "custom": [
             {
               "type": "mitigates",
               "targets": [
-                "threat:perturbation-attack"
+                "threat-perturbation-attack"
               ]
             }
           ]
         },
         {
-          "ref": "control:confidence-thresholding",
+          "ref": "control-confidence-thresholding",
           "custom": [
             {
               "type": "mitigates",
               "targets": [
-                "threat:perturbation-attack"
+                "threat-perturbation-attack"
               ]
             }
           ]
         },
         {
-          "ref": "control:in-memory-image-storage",
+          "ref": "control-in-memory-image-storage",
           "custom": [
             {
               "type": "mitigates",
               "targets": [
-                "threat:sensitive-image-exposure"
+                "threat-sensitive-image-exposure"
               ]
             }
           ]
         },
         {
-          "ref": "control:memory-access-restrictions",
+          "ref": "control-memory-access-restrictions",
           "custom": [
             {
               "type": "mitigates",
               "targets": [
-                "threat:sensitive-image-exposure"
+                "threat-sensitive-image-exposure"
               ]
             }
           ]
         },
         {
-          "ref": "control:secure-cache-handling",
+          "ref": "control-secure-cache-handling",
           "custom": [
             {
               "type": "mitigates",
               "targets": [
-                "threat:sensitive-image-exposure"
+                "threat-sensitive-image-exposure"
               ]
             }
           ]
         },
         {
-          "ref": "control:in-memory-data-lifecycle-management",
+          "ref": "control-in-memory-data-lifecycle-management",
           "custom": [
             {
               "type": "mitigates",
               "targets": [
-                "threat:sensitive-image-exposure"
+                "threat-sensitive-image-exposure"
               ]
             }
           ]
         },
         {
-          "ref": "control:network-acl-ssh-restrictions",
+          "ref": "control-network-acl-ssh-restrictions",
           "custom": [
             {
               "type": "mitigates",
               "targets": [
-                "threat:ssh-compromise-developer-machine",
-                "threat:ssh-compromise-vulnerability"
+                "threat-ssh-compromise-developer-machine",
+                "threat-ssh-compromise-vulnerability"
               ]
             }
           ]
         },
         {
-          "ref": "control:complex-ssh-passphrases",
+          "ref": "control-complex-ssh-passphrases",
           "custom": [
             {
               "type": "mitigates",
               "targets": [
-                "threat:ssh-compromise-developer-machine"
+                "threat-ssh-compromise-developer-machine"
               ]
             }
           ]
         },
         {
-          "ref": "control:developer-machine-security",
+          "ref": "control-developer-machine-security",
           "custom": [
             {
               "type": "mitigates",
               "targets": [
-                "threat:ssh-compromise-developer-machine",
-                "threat:image-tampering",
-                "threat:model-tampering",
-                "threat:notebook-tampering"
+                "threat-ssh-compromise-developer-machine",
+                "threat-image-tampering",
+                "threat-model-tampering",
+                "threat-notebook-tampering"
               ]
             }
           ]
         },
         {
-          "ref": "control:ssh-access-logging",
+          "ref": "control-ssh-access-logging",
           "custom": [
             {
               "type": "mitigates",
               "targets": [
-                "threat:ssh-compromise-developer-machine",
-                "threat:ssh-compromise-vulnerability"
+                "threat-ssh-compromise-developer-machine",
+                "threat-ssh-compromise-vulnerability"
               ]
             }
           ]
         },
         {
-          "ref": "control:bastion-host-patching-hardening",
+          "ref": "control-bastion-host-patching-hardening",
           "custom": [
             {
               "type": "mitigates",
               "targets": [
-                "threat:ssh-compromise-vulnerability"
+                "threat-ssh-compromise-vulnerability"
               ]
             }
           ]
@@ -1128,7 +1128,7 @@
   "profiles": {
     "threatProfiles": [
       {
-        "bom-ref": "threat-persona:ratimir",
+        "bom-ref": "tp-ratimir",
         "name": "Ratimir",
         "description": "An expert social engineer, great at writing its own exploits and malware - Ratimir is a worthy adversary to consider",
         "sophistication": "expert",
@@ -1155,7 +1155,7 @@
         ]
       },
       {
-        "bom-ref": "threat-persona:michiko",
+        "bom-ref": "tp-michiko",
         "name": "Michiko",
         "description": "Michiko levareges a lot of acquired knowledge from her e-crime organization which enables her to launch sophisticated attacks penetrating internal corporate networks",
         "sophistication": "advanced",
@@ -1186,12 +1186,12 @@
   "threats": {
     "threats": [
       {
-        "bom-ref": "threat:buffer-overflow-image-processing",
+        "bom-ref": "threat-buffer-overflow-image-processing",
         "name": "Buffer overflow in image processing causing remote code execution or DoS",
         "description": "An attacker crafts an image to cause buffer overflow in image processing, leading to potential remote code execution, denial of service, and errors.",
         "origin": "adversarial",
         "attackPatterns": [
-          "capec:100"
+          "ap-capec-100"
         ],
         "weaknesses": [
           {
@@ -1206,17 +1206,17 @@
           }
         ],
         "mitigations": [
-          "control:sandboxing-for-image-processing",
-          "control:owasp-file-upload-guidelines"
+          "control-sandboxing-for-image-processing",
+          "control-owasp-file-upload-guidelines"
         ]
       },
       {
-        "bom-ref": "threat:supply-chain-attack",
+        "bom-ref": "threat-supply-chain-attack",
         "name": "Supply chain attack on third-party libraries compromising system outputs",
         "description": "An attacker poisons the supply chain of third-party libraries, leading to network or system compromise.",
         "origin": "adversarial",
         "attackPatterns": [
-          "capec:438"
+          "ap-capec-438"
         ],
         "weaknesses": [
           {
@@ -1231,17 +1231,17 @@
           }
         ],
         "mitigations": [
-          "control:validate-tls-certificate-checks",
-          "control:sca-and-patching-for-third-party-libraries"
+          "control-validate-tls-certificate-checks",
+          "control-sca-and-patching-for-third-party-libraries"
         ]
       },
       {
-        "bom-ref": "threat:image-tampering",
+        "bom-ref": "threat-image-tampering",
         "name": "Image Tampering",
         "description": "An attacker tampers with or deletes stored images to impact training or testing results and/or cause denial of service.",
         "origin": "adversarial",
         "attackPatterns": [
-          "capec:1"
+          "ap-capec-1"
         ],
         "weaknesses": [
           {
@@ -1264,20 +1264,20 @@
           }
         ],
         "mitigations": [
-          "control:access-control-for-azure-blobs",
-          "control:access-logging-for-azure-blob",
-          "control:backup-for-azure-blob-storage",
-          "control:store-and-check-hashes",
-          "control:developer-machine-security"
+          "control-access-control-for-azure-blobs",
+          "control-access-logging-for-azure-blob",
+          "control-backup-for-azure-blob-storage",
+          "control-store-and-check-hashes",
+          "control-developer-machine-security"
         ]
       },
       {
-        "bom-ref": "threat:notebook-tampering",
+        "bom-ref": "threat-notebook-tampering",
         "name": "Notebook tampering to insert a backdoor",
         "description": "An attacker modifies a notebook file to insert a backdoor, such as a keylogger or data stealer.",
         "origin": "adversarial",
         "attackPatterns": [
-          "capec:1"
+          "ap-capec-1"
         ],
         "weaknesses": [
           {
@@ -1300,18 +1300,18 @@
           }
         ],
         "mitigations": [
-          "control:store-and-check-hashes",
-          "control:jupyter-notebooks-access-control",
-          "control:developer-machine-security"
+          "control-store-and-check-hashes",
+          "control-jupyter-notebooks-access-control",
+          "control-developer-machine-security"
         ]
       },
       {
-        "bom-ref": "threat:model-tampering",
+        "bom-ref": "threat-model-tampering",
         "name": "Machine learning model tampering causing low accuracy or IP theft",
         "description": "An attacker or insider modifies or reads persisted model files to steal intellectual property or degrade prediction accuracy.",
         "origin": "adversarial",
         "attackPatterns": [
-          "capec:1"
+          "ap-capec-1"
         ],
         "weaknesses": [
           {
@@ -1334,20 +1334,20 @@
           }
         ],
         "mitigations": [
-          "control:access-control-for-azure-blobs",
-          "control:access-logging-for-azure-blob",
-          "control:backup-for-azure-blob-storage",
-          "control:store-and-check-hashes",
-          "control:developer-machine-security"
+          "control-access-control-for-azure-blobs",
+          "control-access-logging-for-azure-blob",
+          "control-backup-for-azure-blob-storage",
+          "control-store-and-check-hashes",
+          "control-developer-machine-security"
         ]
       },
       {
-        "bom-ref": "threat:perturbation-attack",
+        "bom-ref": "threat-perturbation-attack",
         "name": "Image perturbation attack resulting in incorrect classifications",
         "description": "An attacker uses brute force with random or systematic perturbations to create images that lead to incorrect classifications.",
         "origin": "adversarial",
         "attackPatterns": [
-          "capec:28"
+          "ap-capec-28"
         ],
         "weaknesses": [
           {
@@ -1362,19 +1362,19 @@
           }
         ],
         "mitigations": [
-          "control:api-rate-limiting",
-          "control:adversarial-training",
-          "control:input-filtering",
-          "control:confidence-thresholding"
+          "control-api-rate-limiting",
+          "control-adversarial-training",
+          "control-input-filtering",
+          "control-confidence-thresholding"
         ]
       },
       {
-        "bom-ref": "threat:sensitive-image-exposure",
+        "bom-ref": "threat-sensitive-image-exposure",
         "name": "Sensitive image exposure due to accidental access",
         "description": "An attacker or malicious insider gains access to sensitive uploaded images.",
         "origin": "adversarial",
         "attackPatterns": [
-          "capec:204"
+          "ap-capec-204"
         ],
         "weaknesses": [
           {
@@ -1389,19 +1389,19 @@
           }
         ],
         "mitigations": [
-          "control:in-memory-image-storage",
-          "control:memory-access-restrictions",
-          "control:secure-cache-handling",
-          "control:in-memory-data-lifecycle-management"
+          "control-in-memory-image-storage",
+          "control-memory-access-restrictions",
+          "control-secure-cache-handling",
+          "control-in-memory-data-lifecycle-management"
         ]
       },
       {
-        "bom-ref": "threat:ssh-compromise-developer-machine",
+        "bom-ref": "threat-ssh-compromise-developer-machine",
         "name": "SSH compromise via stolen credentials from developer machine",
         "description": "An attacker compromises a developer machine to steal SSH keys, impersonate users, or escalate privileges.",
         "origin": "adversarial",
         "attackPatterns": [
-          "capec:555"
+          "ap-capec-555"
         ],
         "weaknesses": [
           {
@@ -1416,19 +1416,19 @@
           }
         ],
         "mitigations": [
-          "control:network-acl-ssh-restrictions",
-          "control:complex-ssh-passphrases",
-          "control:developer-machine-security",
-          "control:ssh-access-logging"
+          "control-network-acl-ssh-restrictions",
+          "control-complex-ssh-passphrases",
+          "control-developer-machine-security",
+          "control-ssh-access-logging"
         ]
       },
       {
-        "bom-ref": "threat:ssh-compromise-vulnerability",
+        "bom-ref": "threat-ssh-compromise-vulnerability",
         "name": "SSH compromise via open port vulnerability",
         "description": "An attacker exploits an open SSH port to escalate privileges or impersonate authorized users.",
         "origin": "adversarial",
         "attackPatterns": [
-          "capec:300"
+          "ap-capec-300"
         ],
         "weaknesses": [
           {
@@ -1443,137 +1443,137 @@
           }
         ],
         "mitigations": [
-          "control:network-acl-ssh-restrictions",
-          "control:ssh-access-logging",
-          "control:bastion-host-patching-hardening"
+          "control-network-acl-ssh-restrictions",
+          "control-ssh-access-logging",
+          "control-bastion-host-patching-hardening"
         ]
       }
     ],
     "scenarios": [
       {
-        "bom-ref": "scenario:buffer-overflow-image-processing",
+        "bom-ref": "ts-buffer-overflow-image-processing",
         "name": "Buffer overflow in image processing causing remote code execution or DoS",
         "event": "denial of service or remote code execution",
         "threats": [
-          "threat:buffer-overflow-image-processing"
+          "threat-buffer-overflow-image-processing"
         ],
-        "threatProfile": "threat-persona:ratimir",
+        "threatProfile": "tp-ratimir",
         "accessLevel": "internal"
       },
       {
-        "bom-ref": "scenario:supply-chain-attack",
+        "bom-ref": "ts-supply-chain-attack",
         "name": "Supply chain attack on third-party libraries compromising system outputs",
         "event": "supply chain attack",
         "threats": [
-          "threat:supply-chain-attack"
+          "threat-supply-chain-attack"
         ],
-        "threatProfile": "threat-persona:ratimir",
+        "threatProfile": "tp-ratimir",
         "accessLevel": "internal"
       },
       {
-        "bom-ref": "scenario:image-tampering",
+        "bom-ref": "ts-image-tampering",
         "name": "Image Tampering",
         "event": "Image tampering",
         "threats": [
-          "threat:image-tampering"
+          "threat-image-tampering"
         ],
-        "threatProfile": "threat-persona:michiko",
+        "threatProfile": "tp-michiko",
         "accessLevel": "privileged"
       },
       {
-        "bom-ref": "scenario:notebook-tampering",
+        "bom-ref": "ts-notebook-tampering",
         "name": "Notebook tampering to insert a backdoor",
         "event": "notebook tampering",
         "threats": [
-          "threat:notebook-tampering"
+          "threat-notebook-tampering"
         ],
-        "threatProfile": "threat-persona:michiko",
+        "threatProfile": "tp-michiko",
         "accessLevel": "privileged"
       },
       {
-        "bom-ref": "scenario:model-tampering",
+        "bom-ref": "ts-model-tampering",
         "name": "Machine learning model tampering causing low accuracy or IP theft",
         "event": "machine learning model tampering",
         "threats": [
-          "threat:model-tampering"
+          "threat-model-tampering"
         ],
-        "threatProfile": "threat-persona:michiko",
+        "threatProfile": "tp-michiko",
         "accessLevel": "privileged"
       },
       {
-        "bom-ref": "scenario:perturbation-attack",
+        "bom-ref": "ts-perturbation-attack",
         "name": "Image perturbation attack resulting in incorrect classifications",
         "event": "perturbation attack",
         "threats": [
-          "threat:perturbation-attack"
+          "threat-perturbation-attack"
         ],
-        "threatProfile": "threat-persona:ratimir",
+        "threatProfile": "tp-ratimir",
         "accessLevel": "internal"
       },
       {
-        "bom-ref": "scenario:sensitive-image-exposure",
+        "bom-ref": "ts-sensitive-image-exposure",
         "name": "Sensitive image exposure due to accidental access",
         "event": "accidental sensitive data exposure",
         "threats": [
-          "threat:sensitive-image-exposure"
+          "threat-sensitive-image-exposure"
         ],
-        "threatProfile": "threat-persona:michiko",
+        "threatProfile": "tp-michiko",
         "accessLevel": "privileged"
       },
       {
-        "bom-ref": "scenario:ssh-compromise-developer-machine",
+        "bom-ref": "ts-ssh-compromise-developer-machine",
         "name": "SSH compromise via stolen credentials from developer machine",
         "event": "bastion compromise via SSH",
         "threats": [
-          "threat:ssh-compromise-developer-machine"
+          "threat-ssh-compromise-developer-machine"
         ],
-        "threatProfile": "threat-persona:michiko",
+        "threatProfile": "tp-michiko",
         "accessLevel": "privileged"
       },
       {
-        "bom-ref": "scenario:ssh-compromise-vulnerability",
+        "bom-ref": "ts-ssh-compromise-vulnerability",
         "name": "SSH compromise via open port vulnerability",
         "event": "bastion compromise via SSH",
         "threats": [
-          "threat:ssh-compromise-vulnerability"
+          "threat-ssh-compromise-vulnerability"
         ],
-        "threatProfile": "threat-persona:ratimir",
+        "threatProfile": "tp-ratimir",
         "accessLevel": "internal"
       }
     ],
     "attackPatterns": [
       {
-        "bom-ref": "capec:100",
+        "bom-ref": "ap-capec-100",
         "capecId": 100,
         "name": "Overflow Buffers"
       },
       {
-        "bom-ref": "capec:438",
+        "bom-ref": "ap-capec-438",
         "capecId": 438,
         "name": "Modification During Manufacture"
       },
       {
-        "bom-ref": "capec:1",
+        "bom-ref": "ap-capec-1",
         "capecId": 1,
         "name": "Accessing Functionality Not Properly Constrained by acls"
       },
       {
-        "bom-ref": "capec:28",
+        "bom-ref": "ap-capec-28",
         "capecId": 28,
         "name": "Fuzzing"
       },
       {
-        "bom-ref": "capec:204",
+        "bom-ref": "ap-capec-204",
         "capecId": 204,
         "name": "Lifting Sensitive Data Embedded in Cache"
       },
       {
-        "bom-ref": "capec:555",
+        "bom-ref": "ap-capec-555",
         "capecId": 555,
         "name": "Remote Services with Stolen Credentials"
       },
       {
-        "bom-ref": "capec:300",
+        "bom-ref": "ap-capec-300",
         "capecId": 300,
         "name": "Port Scanning"
       }
@@ -1581,347 +1581,348 @@
   },
   "controls": [
     {
-      "bom-ref": "control:sandboxing-for-image-processing",
+      "bom-ref": "control-sandboxing-for-image-processing",
       "name": "Implement sandboxing for image processing",
       "description": "Run image processing in isolated environment to limit impact of exploitation",
       "status": "recommended",
-      "appliesTo": [
-        "trust-boundary:public:prod-zone"
-      ],
       "properties": [
         {
           "name": "org.owasp.threat-model-library.priority",
           "value": "medium"
         }
+      ],
+      "appliesTo": [
+        "bnd-public-prod-zone"
       ]
     },
     {
-      "bom-ref": "control:owasp-file-upload-guidelines",
+      "bom-ref": "control-owasp-file-upload-guidelines",
       "name": "Follow OWASP Cheat Sheet for File Upload",
       "description": "Run image processing in isolated environment to limit impact of exploitation",
       "status": "recommended",
-      "appliesTo": [
-        "trust-boundary:public:prod-zone"
-      ],
       "properties": [
         {
           "name": "org.owasp.threat-model-library.priority",
           "value": "critical"
         }
+      ],
+      "appliesTo": [
+        "bnd-public-prod-zone"
       ]
     },
     {
-      "bom-ref": "control:validate-tls-certificate-checks",
+      "bom-ref": "control-validate-tls-certificate-checks",
       "name": "Validate TLS usage and certificate checks are in place",
       "description": "Validate TLS usage and certificate checks are in place.",
       "status": "recommended",
-      "appliesTo": [
-        "trust-boundary:public:prod-zone"
-      ],
       "properties": [
         {
           "name": "org.owasp.threat-model-library.priority",
           "value": "critical"
         }
+      ],
+      "appliesTo": [
+        "bnd-public-prod-zone"
       ]
     },
     {
-      "bom-ref": "control:sca-and-patching-for-third-party-libraries",
+      "bom-ref": "control-sca-and-patching-for-third-party-libraries",
       "name": "SCA scanning and patching",
       "description": "Regularly scan third-party dependencies for vulnerabilities and malicious packages, fix any critical or high vulnerabilities",
       "status": "recommended",
-      "appliesTo": [
-        "trust-boundary:experimental-zone:prod-zone"
-      ],
       "properties": [
         {
           "name": "org.owasp.threat-model-library.priority",
           "value": "critical"
+        },
+        {
+          "name": "org.owasp.threat-model-library.trust-boundary",
+          "value": "{\"trust_zone_a\": \"experimental-zone\", \"trust_zone_b\": \"prod-zone\"}"
         }
       ]
     },
     {
-      "bom-ref": "control:access-control-for-azure-blobs",
+      "bom-ref": "control-access-control-for-azure-blobs",
       "name": "Ensure appropriate access control and authorization for any Azure Blob storage",
       "description": "Use ABAC, rbac, and other access control methods to ensure only authorized individuals can access the images.",
       "status": "implemented",
-      "appliesTo": [
-        "trust-boundary:public:prod-zone"
-      ],
       "properties": [
         {
           "name": "org.owasp.threat-model-library.priority",
           "value": "critical"
         }
+      ],
+      "appliesTo": [
+        "bnd-public-prod-zone"
       ]
     },
     {
-      "bom-ref": "control:access-logging-for-azure-blob",
+      "bom-ref": "control-access-logging-for-azure-blob",
       "name": "Have access logging in place for Azure Blob storage",
       "description": "Turn on access logging for the Azure Blob and push logs to a SIEM for monitoring.",
       "status": "recommended",
-      "appliesTo": [
-        "trust-boundary:public:prod-zone"
-      ],
       "properties": [
         {
           "name": "org.owasp.threat-model-library.priority",
           "value": "high"
         }
+      ],
+      "appliesTo": [
+        "bnd-public-prod-zone"
       ]
     },
     {
-      "bom-ref": "control:backup-for-azure-blob-storage",
+      "bom-ref": "control-backup-for-azure-blob-storage",
       "name": "Ensure backups for Azure Blob storage with different credentials",
       "description": "Ensure images have a backup stored securely and cannot be accessed with the same credentials as the production storage.",
       "status": "recommended",
-      "appliesTo": [
-        "trust-boundary:public:prod-zone"
-      ],
       "properties": [
         {
           "name": "org.owasp.threat-model-library.priority",
           "value": "high"
         }
+      ],
+      "appliesTo": [
+        "bnd-public-prod-zone"
       ]
     },
     {
-      "bom-ref": "control:store-and-check-hashes",
+      "bom-ref": "control-store-and-check-hashes",
       "name": "Store hashes and validate integrity of images, jupyter notebooks and the machine learning models",
       "description": "Protect Jupyter Notebooks and the machine learning models from tampering by using stored hashes and validating them.",
       "status": "recommended",
-      "appliesTo": [
-        "trust-boundary:public:experimental-zone"
-      ],
       "properties": [
         {
           "name": "org.owasp.threat-model-library.priority",
           "value": "high"
         }
+      ],
+      "appliesTo": [
+        "bnd-public-experimental-zone"
       ]
     },
     {
-      "bom-ref": "control:jupyter-notebooks-access-control",
+      "bom-ref": "control-jupyter-notebooks-access-control",
       "name": "Ensure appropriate access control and authorization in place for the Jupyter Notebooks",
       "description": "Use ABAC, rbac and other access control methods to ensure only people who are authorised can access Jupyter Notebooks.",
       "status": "implemented",
-      "appliesTo": [
-        "trust-boundary:public:experimental-zone"
-      ],
       "properties": [
         {
           "name": "org.owasp.threat-model-library.priority",
           "value": "critical"
         }
+      ],
+      "appliesTo": [
+        "bnd-public-experimental-zone"
       ]
     },
     {
-      "bom-ref": "control:api-rate-limiting",
+      "bom-ref": "control-api-rate-limiting",
       "name": "Rate Limiting",
       "description": "Prevent brute force by restricting the number of requests an API client can make in a time frame.",
       "status": "recommended",
-      "appliesTo": [
-        "trust-boundary:public:prod-zone"
-      ],
       "properties": [
         {
           "name": "org.owasp.threat-model-library.priority",
           "value": "high"
         }
+      ],
+      "appliesTo": [
+        "bnd-public-prod-zone"
       ]
     },
     {
-      "bom-ref": "control:adversarial-training",
+      "bom-ref": "control-adversarial-training",
       "name": "Adversarial Training",
       "description": "Train the model with adversarial examples to improve robustness against perturbation attacks.",
       "status": "recommended",
-      "appliesTo": [
-        "trust-boundary:public:prod-zone"
-      ],
       "properties": [
         {
           "name": "org.owasp.threat-model-library.priority",
           "value": "medium"
         }
+      ],
+      "appliesTo": [
+        "bnd-public-prod-zone"
       ]
     },
     {
-      "bom-ref": "control:input-filtering",
+      "bom-ref": "control-input-filtering",
       "name": "Input Filtering",
       "description": "Detect and block adversarial inputs through preprocessing or anomaly detection.",
       "status": "recommended",
-      "appliesTo": [
-        "trust-boundary:public:prod-zone"
-      ],
       "properties": [
         {
           "name": "org.owasp.threat-model-library.priority",
           "value": "high"
         }
+      ],
+      "appliesTo": [
+        "bnd-public-prod-zone"
       ]
     },
     {
-      "bom-ref": "control:confidence-thresholding",
+      "bom-ref": "control-confidence-thresholding",
       "name": "Confidence Thresholding",
       "description": "Set thresholds to avoid over-reliance on high-confidence but incorrect predictions.",
       "status": "recommended",
-      "appliesTo": [
-        "trust-boundary:public:prod-zone"
-      ],
       "properties": [
         {
           "name": "org.owasp.threat-model-library.priority",
           "value": "medium"
         }
+      ],
+      "appliesTo": [
+        "bnd-public-prod-zone"
       ]
     },
     {
-      "bom-ref": "control:in-memory-image-storage",
+      "bom-ref": "control-in-memory-image-storage",
       "name": "The uploaded images are saved in memory - difficult to access",
       "description": "The fact that images are not inherently sensitive and stored in memory mitigates this threat to an acceptable level.",
       "status": "implemented",
-      "appliesTo": [
-        "trust-boundary:public:prod-zone"
-      ],
       "properties": [
         {
           "name": "org.owasp.threat-model-library.priority",
           "value": "medium"
         }
+      ],
+      "appliesTo": [
+        "bnd-public-prod-zone"
       ]
     },
     {
-      "bom-ref": "control:memory-access-restrictions",
+      "bom-ref": "control-memory-access-restrictions",
       "name": "Memory access restrictions",
       "description": "Implement strict memory access restrictions to ensure only authorized processes or users can access the in-memory or cached data. This includes using mechanisms like process isolation and restricting debug or system tools that could read memory.",
       "status": "recommended",
-      "appliesTo": [
-        "trust-boundary:public:prod-zone"
-      ],
       "properties": [
         {
           "name": "org.owasp.threat-model-library.priority",
           "value": "low"
         }
+      ],
+      "appliesTo": [
+        "bnd-public-prod-zone"
       ]
     },
     {
-      "bom-ref": "control:secure-cache-handling",
+      "bom-ref": "control-secure-cache-handling",
       "name": "Secure cache-handling",
       "description": "Use secure caching mechanisms that encrypt data stored in memory (e.g., using libraries like Redis with in-memory encryption) and ensure the cache has strict eviction policies to avoid prolonged data retention.",
       "status": "recommended",
-      "appliesTo": [
-        "trust-boundary:public:prod-zone"
-      ],
       "properties": [
         {
           "name": "org.owasp.threat-model-library.priority",
           "value": "low"
         }
+      ],
+      "appliesTo": [
+        "bnd-public-prod-zone"
       ]
     },
     {
-      "bom-ref": "control:in-memory-data-lifecycle-management",
+      "bom-ref": "control-in-memory-data-lifecycle-management",
       "name": "In-memory data lifecycle management",
       "description": "Implement a strict lifecycle management policy to securely clear in-memory data immediately after use. For example, overwrite memory regions containing sensitive data and enforce short caching lifespans.",
       "status": "recommended",
-      "appliesTo": [
-        "trust-boundary:public:prod-zone"
-      ],
       "properties": [
         {
           "name": "org.owasp.threat-model-library.priority",
           "value": "low"
         }
+      ],
+      "appliesTo": [
+        "bnd-public-prod-zone"
       ]
     },
     {
-      "bom-ref": "control:network-acl-ssh-restrictions",
+      "bom-ref": "control-network-acl-ssh-restrictions",
       "name": "Use network-level access control lists (acls) to limit SSH access to specific IP ranges",
       "description": "Whitelist SSH ports to allow access only from specific IPs.",
       "status": "recommended",
-      "appliesTo": [
-        "trust-boundary:public:prod-zone"
-      ],
       "properties": [
         {
           "name": "org.owasp.threat-model-library.priority",
           "value": "critical"
         }
+      ],
+      "appliesTo": [
+        "bnd-public-prod-zone"
       ]
     },
     {
-      "bom-ref": "control:complex-ssh-passphrases",
+      "bom-ref": "control-complex-ssh-passphrases",
       "name": "Require passphrases for SSH private keys to be complex",
       "description": "Passphrases for SSH keys should have high complexity (minimum 12 characters and one type of complexity).",
       "status": "recommended",
-      "appliesTo": [
-        "trust-boundary:public:prod-zone"
-      ],
       "properties": [
         {
           "name": "org.owasp.threat-model-library.priority",
           "value": "medium"
         }
+      ],
+      "appliesTo": [
+        "bnd-public-prod-zone"
       ]
     },
     {
-      "bom-ref": "control:developer-machine-security",
+      "bom-ref": "control-developer-machine-security",
       "name": "Developer machine endpoint security - EDR and posture management",
       "description": "Ensure developer machines are patched, have an up-to-date OS, and EDR in place.",
       "status": "recommended",
-      "appliesTo": [
-        "trust-boundary:public:prod-zone"
-      ],
       "properties": [
         {
           "name": "org.owasp.threat-model-library.priority",
           "value": "critical"
         }
+      ],
+      "appliesTo": [
+        "bnd-public-prod-zone"
       ]
     },
     {
-      "bom-ref": "control:ssh-access-logging",
+      "bom-ref": "control-ssh-access-logging",
       "name": "Configure logging for all SSH access attempts",
       "description": "Log all access attempts - including successes and failures, and implement alerting for suspicious activities such as repeated login failures, new keys, or logins from unexpected locations.",
       "status": "implemented",
-      "appliesTo": [
-        "trust-boundary:public:prod-zone"
-      ],
       "properties": [
         {
           "name": "org.owasp.threat-model-library.priority",
           "value": "high"
         }
+      ],
+      "appliesTo": [
+        "bnd-public-prod-zone"
       ]
     },
     {
-      "bom-ref": "control:bastion-host-patching-hardening",
+      "bom-ref": "control-bastion-host-patching-hardening",
       "name": "Ensure the Bastion host is patched and hardened",
       "description": "Have strict patching SLAs for the Bastion host.",
       "status": "recommended",
-      "appliesTo": [
-        "trust-boundary:public:prod-zone"
-      ],
       "properties": [
         {
           "name": "org.owasp.threat-model-library.priority",
           "value": "critical"
         }
+      ],
+      "appliesTo": [
+        "bnd-public-prod-zone"
       ]
     }
   ],
   "risks": {
     "risks": [
       {
-        "bom-ref": "risk:adversarial-attack-on-huskyai",
+        "bom-ref": "risk-adversarial-attack-on-huskyai",
         "name": "Adversarial attacks on the HuskyAI model",
         "statement": "Attackers could manipulate the HuskyAI model through perturbation techniques or tampering with the training and testing sets, leading to incorrect predictions and erosion of trust in the system.",
         "relatedThreats": [
-          "threat:image-tampering",
-          "threat:model-tampering",
-          "threat:notebook-tampering",
-          "threat:perturbation-attack"
+          "threat-image-tampering",
+          "threat-model-tampering",
+          "threat-notebook-tampering",
+          "threat-perturbation-attack"
         ],
         "inherentRisk": {
           "likelihood": {
@@ -1939,12 +1940,12 @@
         }
       },
       {
-        "bom-ref": "risk:web-attacks",
+        "bom-ref": "risk-web-attacks",
         "name": "Web Attacks",
         "statement": "An attacker could launch web based attacks by sending crafted requests, leading to outages and reputational damage.",
         "relatedThreats": [
-          "threat:supply-chain-attack",
-          "threat:buffer-overflow-image-processing"
+          "threat-supply-chain-attack",
+          "threat-buffer-overflow-image-processing"
         ],
         "inherentRisk": {
           "likelihood": {
@@ -1962,12 +1963,12 @@
         }
       },
       {
-        "bom-ref": "risk:unauthorized-ssh-access",
+        "bom-ref": "risk-unauthorized-ssh-access",
         "name": "Unauthorized SSH access via stolen or compromised keys",
         "statement": "An attacker could gain unauthorized access to sensitive systems via stolen or compromised SSH keys, or by attacking the SSH port directly - leading to privilege escalation, information disclosure, reputational damage and potential operational disruption.",
         "relatedThreats": [
-          "threat:ssh-compromise-developer-machine",
-          "threat:ssh-compromise-vulnerability"
+          "threat-ssh-compromise-developer-machine",
+          "threat-ssh-compromise-vulnerability"
         ],
         "inherentRisk": {
           "likelihood": {

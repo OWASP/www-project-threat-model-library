@@ -32,11 +32,13 @@ jobs:
             ./threat-models/web/*.json
           all-errors: true
 
-      - name: Check CycloneDX threat model example
+      - name: Check CycloneDX threat model examples
         uses: dsanders11/json-schema-validate-action@v2.1.0
         with:
           schema: ./cyclonedx/cyclonedx-threat-model-2.0-bundled.schema.json
-          files: ./cyclonedx/husky-ai-threat-model-cyclonedx-2.0.json
+          files: |
+            ./cyclonedx/husky-ai-threat-model-cyclonedx-2.0.json
+            ./cyclonedx/lfai-code-assistant-threat-model-cyclonedx-2.0.json
           all-errors: true
 
       - name: Check lossless CycloneDX conversion

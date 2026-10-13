@@ -31,7 +31,7 @@ SCHEMA_URL = ("https://github.com/OWASP/www-project-threat-model-library/blob/ma
               "cyclonedx/cyclonedx-threat-model-2.0-bundled.schema.json")
 TOOL = {
     "type": "application",
-    "bom-ref": "tool:owasp-threat-model-library-cyclonedx-convert",
+    "bom-ref": "tool-owasp-threat-model-library-cyclonedx-convert",
     "name": "OWASP Threat Model Library CycloneDX converter",
     "version": "1.0",
 }
@@ -173,25 +173,42 @@ CWE_URL = "https://cwe.mitre.org/data/definitions/{}.html"
 
 # --- helpers ----------------------------------------------------------------
 
+# bom-refs follow the CycloneDX examples: lowercase "<prefix>-<symbolic name>".
+# No prefix starts another, so a reference's kind can always be read back.
+PREFIX = {
+    "trust-zone": "zone",
+    "trust-boundary": "bnd",
+    "actor": "act",
+    "component": "asset",
+    "data-store": "store",
+    "data-set": "dataset",
+    "data-flow": "flow",
+    "assumption": "asm",
+    "threat-persona": "tp",
+    "threat": "threat",
+    "scenario": "ts",
+    "control": "control",
+    "risk": "risk",
+}
+KIND_OF_PREFIX = {p: k for k, p in PREFIX.items()}
+
+
 def ref(kind, name):
-    return f"{kind}:{name}"
+    return f"{PREFIX[kind]}-{name}"
 
 
 def unref(kind, value):
-    prefix = kind + ":"
+    prefix = PREFIX[kind] + "-"
     if not value.startswith(prefix):
-        raise ConversionError(f"expected a {kind} reference, got {value!r}")
+        raise ConversionError(f"expected a {kind} reference ({prefix}…), got {value!r}")
     return value[len(prefix):]
 
 
-def boundary_ref(a, b):
-    # Symbolic names cannot contain ':', so this splits back unambiguously.
-    return f"trust-boundary:{a}:{b}"
-
-
-def unboundary_ref(value):
-    a, b = unref("trust-boundary", value).split(":")
-    return {"trust_zone_a": a, "trust_zone_b": b}
+def kind_of(value):
+    prefix = value.split("-", 1)[0]
+    if prefix not in KIND_OF_PREFIX:
+        raise ConversionError(f"{value!r} is not a reference to a library element")
+    return KIND_OF_PREFIX[prefix]
 
 
 def prop(name, value):
@@ -242,14 +259,16 @@ def to_datetime(value):
 def typed_ref(target, owner, end, props):
     """Native typed-symbolic-name -> bom-ref, keeping the exact type string."""
     kind = target["type"].removeprefix("#/$defs/").replace("_", "-")
+    if kind not in PREFIX:
+        raise ConversionError(f"flow {end} type {target['type']!r} is not a library element")
     if target["type"] != kind.replace("-", "_"):
         props.append(prop(f"{end}-type", target["type"]))
     return ref(kind, target["object"])
 
 
 def untyped_ref(value, owner, end):
-    kind, _, name = value.partition(":")
-    return {"type": prop_of(owner, f"{end}-type") or kind.replace("-", "_"), "object": name}
+    kind = kind_of(value)
+    return {"type": prop_of(owner, f"{end}-type") or kind.replace("-", "_"), "object": unref(kind, value)}
 
 
 def put(target, key, value):
@@ -296,7 +315,7 @@ def to_cyclonedx(tm):
         bp_props.append(prop("product-release-date", tm["product_release_date"]))
 
     bp = {
-        "bom-ref": "blueprint",
+        "bom-ref": "bp-threat-model",
         "name": scope["title"],
         "modelTypes": ["architecture", "data-flow"],
         "scope": {"name": scope["title"], "description": scope["description"], "properties": scope_props},
@@ -317,11 +336,20 @@ def to_cyclonedx(tm):
                     "description": z["description"], "type": "trust"} for z in tm["trust_zones"]]
 
     bp["boundaries"] = []
+    boundary_refs = {}  # (zone a, zone b) -> bom-ref of the first boundary between them
     for tb in tm["trust_boundaries"]:
         a, b = tb["trust_zone_a"], tb["trust_zone_b"]
         if a == b:
             raise ConversionError(f"trust boundary from {a!r} to itself; CycloneDX boundaries need two distinct zones")
-        boundary = {"bom-ref": boundary_ref(a, b), "type": "trust", "zones": [ref("trust-zone", a), ref("trust-zone", b)]}
+        # Zone names contain hyphens, so the zones are read from the boundary, never from its
+        # bom-ref; a clash such as "a-b"+"c" and "a"+"b-c" just gets a numeric suffix.
+        boundary_ref = ref("trust-boundary", f"{a}-{b}")
+        taken = {x["bom-ref"] for x in bp["boundaries"]}
+        n = 2
+        while boundary_ref in taken:
+            boundary_ref, n = ref("trust-boundary", f"{a}-{b}-{n}"), n + 1
+        boundary_refs.setdefault((a, b), boundary_ref)
+        boundary = {"bom-ref": boundary_ref, "type": "trust", "zones": [ref("trust-zone", a), ref("trust-zone", b)]}
         crossing, boundary_props = {}, []
         if "authentication_methods" in tb:
             crossing["authentication"] = [AUTHENTICATION[m] for m in dedupe(tb["authentication_methods"], boundary_props, "authentication-methods")]
@@ -334,7 +362,6 @@ def to_cyclonedx(tm):
             boundary["sessionManagement"] = session
         boundary["properties"] = boundary_props
         bp["boundaries"].append(drop_empty_properties(boundary))
-    unique([b["bom-ref"] for b in bp["boundaries"]], "trust_boundaries")
 
     bp["actors"] = []
     for a in tm["actors"]:
@@ -405,7 +432,7 @@ def to_cyclonedx(tm):
     if "assumptions" in tm:
         bp["assumptions"] = []
         for i, a in enumerate(tm["assumptions"], 1):
-            assumption = {"bom-ref": f"assumption:{i}", "description": a["description"],
+            assumption = {"bom-ref": ref("assumption", i), "description": a["description"],
                           "validity": ASSUMPTION_VALIDITY[a["validity"]]}
             topics = a.get("topics")
             if topics:
@@ -481,7 +508,7 @@ def to_cyclonedx(tm):
                     key = (m["capec_id"], m.get("capec_title"))
                     if key not in patterns:
                         same_id = sum(1 for k in patterns if k[0] == key[0])
-                        pattern_ref = f"capec:{key[0]}" + (f":{same_id + 1}" if same_id else "")
+                        pattern_ref = f"ap-capec-{key[0]}" + (f"-{same_id + 1}" if same_id else "")
                         patterns[key] = {"bom-ref": pattern_ref, "capecId": key[0], "name": key[1] or f"CAPEC-{key[0]}"}
                         if key[1] is None:
                             section_props.append(prop("untitled-attack-pattern", pattern_ref))
@@ -526,9 +553,14 @@ def to_cyclonedx(tm):
             control_ref = ref("control", c["symbolic_name"])
             control = {"bom-ref": control_ref, "name": c["title"], "description": c["description"],
                        "status": CONTROL_STATUS[c["status"]]}
-            if "trust_boundary" in c:
-                control["appliesTo"] = [boundary_ref(c["trust_boundary"]["trust_zone_a"], c["trust_boundary"]["trust_zone_b"])]
             control["properties"] = [prop("priority", c["priority"])]
+            if "trust_boundary" in c:
+                pair = (c["trust_boundary"]["trust_zone_a"], c["trust_boundary"]["trust_zone_b"])
+                if pair in boundary_refs:
+                    control["appliesTo"] = [boundary_refs[pair]]
+                else:
+                    # A boundary the model never declares has no bom-ref to point at.
+                    control["properties"].append(prop("trust-boundary", json.dumps(c["trust_boundary"])))
             # A CycloneDX control cannot name the threats it mitigates, so the
             # link starts from the control as a custom blueprint relationship,
             # in native order. threat.mitigations carries the reverse view.
@@ -620,9 +652,11 @@ def to_native(bom):
                           "description": z["description"]} for z in bp.get("zones", [])]
 
     tm["trust_boundaries"] = []
+    boundary_zones = {}  # bom-ref -> the boundary's zone pair, for controls
     for b in bp.get("boundaries", []):
         zone_a, zone_b = (unref("trust-zone", z) for z in b["zones"])
         tb = {"trust_zone_a": zone_a, "trust_zone_b": zone_b}
+        boundary_zones[b["bom-ref"]] = dict(tb)
         crossing = b.get("crossingRequirements", {})
         if "authorization" in crossing:
             tb["access_control_methods"] = verbatim(b, "access-control-methods", [
@@ -645,15 +679,24 @@ def to_native(bom):
         actor["trust_zone"] = unref("trust-zone", a["zone"])
         tm["actors"].append(actor)
 
+    # The library format only has a component's parent and a control's
+    # threats; any other relationship cannot be converted back.
     parents, mitigated = {}, {}
     for rel in bp.get("relationships", []):
-        for child in rel.get("contains", []):
-            parents[child] = unref("component", rel["ref"])
-        for custom in rel.get("custom", []):
-            if custom["type"] == "mitigates":
-                mitigated[rel["ref"]] = [unref("threat", t) for t in custom["targets"]]
+        kinds = [k for k in rel if k != "ref"]
+        targets = rel.get("contains", [])
+        if kinds == ["contains"] and all(r.startswith("asset-") for r in [rel["ref"], *targets]):
+            for child in targets:
+                parents[child] = unref("component", rel["ref"])
+        elif kinds == ["custom"] and [c["type"] for c in rel["custom"]] == ["mitigates"]:
+            mitigated[rel["ref"]] = [unref("threat", t) for t in rel["custom"][0]["targets"]]
+        else:
+            raise ConversionError(f"relationship {kinds} from {rel['ref']!r} has no equivalent in the library format")
     tm["components"] = []
     for c in bp.get("assets", []):
+        if c.get("type") != "component":
+            kind = f"an asset of type {c['type']!r}" if "type" in c else "an asset referencing a BOM component"
+            raise ConversionError(f"{c['bom-ref']!r} is {kind}; library components have no type")
         component = {"symbolic_name": unref("component", c["bom-ref"]), "title": c["name"], "description": c["description"]}
         put(component, "parent_component", parents.get(c["bom-ref"]))
         component["trust_zone"] = unref("trust-zone", c["zone"])
@@ -692,6 +735,8 @@ def to_native(bom):
 
     tm["data_flows"] = []
     for f in bp.get("flows", []):
+        if f["type"] != "data":
+            raise ConversionError(f"flow {f['bom-ref']!r} is a {f['type']!r} flow; the library format only has data flows")
         tm["data_flows"].append({
             "symbolic_name": unref("data-flow", f["bom-ref"]), "title": f["name"], "description": f["description"],
             "source": untyped_ref(f["source"], f, "source"),
@@ -717,6 +762,10 @@ def to_native(bom):
             tm["assumptions"].append(assumption)
 
     if "threatProfiles" in bom.get("profiles", {}):
+        for p in bom["profiles"]["threatProfiles"]:
+            if "skillSet" not in p or prop_of(p, "applicability-to-org") is None:
+                raise ConversionError(f"threat profile {p['bom-ref']!r} has no skill level or applicability; "
+                                      "library threat personas require both")
         tm["threat_personas"] = [{
             "symbolic_name": unref("threat-persona", p["bom-ref"]), "title": p["name"], "description": p["description"],
             "is_person": json.loads(prop_of(p, "is-person")),
@@ -736,6 +785,9 @@ def to_native(bom):
             scenario = scenarios[t["bom-ref"]]
             threat = {"symbolic_name": unref("threat", t["bom-ref"]), "title": t["name"], "description": t["description"]}
             if "affectedAssets" in t:
+                others = [a for a in t["affectedAssets"] if not a.startswith("asset-")]
+                if others:
+                    raise ConversionError(f"threat {t['bom-ref']!r} affects {others}; library threats can only affect components")
                 threat["components_affected"] = verbatim(t, "components-affected", [unref("component", c) for c in t["affectedAssets"]])
             threat["threat_persona"] = unref("threat-persona", scenario["threatProfile"])
             threat["event"] = scenario["event"]
@@ -744,6 +796,8 @@ def to_native(bom):
             if "attackPatterns" in t:
                 mechanisms = []
                 for pattern_ref in t["attackPatterns"]:
+                    if not pattern_ref.startswith("ap-capec-"):
+                        raise ConversionError(f"threat {t['bom-ref']!r} uses {pattern_ref!r}; library attack mechanisms are CAPEC only")
                     pattern = patterns[pattern_ref]
                     mechanism = {"capec_id": pattern["capecId"]}
                     if pattern_ref not in untitled:
@@ -767,9 +821,13 @@ def to_native(bom):
             control_ref = c["bom-ref"]
             control = {"symbolic_name": unref("control", control_ref), "title": c["name"], "description": c["description"],
                        "threats": verbatim(c, "threats", mitigated.get(control_ref, []))}
-            for target in c.get("appliesTo", []):
-                if target.startswith("trust-boundary:"):
-                    control["trust_boundary"] = unboundary_ref(target)
+            if "appliesTo" in c:
+                # The library control can only point at one trust boundary.
+                if len(c["appliesTo"]) != 1 or c["appliesTo"][0] not in boundary_zones:
+                    raise ConversionError(f"control {control_ref!r} applies to {c['appliesTo']}; "
+                                          "a library control can only apply to one trust boundary")
+                control["trust_boundary"] = dict(boundary_zones[c["appliesTo"][0]])
+            put(control, "trust_boundary", verbatim(c, "trust-boundary", None))
             control["status"] = lookup(CONTROL_STATUS_REV, c["status"], "control status")
             control["priority"] = prop_of(c, "priority")
             tm["controls"].append(control)
@@ -798,6 +856,15 @@ def to_native(bom):
         extensions[entry["key"]] = entry["value"]
     if extensions or prop_of(bom, "extensions") is not None:
         tm["extensions"] = extensions
+
+    # Anything the library format cannot hold would otherwise be dropped without a word, so
+    # rebuild the CycloneDX document and refuse if it differs. serialNumber is derived from the
+    # content, so a hand-written document's own serial number is not counted as data.
+    rebuilt = to_cyclonedx(tm)
+    original = {k: v for k, v in bom.items() if k != "serialNumber"}
+    diff = first_difference(original, {k: v for k, v in rebuilt.items() if k != "serialNumber"})
+    if diff:
+        raise ConversionError(f"the library format cannot hold all of this document: {diff}")
     return tm
 
 
