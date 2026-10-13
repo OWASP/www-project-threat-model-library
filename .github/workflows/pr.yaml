@@ -32,9 +32,12 @@ jobs:
             ./threat-models/web/*.json
           all-errors: true
 
-      - name: Check CycloneDX threat models
+      - name: Check CycloneDX threat model example
         uses: dsanders11/json-schema-validate-action@v2.1.0
         with:
-          schema: ./cyclonedx-threat-model-2.0-bundled.schema.json
-          files: ./cyclonedx-threat-models/**/*.json
+          schema: ./cyclonedx/cyclonedx-threat-model-2.0-bundled.schema.json
+          files: ./cyclonedx/husky-ai-threat-model-cyclonedx-2.0.json
           all-errors: true
+
+      - name: Check lossless CycloneDX conversion
+        run: python3 scripts/cyclonedx_convert.py check threat-models/*/*.json
