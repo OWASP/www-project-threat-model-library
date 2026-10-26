@@ -1,0 +1,2361 @@
+{
+  "$schema": "https://github.com/OWASP/www-project-threat-model-library/blob/v1.0.2/threat-model.schema.json",
+  "version": "1.0",
+  "scope": {
+    "title": "AI coding agent with MCP servers on a developer workstation",
+    "description": "In scope: a developer using an AI coding agent (for example Claude Code, Codex CLI, Cursor, GitHub Copilot CLI or Gemini CLI) on a laptop or a cloud-hosted development environment (cloud VM, devcontainer, hosted workspace). This covers the agent's host process and the tool calls it makes (shell commands, file reads and writes, web fetches); the LLM provider inference API the agent sends its context to; local MCP servers launched over stdio from packages installed from public registries (npm, PyPI) and remote MCP servers reached over HTTP; the workspace repository and the agent instruction and memory files the agent loads automatically (CLAUDE.md, AGENTS.md, .cursor/rules, auto-memory directories); local credential stores (environment variables, ~/.aws, ~/.ssh, .npmrc, .env, and the env blocks of MCP client configuration files); package and model registries; arbitrary web content the agent fetches; and, optionally, a runtime guard (an agent hook or a local proxy) that checks each action before it runs. Out of scope: the internal security of the LLM provider's infrastructure and of the registries themselves, model training and fine-tuning, CI/CD pipelines that run agents headless (they share most of these threats but have different trust zones), and attacks on the developer that do not involve the agent (for example phishing for the developer's own passwords).",
+    "business_criticality": "high",
+    "data_sensitivity": [
+      "cred",
+      "ip",
+      "pii"
+    ],
+    "exposure": "external",
+    "tier": "mission_critical"
+  },
+  "description": "An AI coding agent is an LLM-driven loop running as the developer's own OS user. Each turn, the agent host assembles a context window from the developer's prompt, auto-loaded instruction and memory files, files read from the workspace, command output, fetched web pages and MCP tool results, and sends it to an LLM provider. The provider returns text and tool-call requests, which the host executes: it runs shell commands, edits files, fetches URLs, and calls tools exposed by MCP servers. Local MCP servers are separate processes the MCP client launches from a command in its configuration file (often `npx -y <package>` or `uvx <package>`), passing secrets through the configuration's env block; they run with the developer's full user privileges and their own network access. Remote MCP servers are reached over Streamable HTTP, optionally with OAuth. The defining security property of this system is that the model cannot reliably tell instructions from data: anything that reaches the context window, from any source, can steer the next tool call. Every tool the agent can call is therefore reachable by anyone who can put text in front of it, and the agent holds the developer's credentials, source code and network access. Permission prompts, allow-lists and auto-approval modes in the agent host are the main built-in boundary between model output and execution; an optional runtime guard adds a policy check on each proposed action, on inbound content and on outbound data. This model is vendor-neutral and applies across agent hosts; named products and CVEs are cited only as public evidence that a threat is real.",
+  "frozen": false,
+  "reviewed_at": "2026-10-26",
+  "release_docs_link": "https://modelcontextprotocol.io/specification/2025-06-18/basic/security_best_practices",
+  "trust_zones": [
+    {
+      "symbolic_name": "developer-session",
+      "title": "Developer OS user session",
+      "description": "The developer's interactive OS user account on the workstation: home directory, credential files, environment variables, MCP client configuration, agent transcripts and downloaded model files. Everything the agent and its MCP servers run is, by default, this same OS user, so there is no OS-level separation between this zone and the agent runtime unless a sandbox is configured."
+    },
+    {
+      "symbolic_name": "agent-runtime",
+      "title": "Agent host process and tool execution",
+      "description": "The AI coding agent's host process and the tools it executes on the model's behalf (shell, file read/write, web fetch, MCP client), plus an optional runtime guard. Actions here run with the developer's privileges. The only gate between a model-proposed action and its execution is the host's permission model (prompts, allow/deny rules, auto-approval modes) and any guard hook."
+    },
+    {
+      "symbolic_name": "agent-context",
+      "title": "Model context window (untrusted-input sink)",
+      "description": "The logical zone where all inputs are concatenated into the prompt the model reads: developer prompts, instruction files, file contents, command output, fetched pages, MCP tool definitions and results, retrieved chunks. Content in this zone has no reliable provenance separation; text from the least-trusted source is read with the same authority as the developer's request."
+    },
+    {
+      "symbolic_name": "workspace",
+      "title": "Workspace repository",
+      "description": "The project checkout the agent works in, including third-party-authored content (cloned repositories, dependencies, pull-request branches, vendored docs), project-scoped agent instruction files, project-scoped MCP configuration and any local retrieval index built from it."
+    },
+    {
+      "symbolic_name": "mcp-server-process",
+      "title": "Local MCP server processes",
+      "description": "Processes launched by the MCP client from configured commands, typically third-party code fetched from npm or PyPI at launch. They run as the developer's OS user with full filesystem and network access unless sandboxed, and they receive secrets through their environment."
+    },
+    {
+      "symbolic_name": "remote-mcp",
+      "title": "Remote MCP server operators",
+      "description": "Third-party MCP servers reached over HTTP(S). Their operators control tool definitions and results, and can change them at any time."
+    },
+    {
+      "symbolic_name": "llm-provider",
+      "title": "LLM provider",
+      "description": "The model provider's inference API, which receives the full context window on every turn and returns completions and tool-call requests."
+    },
+    {
+      "symbolic_name": "internet",
+      "title": "Public internet and registries",
+      "description": "Arbitrary web content, public code hosting and issue trackers, package registries (npm, PyPI), model hubs, and attacker-controlled or unapproved endpoints."
+    },
+    {
+      "symbolic_name": "local-network",
+      "title": "Link-local and private network services",
+      "description": "Services reachable from the workstation but not from the internet: cloud instance metadata endpoints (169.254.169.254 and equivalents) on cloud-hosted development environments, localhost admin interfaces and databases, and corporate intranet services."
+    }
+  ],
+  "trust_boundaries": [
+    {
+      "trust_zone_a": "developer-session",
+      "trust_zone_b": "agent-runtime",
+      "access_control_methods": [
+        "acl"
+      ],
+      "authentication_methods": [
+        "none"
+      ]
+    },
+    {
+      "trust_zone_a": "agent-runtime",
+      "trust_zone_b": "agent-context",
+      "access_control_methods": [
+        "none"
+      ],
+      "authentication_methods": [
+        "none"
+      ]
+    },
+    {
+      "trust_zone_a": "agent-context",
+      "trust_zone_b": "llm-provider",
+      "authentication_methods": [
+        "token"
+      ]
+    },
+    {
+      "trust_zone_a": "agent-runtime",
+      "trust_zone_b": "llm-provider",
+      "authentication_methods": [
+        "token"
+      ]
+    },
+    {
+      "trust_zone_a": "agent-runtime",
+      "trust_zone_b": "workspace",
+      "access_control_methods": [
+        "dac"
+      ],
+      "authentication_methods": [
+        "none"
+      ]
+    },
+    {
+      "trust_zone_a": "workspace",
+      "trust_zone_b": "agent-context",
+      "access_control_methods": [
+        "none"
+      ],
+      "authentication_methods": [
+        "none"
+      ]
+    },
+    {
+      "trust_zone_a": "agent-runtime",
+      "trust_zone_b": "internet",
+      "access_control_methods": [
+        "none"
+      ],
+      "authentication_methods": [
+        "none"
+      ]
+    },
+    {
+      "trust_zone_a": "agent-runtime",
+      "trust_zone_b": "local-network",
+      "access_control_methods": [
+        "none"
+      ],
+      "authentication_methods": [
+        "none"
+      ]
+    },
+    {
+      "trust_zone_a": "agent-runtime",
+      "trust_zone_b": "mcp-server-process",
+      "access_control_methods": [
+        "none"
+      ],
+      "authentication_methods": [
+        "none"
+      ]
+    },
+    {
+      "trust_zone_a": "agent-runtime",
+      "trust_zone_b": "remote-mcp",
+      "authentication_methods": [
+        "token"
+      ]
+    },
+    {
+      "trust_zone_a": "developer-session",
+      "trust_zone_b": "mcp-server-process",
+      "access_control_methods": [
+        "dac"
+      ],
+      "authentication_methods": [
+        "none"
+      ]
+    },
+    {
+      "trust_zone_a": "internet",
+      "trust_zone_b": "mcp-server-process",
+      "access_control_methods": [
+        "none"
+      ],
+      "authentication_methods": [
+        "none"
+      ]
+    },
+    {
+      "trust_zone_a": "internet",
+      "trust_zone_b": "developer-session",
+      "access_control_methods": [
+        "none"
+      ],
+      "authentication_methods": [
+        "none"
+      ]
+    }
+  ],
+  "actors": [
+    {
+      "symbolic_name": "developer",
+      "title": "Developer",
+      "type": "engineer",
+      "trust_zone": "developer-session",
+      "description": "Uses the AI coding agent to read, write, build and ship code. Writes prompts, answers permission prompts, installs MCP servers and chooses the agent's permission mode.",
+      "permissions": "Full rights of the OS user; whatever cloud, source-control, registry and SaaS credentials are stored on the workstation."
+    },
+    {
+      "symbolic_name": "security-admin",
+      "title": "Security administrator",
+      "type": "administrator",
+      "trust_zone": "developer-session",
+      "description": "Sets organisation policy for the agent host (managed settings, approved MCP servers, guard policy) and reviews alerts. May not be present for individual developers.",
+      "permissions": "Deploys managed configuration and reads content-free telemetry; does not normally see prompts."
+    },
+    {
+      "symbolic_name": "content-author",
+      "title": "Third-party content author",
+      "type": "third_party",
+      "trust_zone": "internet",
+      "description": "Anyone who can write text the agent may later read: authors of web pages, README files, issues, pull requests, package documentation, tool results and documents in a retrieval index."
+    },
+    {
+      "symbolic_name": "package-publisher",
+      "title": "Package, MCP server and model publisher",
+      "type": "third_party",
+      "trust_zone": "internet",
+      "description": "Publishes npm or PyPI packages, MCP servers (local packages or remote endpoints) and model files the developer or the agent installs."
+    }
+  ],
+  "components": [
+    {
+      "symbolic_name": "agent-host",
+      "title": "AI coding agent host",
+      "trust_zone": "agent-runtime",
+      "description": "The agent's CLI or IDE process. Assembles the context window, calls the LLM provider, applies the permission model (prompts, allow/deny rules, auto-approval or bypass modes) and dispatches tool calls."
+    },
+    {
+      "symbolic_name": "shell-tool",
+      "title": "Shell command tool",
+      "trust_zone": "agent-runtime",
+      "parent_component": "agent-host",
+      "description": "Runs shell commands proposed by the model (build, test, git, package managers, curl). Output is returned into the context window."
+    },
+    {
+      "symbolic_name": "file-tool",
+      "title": "File read/write tool",
+      "trust_zone": "agent-runtime",
+      "parent_component": "agent-host",
+      "description": "Reads and edits files in the workspace and, depending on configuration, elsewhere in the home directory."
+    },
+    {
+      "symbolic_name": "web-fetch-tool",
+      "title": "Web fetch tool",
+      "trust_zone": "agent-runtime",
+      "parent_component": "agent-host",
+      "description": "Fetches a URL proposed by the model and returns the page (often converted to text or markdown) into the context window."
+    },
+    {
+      "symbolic_name": "mcp-client",
+      "title": "MCP client",
+      "trust_zone": "agent-runtime",
+      "parent_component": "agent-host",
+      "description": "Launches local MCP servers from configured commands, connects to remote MCP servers, lists their tools (name, description, input schema), places those definitions in the context window, forwards tool calls and returns results. Servers may send notifications/tools/list_changed to change the tool list during a session."
+    },
+    {
+      "symbolic_name": "runtime-guard",
+      "title": "Runtime action guard (optional)",
+      "trust_zone": "agent-runtime",
+      "description": "An optional hook or local proxy that receives each proposed action (and, where supported, inbound tool results and outbound requests) before it runs and returns allow, ask or deny according to policy. It runs as the same OS user as the agent."
+    },
+    {
+      "symbolic_name": "agent-context-window",
+      "title": "Model context window",
+      "trust_zone": "agent-context",
+      "description": "The concatenated prompt the model reads each turn: system and instruction files, developer messages, tool definitions, tool results, file contents and fetched pages."
+    },
+    {
+      "symbolic_name": "local-mcp-server",
+      "title": "Local stdio MCP server",
+      "trust_zone": "mcp-server-process",
+      "description": "Third-party MCP server process started by the MCP client (for example `npx -y <package>`), speaking JSON-RPC over stdio. Receives credentials through env from the MCP client configuration and can open its own network connections."
+    },
+    {
+      "symbolic_name": "remote-mcp-server",
+      "title": "Remote MCP server",
+      "trust_zone": "remote-mcp",
+      "description": "MCP server operated by a third party and reached over Streamable HTTP, optionally behind OAuth."
+    },
+    {
+      "symbolic_name": "llm-api",
+      "title": "LLM provider inference API",
+      "trust_zone": "llm-provider",
+      "description": "Receives the full context window over TLS with an API key or OAuth token and returns completions and tool-call requests. Retention and training use depend on the account's terms."
+    },
+    {
+      "symbolic_name": "package-registry",
+      "title": "Package and model registries",
+      "trust_zone": "internet",
+      "description": "npm, PyPI and model hubs from which the developer, the agent and the MCP client fetch packages, MCP server code and model files."
+    },
+    {
+      "symbolic_name": "web-content",
+      "title": "Public web content and code hosting",
+      "trust_zone": "internet",
+      "description": "Web pages, documentation sites, public repositories, issues and pull requests the agent fetches or reads."
+    },
+    {
+      "symbolic_name": "external-endpoint",
+      "title": "Unapproved external endpoint",
+      "trust_zone": "internet",
+      "description": "Any destination outside the approved set: attacker-controlled HTTP servers and DNS zones, request-capture services, raw IP addresses, attacker git remotes, unapproved model APIs."
+    },
+    {
+      "symbolic_name": "cloud-metadata-service",
+      "title": "Cloud metadata and local network services",
+      "trust_zone": "local-network",
+      "description": "Instance metadata endpoints that issue cloud credentials on cloud-hosted development environments, and localhost or intranet services that trust the network location of the caller."
+    }
+  ],
+  "data_stores": [
+    {
+      "symbolic_name": "workspace-repo",
+      "title": "Workspace repository",
+      "type": "document",
+      "trust_zone": "workspace",
+      "description": "Source files, git history and configuration of the project checkout, including third-party-authored files."
+    },
+    {
+      "symbolic_name": "agent-instruction-files",
+      "title": "Agent instruction and memory files",
+      "type": "document",
+      "trust_zone": "workspace",
+      "description": "Files the agent host loads into context automatically at session start or on entering a directory: CLAUDE.md, AGENTS.md, GEMINI.md, .cursor/rules, Copilot instructions, skills, and agent memory directories; also project-scoped agent settings and MCP configuration that change what runs."
+    },
+    {
+      "symbolic_name": "mcp-client-config",
+      "title": "MCP client configuration",
+      "type": "document",
+      "trust_zone": "developer-session",
+      "description": "User- and project-scoped MCP configuration files (for example .mcp.json, ~/.claude.json, .cursor/mcp.json, claude_desktop_config.json) holding each server's launch command, arguments and an env block that commonly contains plaintext API keys and refresh tokens."
+    },
+    {
+      "symbolic_name": "local-credential-store",
+      "title": "Local credential store",
+      "type": "key_value",
+      "trust_zone": "developer-session",
+      "description": "~/.aws/credentials, ~/.ssh private keys, .npmrc, .netrc, .git-credentials, kube and gcloud configuration, project .env files and shell environment variables, all readable by the OS user."
+    },
+    {
+      "symbolic_name": "agent-session-logs",
+      "title": "Agent transcripts and audit logs",
+      "type": "time_series",
+      "trust_zone": "developer-session",
+      "description": "Session transcripts the agent host writes (for example ~/.claude/projects/*.jsonl, ~/.codex/sessions) and any runtime guard's local audit records. Writable by the same OS user the agent runs as."
+    },
+    {
+      "symbolic_name": "retrieval-index",
+      "title": "Local retrieval index",
+      "type": "document",
+      "trust_zone": "workspace",
+      "description": "A code or documentation index (embeddings or keyword) that the agent or a documentation MCP server queries, built from the workspace, dependencies and external documentation."
+    },
+    {
+      "symbolic_name": "local-model-files",
+      "title": "Downloaded model files",
+      "type": "object",
+      "trust_zone": "developer-session",
+      "description": "Model weights downloaded for local inference or experimentation (for example ~/.cache/huggingface, ~/.ollama/models), in formats that include Python pickle."
+    }
+  ],
+  "data_sets": [
+    {
+      "symbolic_name": "source-code",
+      "title": "Source code and project history",
+      "data_sensitivity": [
+        "ip"
+      ],
+      "description": "Proprietary source code, configuration and git history.",
+      "placements": [
+        {
+          "data_store": "workspace-repo",
+          "encrypted": false
+        }
+      ],
+      "access_control_methods": [
+        "dac"
+      ]
+    },
+    {
+      "symbolic_name": "developer-credentials",
+      "title": "Developer and service credentials",
+      "data_sensitivity": [
+        "cred"
+      ],
+      "description": "Cloud keys, SSH keys, registry tokens, SaaS API keys and OAuth refresh tokens, including those placed in MCP server env blocks.",
+      "placements": [
+        {
+          "data_store": "local-credential-store",
+          "encrypted": false
+        },
+        {
+          "data_store": "mcp-client-config",
+          "encrypted": false
+        }
+      ],
+      "access_control_methods": [
+        "dac"
+      ]
+    },
+    {
+      "symbolic_name": "agent-instructions",
+      "title": "Agent instructions and memory",
+      "data_sensitivity": [
+        "op"
+      ],
+      "description": "Standing instructions and remembered facts that shape every future session in a project.",
+      "placements": [
+        {
+          "data_store": "agent-instruction-files",
+          "encrypted": false
+        }
+      ],
+      "access_control_methods": [
+        "dac"
+      ]
+    },
+    {
+      "symbolic_name": "session-records",
+      "title": "Session transcripts and audit records",
+      "data_sensitivity": [
+        "ip",
+        "cred",
+        "pii"
+      ],
+      "description": "Full prompts, tool calls and results of past sessions, which can contain code, secrets and personal data, plus guard verdicts.",
+      "placements": [
+        {
+          "data_store": "agent-session-logs",
+          "encrypted": false
+        }
+      ],
+      "access_control_methods": [
+        "dac"
+      ]
+    },
+    {
+      "symbolic_name": "retrieval-chunks",
+      "title": "Indexed documentation and code chunks",
+      "data_sensitivity": [
+        "ip"
+      ],
+      "description": "Text chunks returned to the agent by retrieval.",
+      "placements": [
+        {
+          "data_store": "retrieval-index",
+          "encrypted": false
+        }
+      ],
+      "access_control_methods": [
+        "dac"
+      ]
+    },
+    {
+      "symbolic_name": "model-artifacts",
+      "title": "Model weight files",
+      "data_sensitivity": [
+        "ip"
+      ],
+      "description": "Third-party or internal model files.",
+      "placements": [
+        {
+          "data_store": "local-model-files",
+          "encrypted": false
+        }
+      ],
+      "access_control_methods": [
+        "dac"
+      ]
+    }
+  ],
+  "data_flows": [
+    {
+      "symbolic_name": "developer-prompt",
+      "title": "Developer prompt and approvals",
+      "description": "The developer's task description and answers to permission prompts.",
+      "source": {
+        "type": "actor",
+        "object": "developer"
+      },
+      "destination": {
+        "type": "component",
+        "object": "agent-host"
+      },
+      "has_sensitive_data": true,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "permission-prompt",
+      "title": "Permission prompt to developer",
+      "description": "The host shows a proposed command, edit or tool call for approval (skipped for allow-listed actions and in auto-approval or bypass modes).",
+      "source": {
+        "type": "component",
+        "object": "agent-host"
+      },
+      "destination": {
+        "type": "actor",
+        "object": "developer"
+      },
+      "has_sensitive_data": false,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "context-to-provider",
+      "title": "Context window sent to provider",
+      "description": "The assembled context window, including code, file contents, tool results and any secrets read during the session, sent over TLS each turn.",
+      "source": {
+        "type": "component",
+        "object": "agent-context-window"
+      },
+      "destination": {
+        "type": "component",
+        "object": "llm-api"
+      },
+      "has_sensitive_data": true,
+      "encrypted": true
+    },
+    {
+      "symbolic_name": "provider-tool-calls",
+      "title": "Completions and tool-call requests",
+      "description": "Model output, including requested tool calls with their arguments.",
+      "source": {
+        "type": "component",
+        "object": "llm-api"
+      },
+      "destination": {
+        "type": "component",
+        "object": "agent-host"
+      },
+      "has_sensitive_data": true,
+      "encrypted": true
+    },
+    {
+      "symbolic_name": "guard-check",
+      "title": "Proposed action to runtime guard",
+      "description": "The tool name and arguments of a proposed action, before execution.",
+      "source": {
+        "type": "component",
+        "object": "agent-host"
+      },
+      "destination": {
+        "type": "component",
+        "object": "runtime-guard"
+      },
+      "has_sensitive_data": true,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "guard-verdict",
+      "title": "Runtime guard verdict",
+      "description": "Allow, ask or deny, with a reason the model may see.",
+      "source": {
+        "type": "component",
+        "object": "runtime-guard"
+      },
+      "destination": {
+        "type": "component",
+        "object": "agent-host"
+      },
+      "has_sensitive_data": false,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "dispatch-shell",
+      "title": "Shell command dispatch",
+      "description": "A command string chosen by the model.",
+      "source": {
+        "type": "component",
+        "object": "agent-host"
+      },
+      "destination": {
+        "type": "component",
+        "object": "shell-tool"
+      },
+      "has_sensitive_data": true,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "dispatch-file",
+      "title": "File operation dispatch",
+      "description": "Path and content of a read or edit.",
+      "source": {
+        "type": "component",
+        "object": "agent-host"
+      },
+      "destination": {
+        "type": "component",
+        "object": "file-tool"
+      },
+      "has_sensitive_data": true,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "dispatch-fetch",
+      "title": "Web fetch dispatch",
+      "description": "A URL chosen by the model.",
+      "source": {
+        "type": "component",
+        "object": "agent-host"
+      },
+      "destination": {
+        "type": "component",
+        "object": "web-fetch-tool"
+      },
+      "has_sensitive_data": false,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "dispatch-mcp",
+      "title": "MCP tool call dispatch",
+      "description": "Server, tool name and JSON arguments chosen by the model.",
+      "source": {
+        "type": "component",
+        "object": "agent-host"
+      },
+      "destination": {
+        "type": "component",
+        "object": "mcp-client"
+      },
+      "has_sensitive_data": true,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "shell-output",
+      "title": "Command output into context",
+      "description": "stdout/stderr of executed commands, including content of files they print.",
+      "source": {
+        "type": "component",
+        "object": "shell-tool"
+      },
+      "destination": {
+        "type": "component",
+        "object": "agent-context-window"
+      },
+      "has_sensitive_data": true,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "shell-egress",
+      "title": "Outbound network from shell commands",
+      "description": "HTTP requests, DNS lookups, git push and other connections opened by commands the agent runs; destination and payload are chosen by the model.",
+      "source": {
+        "type": "component",
+        "object": "shell-tool"
+      },
+      "destination": {
+        "type": "component",
+        "object": "external-endpoint"
+      },
+      "has_sensitive_data": true,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "package-install",
+      "title": "Package install from registry",
+      "description": "Packages and install scripts fetched by npm, pip or similar when the agent runs an install.",
+      "source": {
+        "type": "component",
+        "object": "package-registry"
+      },
+      "destination": {
+        "type": "component",
+        "object": "shell-tool"
+      },
+      "has_sensitive_data": false,
+      "encrypted": true
+    },
+    {
+      "symbolic_name": "credential-read",
+      "title": "Credential file read by command",
+      "description": "Commands or file reads that open credential files or print environment variables.",
+      "source": {
+        "type": "data_store",
+        "object": "local-credential-store"
+      },
+      "destination": {
+        "type": "component",
+        "object": "shell-tool"
+      },
+      "has_sensitive_data": true,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "workspace-read",
+      "title": "Workspace file read",
+      "description": "File contents read by the agent, including third-party-authored files.",
+      "source": {
+        "type": "data_store",
+        "object": "workspace-repo"
+      },
+      "destination": {
+        "type": "component",
+        "object": "file-tool"
+      },
+      "has_sensitive_data": true,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "file-output",
+      "title": "File contents into context",
+      "description": "Read file contents placed into the context window.",
+      "source": {
+        "type": "component",
+        "object": "file-tool"
+      },
+      "destination": {
+        "type": "component",
+        "object": "agent-context-window"
+      },
+      "has_sensitive_data": true,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "workspace-write",
+      "title": "Workspace file write",
+      "description": "Edits the agent makes to source and configuration files.",
+      "source": {
+        "type": "component",
+        "object": "file-tool"
+      },
+      "destination": {
+        "type": "data_store",
+        "object": "workspace-repo"
+      },
+      "has_sensitive_data": true,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "instruction-write",
+      "title": "Write to instruction or memory file",
+      "description": "Edits to CLAUDE.md, AGENTS.md, rules, memory or agent settings files.",
+      "source": {
+        "type": "component",
+        "object": "file-tool"
+      },
+      "destination": {
+        "type": "data_store",
+        "object": "agent-instruction-files"
+      },
+      "has_sensitive_data": false,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "instruction-autoload",
+      "title": "Instruction files auto-loaded",
+      "description": "Instruction and memory files loaded into context at session start without per-session review.",
+      "source": {
+        "type": "data_store",
+        "object": "agent-instruction-files"
+      },
+      "destination": {
+        "type": "component",
+        "object": "agent-context-window"
+      },
+      "has_sensitive_data": false,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "fetch-request",
+      "title": "Web fetch request",
+      "description": "HTTP(S) request to a model-chosen URL; the URL itself can carry data.",
+      "source": {
+        "type": "component",
+        "object": "web-fetch-tool"
+      },
+      "destination": {
+        "type": "component",
+        "object": "web-content"
+      },
+      "has_sensitive_data": false,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "fetch-response",
+      "title": "Web fetch response",
+      "description": "Page content returned by the remote site.",
+      "source": {
+        "type": "component",
+        "object": "web-content"
+      },
+      "destination": {
+        "type": "component",
+        "object": "web-fetch-tool"
+      },
+      "has_sensitive_data": false,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "fetch-output",
+      "title": "Fetched content into context",
+      "description": "Fetched page content placed into the context window.",
+      "source": {
+        "type": "component",
+        "object": "web-fetch-tool"
+      },
+      "destination": {
+        "type": "component",
+        "object": "agent-context-window"
+      },
+      "has_sensitive_data": false,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "metadata-request",
+      "title": "Request to link-local or private service",
+      "description": "A fetch, MCP tool or command that reaches 169.254.169.254, localhost or intranet addresses.",
+      "source": {
+        "type": "component",
+        "object": "web-fetch-tool"
+      },
+      "destination": {
+        "type": "component",
+        "object": "cloud-metadata-service"
+      },
+      "has_sensitive_data": true,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "mcp-stdio-call",
+      "title": "MCP tool call over stdio",
+      "description": "JSON-RPC tools/call request to a local MCP server.",
+      "source": {
+        "type": "component",
+        "object": "mcp-client"
+      },
+      "destination": {
+        "type": "component",
+        "object": "local-mcp-server"
+      },
+      "has_sensitive_data": true,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "mcp-stdio-result",
+      "title": "MCP tool list and results over stdio",
+      "description": "tools/list responses (names, descriptions, input schemas), list_changed notifications and tool results.",
+      "source": {
+        "type": "component",
+        "object": "local-mcp-server"
+      },
+      "destination": {
+        "type": "component",
+        "object": "mcp-client"
+      },
+      "has_sensitive_data": true,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "mcp-result-to-context",
+      "title": "MCP definitions and results into context",
+      "description": "Tool definitions and tool results placed into the context window.",
+      "source": {
+        "type": "component",
+        "object": "mcp-client"
+      },
+      "destination": {
+        "type": "component",
+        "object": "agent-context-window"
+      },
+      "has_sensitive_data": true,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "remote-mcp-call",
+      "title": "Remote MCP tool call",
+      "description": "tools/call over Streamable HTTP, optionally with an OAuth access token.",
+      "source": {
+        "type": "component",
+        "object": "mcp-client"
+      },
+      "destination": {
+        "type": "component",
+        "object": "remote-mcp-server"
+      },
+      "has_sensitive_data": true,
+      "encrypted": true
+    },
+    {
+      "symbolic_name": "remote-mcp-result",
+      "title": "Remote MCP tool list and results",
+      "description": "Tool definitions, OAuth metadata and tool results from the remote server.",
+      "source": {
+        "type": "component",
+        "object": "remote-mcp-server"
+      },
+      "destination": {
+        "type": "component",
+        "object": "mcp-client"
+      },
+      "has_sensitive_data": true,
+      "encrypted": true
+    },
+    {
+      "symbolic_name": "mcp-launch-config",
+      "title": "MCP server launch command and env",
+      "description": "The configured command, arguments and env block (plaintext secrets) used to start a local MCP server.",
+      "source": {
+        "type": "data_store",
+        "object": "mcp-client-config"
+      },
+      "destination": {
+        "type": "component",
+        "object": "local-mcp-server"
+      },
+      "has_sensitive_data": true,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "mcp-package-fetch",
+      "title": "MCP server package fetch",
+      "description": "Package code fetched by npx/uvx at launch; an unpinned spec fetches whatever version is current.",
+      "source": {
+        "type": "component",
+        "object": "package-registry"
+      },
+      "destination": {
+        "type": "component",
+        "object": "local-mcp-server"
+      },
+      "has_sensitive_data": false,
+      "encrypted": true
+    },
+    {
+      "symbolic_name": "mcp-server-egress",
+      "title": "Outbound network from MCP server process",
+      "description": "Connections the MCP server process opens itself, outside any tool-call argument the agent host sees.",
+      "source": {
+        "type": "component",
+        "object": "local-mcp-server"
+      },
+      "destination": {
+        "type": "component",
+        "object": "external-endpoint"
+      },
+      "has_sensitive_data": true,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "transcript-write",
+      "title": "Transcript write",
+      "description": "Session transcripts written by the agent host.",
+      "source": {
+        "type": "component",
+        "object": "agent-host"
+      },
+      "destination": {
+        "type": "data_store",
+        "object": "agent-session-logs"
+      },
+      "has_sensitive_data": true,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "guard-audit-write",
+      "title": "Guard audit record write",
+      "description": "Verdict records written by the runtime guard.",
+      "source": {
+        "type": "component",
+        "object": "runtime-guard"
+      },
+      "destination": {
+        "type": "data_store",
+        "object": "agent-session-logs"
+      },
+      "has_sensitive_data": false,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "retrieval-result",
+      "title": "Retrieved chunks into context",
+      "description": "Chunks returned by the retrieval index.",
+      "source": {
+        "type": "data_store",
+        "object": "retrieval-index"
+      },
+      "destination": {
+        "type": "component",
+        "object": "agent-context-window"
+      },
+      "has_sensitive_data": false,
+      "encrypted": false
+    },
+    {
+      "symbolic_name": "model-download",
+      "title": "Model file download",
+      "description": "Model weights downloaded from a model hub.",
+      "source": {
+        "type": "component",
+        "object": "package-registry"
+      },
+      "destination": {
+        "type": "data_store",
+        "object": "local-model-files"
+      },
+      "has_sensitive_data": false,
+      "encrypted": true
+    },
+    {
+      "symbolic_name": "model-load",
+      "title": "Model file load",
+      "description": "A command the agent runs that deserialises a model file (for example torch.load).",
+      "source": {
+        "type": "data_store",
+        "object": "local-model-files"
+      },
+      "destination": {
+        "type": "component",
+        "object": "shell-tool"
+      },
+      "has_sensitive_data": false,
+      "encrypted": false
+    }
+  ],
+  "diagrams": [
+    {
+      "title": "Data flow diagram",
+      "type": "mermaid",
+      "description": "Trust zones are subgraphs; every edge label is the symbolic_name of the matching data_flows entry. All processes in the developer session, agent runtime and local MCP server zones run as the same OS user unless a sandbox is configured.",
+      "source": "flowchart LR\n  subgraph developer_session[Developer OS user session]\n    developer([Developer])\n    mcp_client_config[(MCP client configuration)]\n    local_credential_store[(Local credential store)]\n    agent_session_logs[(Agent transcripts and audit logs)]\n    local_model_files[(Downloaded model files)]\n  end\n  subgraph agent_runtime[Agent host process and tool execution]\n    agent_host[AI coding agent host]\n    shell_tool[Shell command tool]\n    file_tool[File read/write tool]\n    web_fetch_tool[Web fetch tool]\n    mcp_client[MCP client]\n    runtime_guard[Runtime action guard - optional]\n  end\n  subgraph agent_context[Model context window - untrusted-input sink]\n    agent_context_window[Model context window]\n  end\n  subgraph workspace[Workspace repository]\n    workspace_repo[(Workspace repository)]\n    agent_instruction_files[(Agent instruction and memory files)]\n    retrieval_index[(Local retrieval index)]\n  end\n  subgraph mcp_server_process[Local MCP server processes]\n    local_mcp_server[Local stdio MCP server]\n  end\n  subgraph remote_mcp[Remote MCP server operators]\n    remote_mcp_server[Remote MCP server]\n  end\n  subgraph llm_provider[LLM provider]\n    llm_api[LLM provider inference API]\n  end\n  subgraph internet[Public internet and registries]\n    package_registry[Package and model registries]\n    web_content[Public web content and code hosting]\n    external_endpoint[Unapproved external endpoint]\n  end\n  subgraph local_network[Link-local and private network services]\n    cloud_metadata_service[Cloud metadata and local network services]\n  end\n  developer -->|developer-prompt| agent_host\n  agent_host -->|permission-prompt| developer\n  agent_context_window -->|context-to-provider| llm_api\n  llm_api -->|provider-tool-calls| agent_host\n  agent_host -->|guard-check| runtime_guard\n  runtime_guard -->|guard-verdict| agent_host\n  agent_host -->|dispatch-shell| shell_tool\n  agent_host -->|dispatch-file| file_tool\n  agent_host -->|dispatch-fetch| web_fetch_tool\n  agent_host -->|dispatch-mcp| mcp_client\n  shell_tool -->|shell-output| agent_context_window\n  shell_tool -->|shell-egress| external_endpoint\n  package_registry -->|package-install| shell_tool\n  local_credential_store -->|credential-read| shell_tool\n  workspace_repo -->|workspace-read| file_tool\n  file_tool -->|file-output| agent_context_window\n  file_tool -->|workspace-write| workspace_repo\n  file_tool -->|instruction-write| agent_instruction_files\n  agent_instruction_files -->|instruction-autoload| agent_context_window\n  web_fetch_tool -->|fetch-request| web_content\n  web_content -->|fetch-response| web_fetch_tool\n  web_fetch_tool -->|fetch-output| agent_context_window\n  web_fetch_tool -->|metadata-request| cloud_metadata_service\n  mcp_client -->|mcp-stdio-call| local_mcp_server\n  local_mcp_server -->|mcp-stdio-result| mcp_client\n  mcp_client -->|mcp-result-to-context| agent_context_window\n  mcp_client -->|remote-mcp-call| remote_mcp_server\n  remote_mcp_server -->|remote-mcp-result| mcp_client\n  mcp_client_config -->|mcp-launch-config| local_mcp_server\n  package_registry -->|mcp-package-fetch| local_mcp_server\n  local_mcp_server -->|mcp-server-egress| external_endpoint\n  agent_host -->|transcript-write| agent_session_logs\n  runtime_guard -->|guard-audit-write| agent_session_logs\n  retrieval_index -->|retrieval-result| agent_context_window\n  package_registry -->|model-download| local_model_files\n  local_model_files -->|model-load| shell_tool"
+    }
+  ],
+  "assumptions": [
+    {
+      "description": "The agent host, the tools it runs and every local MCP server run as the developer's OS user with that user's filesystem and network access; no OS-level isolation exists between them unless the developer or organisation configures a sandbox, container or separate user. The MCP specification's security best practices tell clients to warn that MCP servers run with the same privileges as the client.",
+      "validity": "confirmed"
+    },
+    {
+      "description": "The model cannot reliably distinguish instructions from data in its context window. OWASP LLM01:2025 states it is unclear whether fool-proof prevention for prompt injection exists. Model-side injection resistance is treated as a probabilistic factor that lowers likelihood, never as a control.",
+      "validity": "confirmed"
+    },
+    {
+      "description": "The LLM provider processes the context it receives according to the account's contractual terms (retention, training use, region); compromise of the provider's own infrastructure is out of scope.",
+      "validity": "confirmed"
+    },
+    {
+      "description": "The workstation is not compromised at session start. Threats that start from an existing same-user foothold (for example a malicious dependency that already ran) are modelled only where they target the agent itself: its endpoint configuration and its logs.",
+      "validity": "confirmed"
+    },
+    {
+      "description": "A runtime guard, where deployed, runs as the same OS user as the agent. It raises the cost of attacks that go through the agent's tool calls but does not see work a separate process does on its own (for example network connections an MCP server process opens), and a same-user attacker can disable it unless it is protected by a separate privileged component.",
+      "validity": "confirmed"
+    },
+    {
+      "description": "Publishing to npm or PyPI does not require any proof of affiliation with the project a package claims to represent. For example, npm registry metadata for @bestcoolman/dev-mcp shows the same description and binary name (sp-api-dev-mcp) as the official @amazon-sp-api-release/sp-api-dev-mcp package, under a different scope and maintainer.",
+      "validity": "confirmed"
+    },
+    {
+      "description": "Remote MCP servers that require authentication implement the MCP authorization specification (OAuth 2.1) correctly; many remote servers require no authentication at all, in which case the server operator, not the developer, controls everything the server returns.",
+      "validity": "unconfirmed"
+    },
+    {
+      "description": "Cloud-hosted development environments (cloud VMs, devcontainers on cloud hosts, hosted workspaces) expose an instance metadata endpoint or an attached workload identity; a physical laptop normally does not, so SSRF to cloud metadata applies only to the former.",
+      "validity": "unconfirmed"
+    }
+  ],
+  "threat_personas": [
+    {
+      "symbolic_name": "injected-content-author",
+      "title": "Injected-content author",
+      "description": "Plants instructions in content the agent will read: a web page, README, issue, pull-request comment, package documentation, document in a retrieval index or an MCP tool result. Needs no access to the workstation, only a way to put text in front of the agent; payloads are often hidden with invisible Unicode or HTML that the developer never sees.",
+      "is_person": true,
+      "skill_level": "engineer",
+      "access_level": "anonymous",
+      "malicious_intent": true,
+      "applicability_to_org": "high"
+    },
+    {
+      "symbolic_name": "supply-chain-attacker",
+      "title": "Malicious MCP server, package or model publisher",
+      "description": "Publishes or takes over a package, MCP server (local package or remote endpoint) or model file the developer installs: repackages of official servers, servers that turn malicious in a later version, or remote servers whose operator changes tool definitions after approval.",
+      "is_person": true,
+      "skill_level": "engineer",
+      "access_level": "anonymous",
+      "malicious_intent": true,
+      "applicability_to_org": "high"
+    },
+    {
+      "symbolic_name": "package-squatter",
+      "title": "Registry name squatter",
+      "description": "Registers package names that LLMs hallucinate or that are near-misses of popular names, and waits for an agent to install them.",
+      "is_person": true,
+      "skill_level": "script_kid",
+      "access_level": "anonymous",
+      "malicious_intent": true,
+      "applicability_to_org": "moderate"
+    },
+    {
+      "symbolic_name": "errant-agent",
+      "title": "Errant agent (no attacker)",
+      "description": "The agent itself, acting on a misread task, an over-broad instruction or a hallucinated fact, with the developer's privileges. No malicious intent; the harm comes from autonomy plus privilege.",
+      "is_person": false,
+      "skill_level": "insider",
+      "access_level": "user",
+      "malicious_intent": false,
+      "applicability_to_org": "high"
+    },
+    {
+      "symbolic_name": "developer-under-pressure",
+      "title": "Developer optimising for speed",
+      "description": "A legitimate developer who enables auto-approval or bypass modes, approves prompts without reading them, pastes secrets into configuration or context, or points the agent at sensitive data to get work done.",
+      "is_person": true,
+      "skill_level": "insider",
+      "access_level": "user",
+      "malicious_intent": false,
+      "applicability_to_org": "high"
+    },
+    {
+      "symbolic_name": "workstation-intruder",
+      "title": "Same-user workstation intruder",
+      "description": "An attacker with code execution as the developer's OS user (for example through a malicious dependency's install script) who targets the agent: redirecting its model endpoint or erasing evidence of what it did.",
+      "is_person": true,
+      "skill_level": "engineer",
+      "access_level": "user",
+      "malicious_intent": true,
+      "applicability_to_org": "moderate"
+    }
+  ],
+  "threats": [
+    {
+      "symbolic_name": "indirect-prompt-injection-web",
+      "title": "Web Injection",
+      "description": "A web page the agent fetches contains malicious instructions that the agent treats as trusted commands.",
+      "components_affected": [
+        "web-fetch-tool",
+        "agent-context-window",
+        "agent-host"
+      ],
+      "threat_persona": "injected-content-author",
+      "event": "agent acts on instructions from fetched web content",
+      "sources": [
+        "adversary"
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 1427,
+          "cwe_title": "Improper Neutralization of Input Used for LLM Prompting"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "indirect-prompt-injection-workspace",
+      "title": "Workspace Injection",
+      "description": "A repository file, issue, or document contains planted instructions that redirect the agent's behavior.",
+      "components_affected": [
+        "file-tool",
+        "agent-context-window",
+        "agent-host"
+      ],
+      "threat_persona": "injected-content-author",
+      "event": "agent acts on instructions planted in workspace content",
+      "sources": [
+        "adversary"
+      ],
+      "attack_mechanisms": [
+        {
+          "capec_id": 636,
+          "capec_title": "Hiding Malicious Data or Code within Files"
+        }
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 1427,
+          "cwe_title": "Improper Neutralization of Input Used for LLM Prompting"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "indirect-prompt-injection-tool-results",
+      "title": "Tool Output Injection",
+      "description": "A tool response contains malicious instructions that the agent follows instead of treating them as untrusted data.",
+      "components_affected": [
+        "mcp-client",
+        "shell-tool",
+        "agent-context-window"
+      ],
+      "threat_persona": "injected-content-author",
+      "event": "agent acts on instructions returned in a tool result",
+      "sources": [
+        "adversary"
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 1427,
+          "cwe_title": "Improper Neutralization of Input Used for LLM Prompting"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "mcp-tool-description-poisoning",
+      "title": "MCP Tool Poisoning",
+      "description": "A malicious MCP server embeds instructions in tool descriptions that manipulate the agent's decisions or actions.",
+      "components_affected": [
+        "mcp-client",
+        "agent-context-window",
+        "local-mcp-server",
+        "remote-mcp-server"
+      ],
+      "threat_persona": "supply-chain-attacker",
+      "event": "agent acts on instructions in an MCP tool description",
+      "sources": [
+        "adversary"
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 1427,
+          "cwe_title": "Improper Neutralization of Input Used for LLM Prompting"
+        },
+        {
+          "cwe_id": 829,
+          "cwe_title": "Inclusion of Functionality from Untrusted Control Sphere"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "mcp-tool-shadowing",
+      "title": "MCP Tool Shadowing",
+      "description": "A malicious MCP server impersonates or overrides another server's tool, causing the agent to invoke the wrong tool.",
+      "components_affected": [
+        "mcp-client",
+        "local-mcp-server",
+        "remote-mcp-server"
+      ],
+      "threat_persona": "supply-chain-attacker",
+      "event": "agent calls a tool other than the one the developer approved",
+      "sources": [
+        "adversary"
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 829,
+          "cwe_title": "Inclusion of Functionality from Untrusted Control Sphere"
+        },
+        {
+          "cwe_id": 694,
+          "cwe_title": "Use of Multiple Resources with Duplicate Identifier"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "mcp-rug-pull",
+      "title": "MCP Rug Pull",
+      "description": "An MCP server changes its tools or behavior after approval, exposing the agent to capabilities or actions the user never authorized.",
+      "components_affected": [
+        "mcp-client",
+        "local-mcp-server",
+        "remote-mcp-server"
+      ],
+      "threat_persona": "supply-chain-attacker",
+      "event": "approved MCP server changes its tools after approval",
+      "sources": [
+        "adversary"
+      ],
+      "attack_mechanisms": [
+        {
+          "capec_id": 186,
+          "capec_title": "Malicious Software Update"
+        }
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 829,
+          "cwe_title": "Inclusion of Functionality from Untrusted Control Sphere"
+        },
+        {
+          "cwe_id": 367,
+          "cwe_title": "Time-of-check Time-of-use (TOCTOU) Race Condition"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "malicious-repackaged-mcp-package",
+      "title": "Fake MCP Package",
+      "description": "A malicious publisher distributes a counterfeit MCP package that performs unauthorized actions when installed or executed.",
+      "components_affected": [
+        "local-mcp-server",
+        "mcp-client",
+        "package-registry"
+      ],
+      "threat_persona": "supply-chain-attacker",
+      "event": "counterfeit MCP package runs with the developer's privileges",
+      "sources": [
+        "adversary"
+      ],
+      "attack_mechanisms": [
+        {
+          "capec_id": 185,
+          "capec_title": "Malicious Software Download"
+        },
+        {
+          "capec_id": 691,
+          "capec_title": "Spoof Open-Source Software Metadata"
+        }
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 829,
+          "cwe_title": "Inclusion of Functionality from Untrusted Control Sphere"
+        },
+        {
+          "cwe_id": 507,
+          "cwe_title": "Trojan Horse"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "secrets-in-mcp-config",
+      "title": "Exposed MCP Secrets",
+      "description": "API keys or credentials stored in plaintext MCP configuration files become accessible to a workstation intruder.",
+      "components_affected": [
+        "mcp-client"
+      ],
+      "threat_persona": "workstation-intruder",
+      "event": "plaintext credentials read from MCP client configuration",
+      "sources": [
+        "adversary"
+      ],
+      "attack_mechanisms": [
+        {
+          "capec_id": 639,
+          "capec_title": "Probe System Files"
+        }
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 312,
+          "cwe_title": "Cleartext Storage of Sensitive Information"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "credential-exfiltration-via-tool-calls",
+      "title": "Credential Exfiltration",
+      "description": "Malicious instructions cause the agent to expose secrets or credentials through tool calls to unauthorized destinations.",
+      "components_affected": [
+        "shell-tool",
+        "web-fetch-tool",
+        "mcp-client"
+      ],
+      "threat_persona": "injected-content-author",
+      "event": "credentials leave the workstation inside a tool call",
+      "sources": [
+        "adversary"
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 201,
+          "cwe_title": "Insertion of Sensitive Information Into Sent Data"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "data-exfiltration-network-channels",
+      "title": "Network Exfiltration",
+      "description": "Malicious instructions cause the agent to transmit confidential data through network requests, DNS queries, or Git operations.",
+      "components_affected": [
+        "shell-tool",
+        "web-fetch-tool",
+        "external-endpoint"
+      ],
+      "threat_persona": "injected-content-author",
+      "event": "confidential data leaves through a network request, DNS query or git operation",
+      "sources": [
+        "adversary"
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 201,
+          "cwe_title": "Insertion of Sensitive Information Into Sent Data"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "sensitive-data-to-model-provider",
+      "title": "Model Data Leakage",
+      "description": "The agent sends confidential workspace content to an external model provider without proper authorization.",
+      "components_affected": [
+        "agent-host",
+        "llm-api"
+      ],
+      "threat_persona": "errant-agent",
+      "event": "confidential workspace content sent to an unapproved model provider",
+      "sources": [
+        "failure"
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 201,
+          "cwe_title": "Insertion of Sensitive Information Into Sent Data"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "destructive-commands",
+      "title": "Destructive Actions",
+      "description": "The agent mistakenly deletes files, overwrites critical data, or executes destructive operations without appropriate safeguards.",
+      "components_affected": [
+        "shell-tool",
+        "file-tool"
+      ],
+      "threat_persona": "errant-agent",
+      "event": "irreversible deletion or overwrite of files, history or data",
+      "sources": [
+        "failure"
+      ]
+    },
+    {
+      "symbolic_name": "overbroad-auto-approval",
+      "title": "Unsafe Auto-Approval",
+      "description": "A developer disables approval checks to accelerate workflows, allowing the agent to execute sensitive actions without human confirmation.",
+      "components_affected": [
+        "agent-host"
+      ],
+      "threat_persona": "developer-under-pressure",
+      "event": "sensitive actions run without human confirmation",
+      "sources": [
+        "human_error"
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 250,
+          "cwe_title": "Execution with Unnecessary Privileges"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "slopsquatting-package-install",
+      "title": "Package Slopsquatting",
+      "description": "The agent installs a nonexistent or mistyped dependency name that an attacker has registered as a malicious package.",
+      "components_affected": [
+        "shell-tool",
+        "package-registry"
+      ],
+      "threat_persona": "package-squatter",
+      "event": "agent installs an attacker-registered package",
+      "sources": [
+        "adversary"
+      ],
+      "attack_mechanisms": [
+        {
+          "capec_id": 630,
+          "capec_title": "TypoSquatting"
+        },
+        {
+          "capec_id": 185,
+          "capec_title": "Malicious Software Download"
+        }
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 829,
+          "cwe_title": "Inclusion of Functionality from Untrusted Control Sphere"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "runaway-cost-loop",
+      "title": "Runaway Costs",
+      "description": "The agent enters uncontrolled execution loops that consume excessive tokens, API calls, or computing resources.",
+      "components_affected": [
+        "agent-host",
+        "llm-api"
+      ],
+      "threat_persona": "errant-agent",
+      "event": "uncontrolled loop consumes tokens, API calls or compute",
+      "sources": [
+        "failure"
+      ],
+      "attack_mechanisms": [
+        {
+          "capec_id": 130,
+          "capec_title": "Excessive Allocation"
+        }
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 770,
+          "cwe_title": "Allocation of Resources Without Limits or Throttling"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "instruction-file-persistence",
+      "title": "Instruction Persistence",
+      "description": "An attacker plants malicious instructions in agent memory or instruction files, causing the agent to follow them across future sessions.",
+      "components_affected": [
+        "file-tool",
+        "agent-context-window"
+      ],
+      "threat_persona": "injected-content-author",
+      "event": "planted instructions load into every later session",
+      "sources": [
+        "adversary"
+      ],
+      "attack_mechanisms": [
+        {
+          "capec_id": 75,
+          "capec_title": "Manipulating Writeable Configuration Files"
+        }
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 1427,
+          "cwe_title": "Improper Neutralization of Input Used for LLM Prompting"
+        },
+        {
+          "cwe_id": 829,
+          "cwe_title": "Inclusion of Functionality from Untrusted Control Sphere"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "agent-config-self-modification",
+      "title": "Guardrail Modification",
+      "description": "The agent mistakenly modifies its own security settings or guardrails, weakening protections against unsafe actions.",
+      "components_affected": [
+        "file-tool",
+        "agent-host",
+        "runtime-guard"
+      ],
+      "threat_persona": "errant-agent",
+      "event": "agent weakens its own permission or guard settings",
+      "sources": [
+        "failure"
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 732,
+          "cwe_title": "Incorrect Permission Assignment for Critical Resource"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "untrusted-workspace-config-execution",
+      "title": "Unsafe Config Execution",
+      "description": "A repository's malicious configuration executes automatically when the agent opens or processes the workspace.",
+      "components_affected": [
+        "agent-host",
+        "mcp-client"
+      ],
+      "threat_persona": "injected-content-author",
+      "event": "workspace configuration executes when the workspace is opened",
+      "sources": [
+        "adversary"
+      ],
+      "attack_mechanisms": [
+        {
+          "capec_id": 75,
+          "capec_title": "Manipulating Writeable Configuration Files"
+        }
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 829,
+          "cwe_title": "Inclusion of Functionality from Untrusted Control Sphere"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "rogue-model-endpoint",
+      "title": "Rogue Model Endpoint",
+      "description": "A malicious model provider redirects agent requests to an untrusted endpoint that can capture sensitive data or manipulate responses.",
+      "components_affected": [
+        "agent-host",
+        "llm-api"
+      ],
+      "threat_persona": "supply-chain-attacker",
+      "event": "agent traffic sent to an untrusted model endpoint",
+      "sources": [
+        "adversary"
+      ],
+      "attack_mechanisms": [
+        {
+          "capec_id": 13,
+          "capec_title": "Subverting Environment Variable Values"
+        },
+        {
+          "capec_id": 94,
+          "capec_title": "Adversary in the Middle (AiTM)"
+        }
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 15,
+          "cwe_title": "External Control of System or Configuration Setting"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "poisoned-retrieval-index",
+      "title": "Retrieval Poisoning",
+      "description": "An attacker tampers with indexed documents or search results, causing the agent to trust and act on manipulated information.",
+      "components_affected": [
+        "agent-context-window",
+        "mcp-client"
+      ],
+      "threat_persona": "injected-content-author",
+      "event": "agent acts on tampered retrieval results",
+      "sources": [
+        "adversary"
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 1427,
+          "cwe_title": "Improper Neutralization of Input Used for LLM Prompting"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "malicious-model-file",
+      "title": "Malicious Model File",
+      "description": "A downloaded model file contains malicious code that executes when the agent loads or processes it.",
+      "components_affected": [
+        "shell-tool"
+      ],
+      "threat_persona": "supply-chain-attacker",
+      "event": "code embedded in a model file executes on load",
+      "sources": [
+        "adversary"
+      ],
+      "attack_mechanisms": [
+        {
+          "capec_id": 586,
+          "capec_title": "Object Injection"
+        }
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 502,
+          "cwe_title": "Deserialization of Untrusted Data"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "audit-log-tampering",
+      "title": "Audit Log Tampering",
+      "description": "A workstation intruder modifies or deletes agent audit logs to conceal unauthorized activity.",
+      "components_affected": [
+        "agent-host",
+        "runtime-guard"
+      ],
+      "threat_persona": "workstation-intruder",
+      "event": "agent audit records altered or deleted",
+      "sources": [
+        "adversary"
+      ],
+      "attack_mechanisms": [
+        {
+          "capec_id": 268,
+          "capec_title": "Audit Log Manipulation"
+        }
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 353,
+          "cwe_title": "Missing Support for Integrity Check"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "ssrf-cloud-metadata",
+      "title": "Cloud Metadata SSRF",
+      "description": "Malicious instructions cause the agent to access cloud instance metadata services, potentially exposing temporary cloud credentials.",
+      "components_affected": [
+        "web-fetch-tool",
+        "shell-tool",
+        "cloud-metadata-service"
+      ],
+      "threat_persona": "injected-content-author",
+      "event": "cloud instance credentials read from the metadata service",
+      "sources": [
+        "adversary"
+      ],
+      "attack_mechanisms": [
+        {
+          "capec_id": 664,
+          "capec_title": "Server Side Request Forgery"
+        }
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 918,
+          "cwe_title": "Server-Side Request Forgery (SSRF)"
+        },
+        {
+          "cwe_id": 441,
+          "cwe_title": "Unintended Proxy or Intermediary ('Confused Deputy')"
+        }
+      ]
+    },
+    {
+      "symbolic_name": "remote-mcp-oauth-command-injection",
+      "title": "MCP OAuth Injection",
+      "description": "A malicious remote MCP server abuses its authentication flow to trigger unauthorized command execution on the agent's host.",
+      "components_affected": [
+        "mcp-client",
+        "remote-mcp-server"
+      ],
+      "threat_persona": "supply-chain-attacker",
+      "event": "remote MCP authorization flow runs a command on the host",
+      "sources": [
+        "adversary"
+      ],
+      "attack_mechanisms": [
+        {
+          "capec_id": 88,
+          "capec_title": "OS Command Injection"
+        }
+      ],
+      "weaknesses": [
+        {
+          "cwe_id": 78,
+          "cwe_title": "Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')"
+        }
+      ]
+    }
+  ],
+  "controls": [
+    {
+      "symbolic_name": "untrusted-content-handling",
+      "title": "Treat inbound content as data, and gate actions after it arrives",
+      "description": "Label web pages, workspace files from third parties, tool results and retrieval results as untrusted when they enter the context window. Scan them for embedded instructions and hidden text, and once untrusted content is in the session, require human approval for high-impact actions (outbound requests, credential reads, installs, pushes).",
+      "threats": [
+        "indirect-prompt-injection-web",
+        "indirect-prompt-injection-workspace",
+        "indirect-prompt-injection-tool-results",
+        "poisoned-retrieval-index"
+      ],
+      "status": "suggested",
+      "priority": "critical",
+      "trust_boundary": {
+        "trust_zone_a": "workspace",
+        "trust_zone_b": "agent-context"
+      }
+    },
+    {
+      "symbolic_name": "mcp-server-approval-and-pinning",
+      "title": "Approve MCP servers by identity and pin what was approved",
+      "description": "Allow only approved MCP servers, identified by publisher, package name, version and integrity hash (local) or origin (remote). Record each server's tool names, descriptions and schemas at approval, and require re-approval when any of them change.",
+      "threats": [
+        "mcp-tool-description-poisoning",
+        "mcp-rug-pull",
+        "malicious-repackaged-mcp-package",
+        "remote-mcp-oauth-command-injection"
+      ],
+      "status": "suggested",
+      "priority": "critical",
+      "trust_boundary": {
+        "trust_zone_a": "agent-runtime",
+        "trust_zone_b": "mcp-server-process"
+      }
+    },
+    {
+      "symbolic_name": "mcp-tool-name-uniqueness",
+      "title": "Refuse duplicate tool names across MCP servers",
+      "description": "Reject or flag a tool whose name or description collides with a tool exposed by another configured server, and show the developer which server a tool call goes to.",
+      "threats": [
+        "mcp-tool-shadowing"
+      ],
+      "status": "suggested",
+      "priority": "high",
+      "trust_boundary": {
+        "trust_zone_a": "agent-runtime",
+        "trust_zone_b": "mcp-server-process"
+      }
+    },
+    {
+      "symbolic_name": "pre-install-package-review",
+      "title": "Review packages and MCP servers before they first run",
+      "description": "Before a package or MCP server is installed or launched, check that its publisher matches the project it claims to be, verify registry integrity, and flag install scripts, hardcoded network endpoints (raw IP addresses, plain HTTP) and names that do not exist or are near-misses of popular packages.",
+      "threats": [
+        "malicious-repackaged-mcp-package",
+        "slopsquatting-package-install"
+      ],
+      "status": "suggested",
+      "priority": "high",
+      "trust_boundary": {
+        "trust_zone_a": "internet",
+        "trust_zone_b": "mcp-server-process"
+      }
+    },
+    {
+      "symbolic_name": "credential-isolation",
+      "title": "Keep real credentials out of agent-readable locations",
+      "description": "Do not store secrets in plaintext in MCP client configuration or files the agent can read. Resolve them from the OS keychain or a broker at launch, or give the agent and its MCP servers placeholder keys that a local proxy swaps for the real credential only when the destination is the credential's own service.",
+      "threats": [
+        "secrets-in-mcp-config",
+        "credential-exfiltration-via-tool-calls"
+      ],
+      "status": "suggested",
+      "priority": "high",
+      "trust_boundary": {
+        "trust_zone_a": "developer-session",
+        "trust_zone_b": "mcp-server-process"
+      }
+    },
+    {
+      "symbolic_name": "outbound-data-and-egress-control",
+      "title": "Control what leaves, and where it can go",
+      "description": "Inspect outbound tool calls for credentials and confidential data, including base64, hex and URL-encoded forms. Apply per-tool and per-server egress allow-lists (host, port, method, path) and block undeclared destinations, including raw IP addresses over plain HTTP and DNS-based channels.",
+      "threats": [
+        "credential-exfiltration-via-tool-calls",
+        "data-exfiltration-network-channels",
+        "ssrf-cloud-metadata"
+      ],
+      "status": "suggested",
+      "priority": "critical",
+      "trust_boundary": {
+        "trust_zone_a": "agent-runtime",
+        "trust_zone_b": "internet"
+      }
+    },
+    {
+      "symbolic_name": "approved-model-providers",
+      "title": "Use approved model providers and endpoints only",
+      "description": "Allow only model providers and endpoints the organisation has approved for the data classification in the workspace, pin their base URLs in managed configuration, and refuse overrides from environment variables or workspace files.",
+      "threats": [
+        "sensitive-data-to-model-provider",
+        "rogue-model-endpoint"
+      ],
+      "status": "suggested",
+      "priority": "high",
+      "trust_boundary": {
+        "trust_zone_a": "agent-runtime",
+        "trust_zone_b": "llm-provider"
+      }
+    },
+    {
+      "symbolic_name": "irreversible-action-confirmation",
+      "title": "Confirm irreversible actions, and keep a way back",
+      "description": "Require explicit human confirmation for recursive deletes, force pushes, history rewrites, database drops and bulk overwrites, regardless of auto-approval settings, and keep snapshots or version history for the workspace.",
+      "threats": [
+        "destructive-commands"
+      ],
+      "status": "suggested",
+      "priority": "high"
+    },
+    {
+      "symbolic_name": "managed-permission-policy",
+      "title": "Set the agent's permission mode centrally",
+      "description": "Use managed settings to disable bypass or approve-everything modes where policy requires it, and to keep the deny rules the organisation depends on out of the developer's and the agent's reach.",
+      "threats": [
+        "overbroad-auto-approval",
+        "agent-config-self-modification"
+      ],
+      "status": "suggested",
+      "priority": "high",
+      "trust_boundary": {
+        "trust_zone_a": "developer-session",
+        "trust_zone_b": "agent-runtime"
+      }
+    },
+    {
+      "symbolic_name": "protected-agent-configuration",
+      "title": "Protect agent settings, guard policy and instruction files",
+      "description": "Keep permission settings and guard policy in locations the agent cannot write (managed or administrator-owned). Watch instruction and memory files for new or changed directives and surface the change for review before it loads.",
+      "threats": [
+        "agent-config-self-modification",
+        "instruction-file-persistence",
+        "untrusted-workspace-config-execution"
+      ],
+      "status": "suggested",
+      "priority": "high",
+      "trust_boundary": {
+        "trust_zone_a": "agent-runtime",
+        "trust_zone_b": "workspace"
+      }
+    },
+    {
+      "symbolic_name": "workspace-trust",
+      "title": "Do not run workspace configuration until the workspace is trusted",
+      "description": "Ask before loading project-scoped MCP servers, hooks or tasks from a newly opened repository, and treat a change to that configuration as a new trust decision.",
+      "threats": [
+        "untrusted-workspace-config-execution"
+      ],
+      "status": "suggested",
+      "priority": "high",
+      "trust_boundary": {
+        "trust_zone_a": "agent-runtime",
+        "trust_zone_b": "workspace"
+      }
+    },
+    {
+      "symbolic_name": "loop-and-spend-limits",
+      "title": "Limit loops, call rates and spend",
+      "description": "Stop a session that repeats the same action, exceeds a call-rate threshold or passes a token or cost budget, and alert the developer.",
+      "threats": [
+        "runaway-cost-loop"
+      ],
+      "status": "suggested",
+      "priority": "high",
+      "trust_boundary": {
+        "trust_zone_a": "agent-runtime",
+        "trust_zone_b": "llm-provider"
+      }
+    },
+    {
+      "symbolic_name": "model-file-scanning",
+      "title": "Scan model files before they load",
+      "description": "Statically inspect downloaded model files for executable payloads (for example pickle opcodes that import modules) before loading, and prefer formats that cannot carry code, such as safetensors.",
+      "threats": [
+        "malicious-model-file"
+      ],
+      "status": "suggested",
+      "priority": "high",
+      "trust_boundary": {
+        "trust_zone_a": "internet",
+        "trust_zone_b": "developer-session"
+      }
+    },
+    {
+      "symbolic_name": "tamper-evident-logging",
+      "title": "Make agent logs tamper-evident and keep a copy elsewhere",
+      "description": "Chain agent audit records with hashes so edits and deletions are detectable, and forward them to a log store the workstation user cannot modify.",
+      "threats": [
+        "audit-log-tampering"
+      ],
+      "status": "suggested",
+      "priority": "high"
+    },
+    {
+      "symbolic_name": "metadata-endpoint-restriction",
+      "title": "Block the instance metadata endpoint from agent tools",
+      "description": "Deny agent tool and MCP server access to link-local metadata addresses unless a rule explicitly allows it, and on cloud hosts require session-token metadata access with a hop limit.",
+      "threats": [
+        "ssrf-cloud-metadata"
+      ],
+      "status": "suggested",
+      "priority": "high",
+      "trust_boundary": {
+        "trust_zone_a": "agent-runtime",
+        "trust_zone_b": "local-network"
+      }
+    },
+    {
+      "symbolic_name": "mcp-client-patching",
+      "title": "Keep MCP clients and remote-server tooling patched",
+      "description": "Track advisories for MCP clients and bridge tools and update promptly; validate authorization endpoints returned by remote MCP servers before using them.",
+      "threats": [
+        "remote-mcp-oauth-command-injection"
+      ],
+      "status": "suggested",
+      "priority": "medium",
+      "trust_boundary": {
+        "trust_zone_a": "agent-runtime",
+        "trust_zone_b": "remote-mcp"
+      }
+    }
+  ],
+  "risks": [
+    {
+      "symbolic_name": "indirect-prompt-injection-web-risk",
+      "title": "Web Injection risk",
+      "description": "Baseline inherent risk for a typical AI coding agent with workspace access, terminal execution and MCP integrations, before environment-specific controls. An estimate, not a measured incident rate.",
+      "threats": [
+        "indirect-prompt-injection-web"
+      ],
+      "likelihood": "certain",
+      "impact": "major",
+      "impact_description": "Agent actions steered by a third party: data disclosure, unwanted changes or outbound requests under the developer's identity.",
+      "score": 20,
+      "level": "critical"
+    },
+    {
+      "symbolic_name": "indirect-prompt-injection-workspace-risk",
+      "title": "Workspace Injection risk",
+      "description": "Baseline inherent risk for a typical AI coding agent with workspace access, terminal execution and MCP integrations, before environment-specific controls. An estimate, not a measured incident rate.",
+      "threats": [
+        "indirect-prompt-injection-workspace"
+      ],
+      "likelihood": "certain",
+      "impact": "severe",
+      "impact_description": "Agent actions steered by planted repository content, with full access to the workspace, credentials and shell.",
+      "score": 25,
+      "level": "critical"
+    },
+    {
+      "symbolic_name": "indirect-prompt-injection-tool-results-risk",
+      "title": "Tool Output Injection risk",
+      "description": "Baseline inherent risk for a typical AI coding agent with workspace access, terminal execution and MCP integrations, before environment-specific controls. An estimate, not a measured incident rate.",
+      "threats": [
+        "indirect-prompt-injection-tool-results"
+      ],
+      "likelihood": "likely",
+      "impact": "severe",
+      "impact_description": "Agent actions steered by tool output, including follow-on tool calls with the developer's privileges.",
+      "score": 20,
+      "level": "critical"
+    },
+    {
+      "symbolic_name": "mcp-tool-description-poisoning-risk",
+      "title": "MCP Tool Poisoning risk",
+      "description": "Baseline inherent risk for a typical AI coding agent with workspace access, terminal execution and MCP integrations, before environment-specific controls. An estimate, not a measured incident rate.",
+      "threats": [
+        "mcp-tool-description-poisoning"
+      ],
+      "likelihood": "likely",
+      "impact": "severe",
+      "impact_description": "Every session that loads the server is steered; the server's operator can direct the agent's tool use.",
+      "score": 20,
+      "level": "critical"
+    },
+    {
+      "symbolic_name": "mcp-tool-shadowing-risk",
+      "title": "MCP Tool Shadowing risk",
+      "description": "Baseline inherent risk for a typical AI coding agent with workspace access, terminal execution and MCP integrations, before environment-specific controls. An estimate, not a measured incident rate.",
+      "threats": [
+        "mcp-tool-shadowing"
+      ],
+      "likelihood": "possible",
+      "impact": "severe",
+      "impact_description": "Calls meant for a trusted tool, and the data in them, reach an attacker's server.",
+      "score": 15,
+      "level": "very_high"
+    },
+    {
+      "symbolic_name": "mcp-rug-pull-risk",
+      "title": "MCP Rug Pull risk",
+      "description": "Baseline inherent risk for a typical AI coding agent with workspace access, terminal execution and MCP integrations, before environment-specific controls. An estimate, not a measured incident rate.",
+      "threats": [
+        "mcp-rug-pull"
+      ],
+      "likelihood": "possible",
+      "impact": "severe",
+      "impact_description": "A trusted server gains capabilities the developer never approved.",
+      "score": 15,
+      "level": "very_high"
+    },
+    {
+      "symbolic_name": "malicious-repackaged-mcp-package-risk",
+      "title": "Fake MCP Package risk",
+      "description": "Baseline inherent risk for a typical AI coding agent with workspace access, terminal execution and MCP integrations, before environment-specific controls. An estimate, not a measured incident rate.",
+      "threats": [
+        "malicious-repackaged-mcp-package"
+      ],
+      "likelihood": "possible",
+      "impact": "severe",
+      "impact_description": "Attacker code runs as the developer with access to configured secrets, files and network.",
+      "score": 15,
+      "level": "very_high"
+    },
+    {
+      "symbolic_name": "secrets-in-mcp-config-risk",
+      "title": "Exposed MCP Secrets risk",
+      "description": "Baseline inherent risk for a typical AI coding agent with workspace access, terminal execution and MCP integrations, before environment-specific controls. An estimate, not a measured incident rate.",
+      "threats": [
+        "secrets-in-mcp-config"
+      ],
+      "likelihood": "likely",
+      "impact": "severe",
+      "impact_description": "API keys and tokens for connected services are exposed and must be rotated.",
+      "score": 20,
+      "level": "critical"
+    },
+    {
+      "symbolic_name": "credential-exfiltration-via-tool-calls-risk",
+      "title": "Credential Exfiltration risk",
+      "description": "Baseline inherent risk for a typical AI coding agent with workspace access, terminal execution and MCP integrations, before environment-specific controls. An estimate, not a measured incident rate.",
+      "threats": [
+        "credential-exfiltration-via-tool-calls"
+      ],
+      "likelihood": "likely",
+      "impact": "severe",
+      "impact_description": "Credentials for source control, cloud or SaaS accounts are disclosed to an attacker.",
+      "score": 20,
+      "level": "critical"
+    },
+    {
+      "symbolic_name": "data-exfiltration-network-channels-risk",
+      "title": "Network Exfiltration risk",
+      "description": "Baseline inherent risk for a typical AI coding agent with workspace access, terminal execution and MCP integrations, before environment-specific controls. An estimate, not a measured incident rate.",
+      "threats": [
+        "data-exfiltration-network-channels"
+      ],
+      "likelihood": "likely",
+      "impact": "severe",
+      "impact_description": "Source code, customer data or secrets are disclosed outside the organisation.",
+      "score": 20,
+      "level": "critical"
+    },
+    {
+      "symbolic_name": "sensitive-data-to-model-provider-risk",
+      "title": "Model Data Leakage risk",
+      "description": "Baseline inherent risk for a typical AI coding agent with workspace access, terminal execution and MCP integrations, before environment-specific controls. An estimate, not a measured incident rate.",
+      "threats": [
+        "sensitive-data-to-model-provider"
+      ],
+      "likelihood": "likely",
+      "impact": "severe",
+      "impact_description": "Confidential or regulated data is processed by a provider outside the organisation's approved terms.",
+      "score": 20,
+      "level": "critical"
+    },
+    {
+      "symbolic_name": "destructive-commands-risk",
+      "title": "Destructive Actions risk",
+      "description": "Baseline inherent risk for a typical AI coding agent with workspace access, terminal execution and MCP integrations, before environment-specific controls. An estimate, not a measured incident rate.",
+      "threats": [
+        "destructive-commands"
+      ],
+      "likelihood": "likely",
+      "impact": "severe",
+      "impact_description": "Loss of work, repository history or data, with recovery time and possible outage.",
+      "score": 20,
+      "level": "critical"
+    },
+    {
+      "symbolic_name": "overbroad-auto-approval-risk",
+      "title": "Unsafe Auto-Approval risk",
+      "description": "Baseline inherent risk for a typical AI coding agent with workspace access, terminal execution and MCP integrations, before environment-specific controls. An estimate, not a measured incident rate.",
+      "threats": [
+        "overbroad-auto-approval"
+      ],
+      "likelihood": "likely",
+      "impact": "severe",
+      "impact_description": "Every other threat in this model runs without the human check that would have stopped it.",
+      "score": 20,
+      "level": "critical"
+    },
+    {
+      "symbolic_name": "slopsquatting-package-install-risk",
+      "title": "Package Slopsquatting risk",
+      "description": "Baseline inherent risk for a typical AI coding agent with workspace access, terminal execution and MCP integrations, before environment-specific controls. An estimate, not a measured incident rate.",
+      "threats": [
+        "slopsquatting-package-install"
+      ],
+      "likelihood": "possible",
+      "impact": "major",
+      "impact_description": "Attacker code enters the project and the workstation through a dependency.",
+      "score": 12,
+      "level": "high"
+    },
+    {
+      "symbolic_name": "runaway-cost-loop-risk",
+      "title": "Runaway Costs risk",
+      "description": "Baseline inherent risk for a typical AI coding agent with workspace access, terminal execution and MCP integrations, before environment-specific controls. An estimate, not a measured incident rate.",
+      "threats": [
+        "runaway-cost-loop"
+      ],
+      "likelihood": "likely",
+      "impact": "moderate",
+      "impact_description": "Unplanned model, API or compute spend and lost developer time.",
+      "score": 12,
+      "level": "high"
+    },
+    {
+      "symbolic_name": "instruction-file-persistence-risk",
+      "title": "Instruction Persistence risk",
+      "description": "Baseline inherent risk for a typical AI coding agent with workspace access, terminal execution and MCP integrations, before environment-specific controls. An estimate, not a measured incident rate.",
+      "threats": [
+        "instruction-file-persistence"
+      ],
+      "likelihood": "likely",
+      "impact": "severe",
+      "impact_description": "Attacker instructions apply to every later session until found and removed.",
+      "score": 20,
+      "level": "critical"
+    },
+    {
+      "symbolic_name": "agent-config-self-modification-risk",
+      "title": "Guardrail Modification risk",
+      "description": "Baseline inherent risk for a typical AI coding agent with workspace access, terminal execution and MCP integrations, before environment-specific controls. An estimate, not a measured incident rate.",
+      "threats": [
+        "agent-config-self-modification"
+      ],
+      "likelihood": "possible",
+      "impact": "severe",
+      "impact_description": "Safeguards are silently weakened for later actions and sessions.",
+      "score": 15,
+      "level": "very_high"
+    },
+    {
+      "symbolic_name": "untrusted-workspace-config-execution-risk",
+      "title": "Unsafe Config Execution risk",
+      "description": "Baseline inherent risk for a typical AI coding agent with workspace access, terminal execution and MCP integrations, before environment-specific controls. An estimate, not a measured incident rate.",
+      "threats": [
+        "untrusted-workspace-config-execution"
+      ],
+      "likelihood": "likely",
+      "impact": "severe",
+      "impact_description": "Code from an untrusted repository runs on the workstation as the developer.",
+      "score": 20,
+      "level": "critical"
+    },
+    {
+      "symbolic_name": "rogue-model-endpoint-risk",
+      "title": "Rogue Model Endpoint risk",
+      "description": "Baseline inherent risk for a typical AI coding agent with workspace access, terminal execution and MCP integrations, before environment-specific controls. An estimate, not a measured incident rate.",
+      "threats": [
+        "rogue-model-endpoint"
+      ],
+      "likelihood": "possible",
+      "impact": "severe",
+      "impact_description": "Full session context, including code and secrets, is disclosed; responses can be manipulated.",
+      "score": 15,
+      "level": "very_high"
+    },
+    {
+      "symbolic_name": "poisoned-retrieval-index-risk",
+      "title": "Retrieval Poisoning risk",
+      "description": "Baseline inherent risk for a typical AI coding agent with workspace access, terminal execution and MCP integrations, before environment-specific controls. An estimate, not a measured incident rate.",
+      "threats": [
+        "poisoned-retrieval-index"
+      ],
+      "likelihood": "likely",
+      "impact": "major",
+      "impact_description": "Decisions and code changes are based on false information.",
+      "score": 16,
+      "level": "very_high"
+    },
+    {
+      "symbolic_name": "malicious-model-file-risk",
+      "title": "Malicious Model File risk",
+      "description": "Baseline inherent risk for a typical AI coding agent with workspace access, terminal execution and MCP integrations, before environment-specific controls. An estimate, not a measured incident rate.",
+      "threats": [
+        "malicious-model-file"
+      ],
+      "likelihood": "possible",
+      "impact": "severe",
+      "impact_description": "Attacker code runs as the developer when the model loads.",
+      "score": 15,
+      "level": "very_high"
+    },
+    {
+      "symbolic_name": "audit-log-tampering-risk",
+      "title": "Audit Log Tampering risk",
+      "description": "Baseline inherent risk for a typical AI coding agent with workspace access, terminal execution and MCP integrations, before environment-specific controls. An estimate, not a measured incident rate.",
+      "threats": [
+        "audit-log-tampering"
+      ],
+      "likelihood": "possible",
+      "impact": "major",
+      "impact_description": "Incidents cannot be reconstructed or attributed; evidence is lost.",
+      "score": 12,
+      "level": "high"
+    },
+    {
+      "symbolic_name": "ssrf-cloud-metadata-risk",
+      "title": "Cloud Metadata SSRF risk",
+      "description": "Baseline inherent risk for a typical AI coding agent with workspace access, terminal execution and MCP integrations, before environment-specific controls. An estimate, not a measured incident rate.",
+      "threats": [
+        "ssrf-cloud-metadata"
+      ],
+      "likelihood": "possible",
+      "impact": "severe",
+      "impact_description": "Temporary cloud credentials for the host's role are disclosed.",
+      "score": 15,
+      "level": "very_high"
+    },
+    {
+      "symbolic_name": "remote-mcp-oauth-command-injection-risk",
+      "title": "MCP OAuth Injection risk",
+      "description": "Baseline inherent risk for a typical AI coding agent with workspace access, terminal execution and MCP integrations, before environment-specific controls. An estimate, not a measured incident rate.",
+      "threats": [
+        "remote-mcp-oauth-command-injection"
+      ],
+      "likelihood": "possible",
+      "impact": "severe",
+      "impact_description": "Attacker commands run on the developer's host.",
+      "score": 15,
+      "level": "very_high"
+    }
+  ],
+  "extensions": {
+    "github.com/gitayg/moorai/threat-catalogue": {
+      "version": "1",
+      "catalogue": "https://github.com/gitayg/moorai/blob/main/data/threats.json",
+      "map": {
+        "indirect-prompt-injection-web": [
+          3,
+          50,
+          70
+        ],
+        "indirect-prompt-injection-workspace": [
+          3,
+          50,
+          72
+        ],
+        "indirect-prompt-injection-tool-results": [
+          40,
+          3
+        ],
+        "mcp-tool-description-poisoning": [
+          25
+        ],
+        "mcp-tool-shadowing": [
+          25
+        ],
+        "mcp-rug-pull": [
+          25
+        ],
+        "malicious-repackaged-mcp-package": [
+          4,
+          57
+        ],
+        "secrets-in-mcp-config": [
+          39
+        ],
+        "credential-exfiltration-via-tool-calls": [
+          55,
+          65,
+          39
+        ],
+        "data-exfiltration-network-channels": [
+          59,
+          65,
+          71,
+          78,
+          79
+        ],
+        "sensitive-data-to-model-provider": [
+          1,
+          9,
+          39
+        ],
+        "destructive-commands": [
+          43,
+          56
+        ],
+        "overbroad-auto-approval": [
+          23
+        ],
+        "slopsquatting-package-install": [
+          62,
+          57
+        ],
+        "runaway-cost-loop": [
+          38,
+          53
+        ],
+        "instruction-file-persistence": [
+          60,
+          22,
+          74
+        ],
+        "agent-config-self-modification": [
+          60,
+          84
+        ],
+        "untrusted-workspace-config-execution": [
+          60,
+          80
+        ],
+        "rogue-model-endpoint": [
+          63,
+          67
+        ],
+        "poisoned-retrieval-index": [
+          21
+        ],
+        "malicious-model-file": [
+          76
+        ],
+        "audit-log-tampering": [
+          73,
+          84
+        ]
+      }
+    }
+  }
+}

@@ -42,6 +42,13 @@
       "category": "infrastructure",
       "tags": ["container-isolation", "virtualisation", "kata-containers", "cncf", "virtio", "kubernetes"],
       "description": "Hardware virtualisation isolation layer for Kata Containers, covering virtio device backends, VFIO device passthrough, and ACPI/hotplug across QEMU, Firecracker, Cloud Hypervisor, and Dragonball."
+    },
+    {
+      "symbolic_name": "ai-coding-agent-mcp-threat-model",
+      "path": "threat-models/ai-ml-systems/ai-coding-agent-mcp-threat-model.json",
+      "category": "ai-ml-systems",
+      "tags": ["ai-agents", "mcp", "llm", "supply-chain"],
+      "description": "AI coding agent with local and remote MCP servers on a developer workstation."
     }
   ]
 }
